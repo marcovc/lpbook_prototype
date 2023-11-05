@@ -11,7 +11,7 @@ from lpbook.web3.block_stream import BlockScanning
 
 from web3._utils.events import get_event_data
 from web3._utils.filters import Filter
-from web3.contract import ContractEvent
+from web3.contract.contract import ContractEvent
 from web3.datastructures import AttributeDict
 from web3.exceptions import MismatchedABI
 
@@ -198,7 +198,7 @@ class ServerFilteredEventPollingStream(EventStream):
         filter_parameters = {}
         if len(addresses) > 0:
             filter_parameters['address'] = [
-                self.web3_client.toChecksumAddress(address.lower())
+                self.web3_client.to_checksum_address(address.lower())
                 for address in addresses
             ]
         filter_parameters['topics'] = [event_signature_hashes]

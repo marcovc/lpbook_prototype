@@ -6,7 +6,7 @@ from lpbook.util import traced
 from lpbook.web3 import BlockId
 
 from .event_stream import EventStream
-from web3.contract import ContractEvent
+from web3.contract.contract import ContractEvent
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ class RecentEventLog:
 
             # This could happen if all events are removed. To avoid it, pass an old enough
             # from_block to the "start" method.
-            if event.blockNumber < self.start_block_number:
+            if self.start_block_number is not None and event.blockNumber < self.start_block_number:
                 logger.critical(
                     f'{self} found in an possibly inconsistent state. Exiting ...'
                 )

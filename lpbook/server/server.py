@@ -14,10 +14,12 @@ from lpbook.LPHistoric import LPHistoric
 from lpbook.lps.curve import CurveDriver
 from lpbook.lps.uniswap_v3 import UniV3Driver
 from lpbook.lps.uniswap_v2 import SushiDriver, UniV2Driver
+from lpbook.lps.maker_psm import MakerPSMDriver
 from lpbook.web3.block_stream import BlockStream
 from lpbook.web3.event_stream import ServerFilteredEventStream
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 from web3 import Web3
+from contextlib import asynccontextmanager
 
 logger = logging.getLogger(__name__)
 
@@ -41,8 +43,17 @@ class ServerSettings(BaseSettings):
 server_settings = ServerSettings()
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Starting LPBook ...")
+    asyncio.ensure_future(reset_on_error())
+    yield
+    await aiohttp_session.close()
+    logger.info("Exiting LPBook ...")
+
 app = FastAPI(
-    title="LPBook service"
+    title="LPBook service",
+    lifespan=lifespan
 )
 
 
@@ -113,17 +124,20 @@ async def reset():
     # LP drivers
     univ3_driver = UniV3Driver(event_stream, block_stream, aiohttp_session, w3)
     curve_driver = CurveDriver(block_stream, aiohttp_session, w3)
-    univ2_driver = UniV2Driver(event_stream, block_stream, aiohttp_session, w3)
+    #univ2_driver = UniV2Driver(event_stream, block_stream, aiohttp_session, w3)
     sushi_driver = SushiDriver(event_stream, block_stream, aiohttp_session, w3)
+    makerpsm_driver = MakerPSMDriver()
+
+    drivers = [univ3_driver, sushi_driver, curve_driver, makerpsm_driver]
 
     # Create LP Cache (main service)
     # Returns current state (fast).
-    lp_cache = LPCache([univ2_driver, sushi_driver, univ3_driver, curve_driver])
-    #lp_cache = LPCache([univ3_driver])
+    
+    lp_cache = LPCache(drivers)
 
     # Create LP Historic (main service)
     # Returns past state (slow).
-    lp_historic = LPHistoric([univ3_driver, univ2_driver, sushi_driver])
+    # lp_historic = LPHistoric([univ3_driver, sushi_driver, curve_driver])
 
     await asyncio.gather(
         block_stream.run(),
@@ -140,18 +154,7 @@ async def reset_on_error():
                 f"Received unhandled exception: {str(e)}. Resetting."
                 f"Traceback:\n{traceback.format_exc()}\n"
             )
-
-
-@app.on_event('startup')
-async def on_startup():
-    logger.info("Starting LPBook ...")
-    asyncio.ensure_future(reset_on_error())
-
-
-@app.on_event('shutdown')
-async def on_shutdown():
-    await aiohttp_session.close()
-    logger.info("Exiting LPBook ...")
+    
 
 # ++++ Server setup: ++++
 

@@ -105,7 +105,7 @@ class UniV2LikeWeb3AsyncProxy(LPAsyncProxy):
         with open(Path(__file__).parent / 'artifacts' / 'uniswap_v2.abi', 'r') as f:
             contract_abi = f.read()
             for lp_id in lp_ids:
-                lp_id_chksum = self.client.toChecksumAddress(lp_id)
+                lp_id_chksum = self.client.to_checksum_address(lp_id)
                 self.contracts[lp_id] = web3_client.eth.contract(
                     address=lp_id_chksum,
                     abi=contract_abi
@@ -122,7 +122,7 @@ class UniV2LikeWeb3AsyncProxy(LPAsyncProxy):
 
         tokens = []
         for token_address in [token0_address, token1_address]:
-            address_chksum = self.client.toChecksumAddress(token_address)
+            address_chksum = self.client.to_checksum_address(token_address)
             tokens.append(create_token_from_web3(address_chksum, self.client))
 
         return tokens
@@ -402,7 +402,10 @@ class UniV2LikeDriver(LPDriver):
 
 class UniV2Driver(UniV2LikeDriver):
     def __init__(self, *args, **kwargs):
-        self.thegraph_url = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2'
+        # The official subgraph seems to be stuck:
+        #self.thegraph_url = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2'
+        # This is an alternative:
+        self.thegraph_url = 'https://api.thegraph.com/subgraphs/name/ianlapham/uniswap-v2-dev'
         self.UniV2Like = UniV2
         self.UniV2LikeWeb3AsyncProxy = UniV2Web3AsyncProxy
         self.UniV2LikeTheGraphAsyncProxy = UniV2TheGraphAsyncProxy

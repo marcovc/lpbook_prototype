@@ -86,7 +86,7 @@ class CurveWeb3AsyncProxy(LPAsyncProxy):
 
         with open(Path(__file__).parent / 'artifacts' / 'registry.abi', 'r') as f:
             registry_contract_abi = f.read()
-            registry_chksum = web3_client.toChecksumAddress(
+            registry_chksum = web3_client.to_checksum_address(
                 self.REGISTRY_CONTRACT_ADDRESS
             )
             self.registry_contract = web3_client.eth.contract(
@@ -110,7 +110,7 @@ class CurveWeb3AsyncProxy(LPAsyncProxy):
 
     def create_from_blockchain(self, lp_id, block: BlockId) -> Curve:
         block_identifier = block.to_web3()
-        lp_id_chksum = self.client.toChecksumAddress(lp_id)
+        lp_id_chksum = self.client.to_checksum_address(lp_id)
 
         balances = self.registry_contract.functions.get_balances(lp_id_chksum).call(
             block_identifier=block_identifier
