@@ -20,12 +20,14 @@ from lpbook.web3.event_stream import ServerFilteredEventStream
 from pydantic_settings import BaseSettings
 from web3 import Web3
 from contextlib import asynccontextmanager
+import argparse
 
 logger = logging.getLogger(__name__)
 
 aiohttp_session = None
 lp_cache = None
 lp_historic = None
+protocols = []
 
 # ++++ Interface definition ++++
 
@@ -104,6 +106,7 @@ async def reset():
     global aiohttp_session    
     global lp_cache
     global lp_historic
+    global protocols
 
     logger.info("Resetting LPBook ...")
 
@@ -121,14 +124,22 @@ async def reset():
     event_stream = ServerFilteredEventStream(block_stream, w3)
     aiohttp_session = aiohttp.ClientSession()
 
-    # LP drivers
-    univ3_driver = UniV3Driver(event_stream, block_stream, aiohttp_session, w3)
-    curve_driver = CurveDriver(block_stream, aiohttp_session, w3)
-    #univ2_driver = UniV2Driver(event_stream, block_stream, aiohttp_session, w3)
-    sushi_driver = SushiDriver(event_stream, block_stream, aiohttp_session, w3)
-    makerpsm_driver = MakerPSMDriver()
+    drivers = []
 
-    drivers = [univ3_driver, sushi_driver, curve_driver, makerpsm_driver]
+    # LP drivers
+    if "univ3" in protocols:
+        drivers.append(UniV3Driver(event_stream, block_stream, aiohttp_session, w3))
+    if "curve" in protocols:
+        drivers.append(CurveDriver(block_stream, aiohttp_session, w3))
+    if "univ2" in protocols:
+        drivers.append(UniV2Driver(event_stream, block_stream, aiohttp_session, w3))
+    if "sushi" in protocols:
+        drivers.append(SushiDriver(event_stream, block_stream, aiohttp_session, w3))
+    if "makerpsm" in protocols:
+        drivers.append(MakerPSMDriver())
+
+    for driver in drivers:
+        logger.info(f"Enabled driver {driver.__class__.__name__}.")
 
     # Create LP Cache (main service)
     # Returns current state (fast).
@@ -166,6 +177,26 @@ if __name__ == '__main__':
     logging.config.fileConfig(fname='logging.conf', disable_existing_loggers=True)
 
     load_dotenv()
+
+    parser = argparse.ArgumentParser(
+        prog='LPBook server',
+        description='Serves requests for on/off chain liquidity state information'
+    )
+
+    class SplitArgs(argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            setattr(namespace, self.dest, values.split(','))
+
+    parser.add_argument(
+        'protocols', 
+        type=str, 
+        action=SplitArgs, 
+        help="Comma separated list of protocols to serve (univ2, sushi, univ3, curve, markerpsm)."
+    )
+
+    args = parser.parse_args()
+
+    protocols = args.protocols
 
     uvicorn.run(
         "__main__:app",

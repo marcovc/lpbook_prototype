@@ -131,7 +131,9 @@ class ServerFilteredEventPollingStream(EventStream):
         else:
             new_entries = await asyncio.to_thread(filter.get_all_entries)
 
-        decoded_events = []
+        # Apparently node will not always send us the events in the
+        # "right" order and sometimes there are even repeated entries!.
+        decoded_events = set()
         for encoded_event in new_entries:
             decoded_event = None
             for event in subscription.events:
@@ -149,13 +151,14 @@ class ServerFilteredEventPollingStream(EventStream):
                 removed=encoded_event.removed
             )
             assert decoded_event is not None
-            decoded_events.append(decoded_event)
+            
+            if decoded_event in decoded_events:
+                print("FOUNDBUG!") 
+            decoded_events.add(decoded_event)
 
         subscription.updated_once = True
 
-        # Apparently node will always send us the events in the
-        # "right" order.
-
+        decoded_events = list(decoded_events)
         decoded_events = sorted(
             decoded_events,
             key=lambda e: (not e.removed, e.blockNumber, e.logIndex)

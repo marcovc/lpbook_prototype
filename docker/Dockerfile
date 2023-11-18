@@ -17,4 +17,5 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 # RUN git lfs pull -I lpbook/cost/traded_data.pickled
 
 # Start server.
-CMD python3 -m lpbook.server.server
+#CMD python3 -m lpbook.server.server
+ENTRYPOINT ["python3","-m","lpbook.server.server"]
