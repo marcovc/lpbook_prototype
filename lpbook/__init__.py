@@ -163,7 +163,7 @@ class LPSyncProxyFromAsyncProxy(LPSyncProxy):
 class LPFromInitialStatePlusChangesProxy(LPSyncProxy):
     # if ethereum finality is 6 blocks,
     # we would only need to keep 6 blocks since checkpoint.
-    MAX_NR_BLOCKS_TO_CHECKPOINT = 25
+    MAX_NR_BLOCKS_TO_CHECKPOINT = 12
 
     def __init__(self, lp_ids, events, async_proxy, event_stream, web3_client):
         self.lp_ids = lp_ids
@@ -195,7 +195,7 @@ class LPFromInitialStatePlusChangesProxy(LPSyncProxy):
         await self.event_log.start(
             self.lp_ids,
             self.events,
-            start_block.number,
+            start_block.number + 1,  # Because checkpoint is at the end of start_block
             self.reset_event_log
         )
 
@@ -216,6 +216,7 @@ class LPFromInitialStatePlusChangesProxy(LPSyncProxy):
         logger.debug(f'Querying {self} (block={block}) ...')
 
         events_since_checkpoint = self.event_log(block)
+
         state = self.get_state(self.checkpoint, events_since_checkpoint)
 
         # Update checkpoint to computed state to save extra computation and memory on

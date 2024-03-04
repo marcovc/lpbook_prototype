@@ -9,15 +9,24 @@ import functools
 import time
 
 
+# possible values for clocks:
+# time.perf_counter - does not stop during sleep
+# time.process_time - stops during sleep
 @contextmanager
-def traced_context(logger, description):
+def traced_context(logger, description, include_cpu_bound_only=False):
     start_time = time.perf_counter()
+    if include_cpu_bound_only:
+        start_time_cpu = time.process_time()
     logger.debug(f'{description} ...')
     yield
     end_time = time.perf_counter()
     run_time = end_time - start_time
-    logger.debug(f'{description} ... done ({run_time:.4f} secs)')
-
+    if include_cpu_bound_only:
+        end_time_cpu = time.process_time()
+        run_time_cpu = end_time_cpu - start_time_cpu
+        logger.debug(f'{description} ... done ({run_time:.4f} secs, {run_time_cpu:.4f} CPU secs)')
+    else:
+        logger.debug(f'{description} ... done ({run_time:.4f} secs)')
 
 def traced(logger, description=None):
     """Logs calls to the decorated function."""
@@ -146,7 +155,7 @@ class LP:
             'protocol': self.protocol,
             'tokens': self.tokens,
             'state': self.state,
-            'gas_stats': self.gas_stats
+            'gas_stats': self.gas_stats,
         }
         try:
             return stringify_numbers(to_dict(api), {'decimals'})

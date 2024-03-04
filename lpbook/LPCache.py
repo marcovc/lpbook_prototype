@@ -6,8 +6,11 @@ from typing import List
 from lpbook import LPDriver
 from lpbook.error import CacheMissError
 
-from lpbook.util import LP, traced
+from lpbook.util import LP, traced, traced_context
 from lpbook.web3 import BlockId
+import lpbook.util.prometheus as prometheus
+
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -49,13 +52,14 @@ class LPCache:
                     all_lps.append(lp)
 
         if len(all_lps) == 0:
-            logger.warning(f'Cache miss for token_ids {token_ids}.')
+            logger.debug(f'Cache miss for token_ids {token_ids}.')
 
         return all_lps
 
     @traced(logger, 'Running LP cache')
     async def run(self):
-        while True:
+        self.running = True
+        while self.running:
             now = datetime.datetime.now()
             most_requested_tokens = {
                 t
@@ -78,6 +82,9 @@ class LPCache:
 
             await asyncio.sleep(self.POOL_MIN_CACHED_AGE.total_seconds())
 
+    def shutdown(self):
+        self.running = False
+
     async def refresh_driver(self, driver, tokens):
         cur_lp_sync_proxy = self.lp_sync_proxies.get(driver.protocol, None)
         cur_lp_ids = self.lp_sync_pool_ids.get(driver.protocol, set())
@@ -89,6 +96,7 @@ class LPCache:
                 f"Error querying lps for {driver.protocol}: {err}. "
                 f"Traceback:\n{traceback.format_exc()}"
             )
+            prometheus.refresh_driver_error.labels(protocol=driver.protocol).inc(1)
             # Keep current proxy in case of error
             return (cur_lp_sync_proxy, cur_lp_ids)
 
@@ -108,9 +116,9 @@ class LPCache:
             return (cur_lp_sync_proxy, cur_lp_ids)
 
         new_lp_sync_proxy = driver.create_lp_sync_proxy(
-            new_lp_ids,
-            LPDriver.LPSyncProxyDataSource.Default
-        )
+                new_lp_ids,
+                LPDriver.LPSyncProxyDataSource.Default
+            )
 
         try:
             await new_lp_sync_proxy.start()
@@ -119,6 +127,7 @@ class LPCache:
                 f"Error starting lp sync proxy for {driver.protocol}: {err}. "
                 f"Traceback:\n{traceback.format_exc()}"
             )
+            prometheus.refresh_driver_error.labels(protocol=driver.protocol).inc(1)
             return (cur_lp_sync_proxy, cur_lp_ids)
 
         return (new_lp_sync_proxy, new_lp_ids)

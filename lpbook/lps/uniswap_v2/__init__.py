@@ -15,6 +15,7 @@ from lpbook import (LPAsyncProxy, LPDriver, LPFromInitialStatePlusChangesProxy,
                     LPSyncProxy, LPSyncProxyFromAsyncProxy)
 from lpbook.error import TemporaryError
 from lpbook.lps.uniswap_v2.subgraph import UniV2GraphQLClient
+from lpbook.thegraph.subgraph import GraphQLClientError
 from lpbook.util import LP, Token
 from lpbook.web3 import BlockId, create_token_from_web3
 from lpbook.web3.block_stream import BlockStream
@@ -28,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class UniV2Like(LP):
-    """Uniswap V2 / Sushiswap LP."""
+    """Uniswap V2 / Sushiswap / Pancakeswap V2 LP."""
     address: str
     _tokens: List[Token]
     balances: List[int]
@@ -44,7 +45,7 @@ class UniV2Like(LP):
     @property
     def state(self) -> Dict:
         return {
-            'balances': self.balances
+            'balances': self.balances,
         }
 
     @classmethod
@@ -91,6 +92,21 @@ class Sushi(UniV2Like):
 
 
 UniV2Like.as_sushi = lambda self: Sushi(**self.__dict__)
+
+class PancakeswapV2(UniV2Like):
+    """Pancakeswap LP."""
+    @classmethod
+    @property
+    def protocol_name(self) -> str:
+        return 'Pancakeswap'
+
+    @classmethod
+    @property
+    def protocol_version(self) -> str:
+        return '2'
+
+
+UniV2Like.as_pancakeswapv2 = lambda self: PancakeswapV2(**self.__dict__)
 
 
 class UniV2LikeWeb3AsyncProxy(LPAsyncProxy):
@@ -187,6 +203,10 @@ class SushiWeb3AsyncProxy(UniV2LikeWeb3AsyncProxy):
     def create_from_blockchain(self, lp_id, block: BlockId) -> UniV2:
         return super().create_from_blockchain(lp_id, block).as_sushi()
 
+class PancakeswapV2Web3AsyncProxy(UniV2LikeWeb3AsyncProxy):
+    def create_from_blockchain(self, lp_id, block: BlockId) -> UniV2:
+        return super().create_from_blockchain(lp_id, block).as_pancakeswapv2()
+
 
 class UniV2LikeTheGraphAsyncProxy(LPAsyncProxy):
     """"Proxies the state of the uniswap v2 LP through TheGraph."""
@@ -216,7 +236,7 @@ class UniV2LikeTheGraphAsyncProxy(LPAsyncProxy):
         return UniV2Like(
             address=thegraph_data.id,
             _tokens=tokens,
-            balances=balances
+            balances=balances,
         )
 
     async def latest_block(self) -> BlockId:
@@ -237,21 +257,32 @@ class UniV2LikeTheGraphAsyncProxy(LPAsyncProxy):
         # where thegraph replies with arbitrary data when the passed block number/hash is
         # not yet indexed.
         if block.number is not None:
-            latest_block_number = (await self.latest_block()).number
-            if block.number > latest_block_number:
+            while True:
+                latest_block_number = (await self.latest_block()).number
+                if block.number <= latest_block_number:
+                    break
                 logger.debug(
                     f'{self} is lagging behind '
-                    f'{block.number - latest_block_number} blocks.'
+                    f'{block.number - latest_block_number} blocks from block {block.number}. Retrying ...'
                 )
-                raise RuntimeError(f'Attempt to retrieve a block too recent for {self}')
+                await asyncio.sleep(2)
 
         lp_filter = {
             'id_in': self.lp_ids,
         }
-        thegraph_data = [
-            pair
-            async for pair in self.client.get_pairs_state(lp_filter, None, **extra_kwargs)
-        ]
+        while True:
+            try:
+                thegraph_data = [
+                    pair
+                    async for pair in self.client.get_pairs_state(lp_filter, None, **extra_kwargs)
+                ]
+                break
+            except GraphQLClientError as e:
+                logger.debug(
+                    f'{self} is not able to fetch data from thegraph. Retrying ...'
+                )
+                await asyncio.sleep(2)  # wait a bit to allow thegraph to catchup
+
         state = {
             thegraph_lp_data.id: self.create_from_thegraph(thegraph_lp_data)
             for thegraph_lp_data in thegraph_data
@@ -269,6 +300,10 @@ class UniV2TheGraphAsyncProxy(UniV2LikeTheGraphAsyncProxy):
 class SushiTheGraphAsyncProxy(UniV2LikeTheGraphAsyncProxy):
     def create_from_thegraph(self, thegraph_data) -> Sushi:
         return super().create_from_thegraph(thegraph_data).as_sushi()
+
+class PancakeswapV2TheGraphAsyncProxy(UniV2LikeTheGraphAsyncProxy):
+    def create_from_thegraph(self, thegraph_data) -> PancakeswapV2:
+        return super().create_from_thegraph(thegraph_data).as_pancakeswapv2()
 
 
 class UniV2LikeTheGraphAndWeb3Proxy(LPFromInitialStatePlusChangesProxy):
@@ -402,7 +437,7 @@ class UniV2LikeDriver(LPDriver):
 
 class UniV2Driver(UniV2LikeDriver):
     def __init__(self, *args, **kwargs):
-        # The official subgraph seems to be stuck:
+        # The official subgraph seems to be stuck (and incorrect!):
         #self.thegraph_url = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2'
         # This is an alternative:
         self.thegraph_url = 'https://api.thegraph.com/subgraphs/name/ianlapham/uniswap-v2-dev'
@@ -419,3 +454,14 @@ class SushiDriver(UniV2LikeDriver):
         self.UniV2LikeWeb3AsyncProxy = SushiWeb3AsyncProxy
         self.UniV2LikeTheGraphAsyncProxy = SushiTheGraphAsyncProxy
         super().__init__(*args, **kwargs)
+
+
+class PancakeswapV2Driver(UniV2LikeDriver):
+    def __init__(self, *args, **kwargs):
+        self.thegraph_url = 'https://api.thegraph.com/subgraphs/name/pancakeswap/exhange-eth'
+        self.UniV2Like = PancakeswapV2
+        self.UniV2LikeWeb3AsyncProxy = PancakeswapV2Web3AsyncProxy
+        self.UniV2LikeTheGraphAsyncProxy = PancakeswapV2TheGraphAsyncProxy
+        super().__init__(*args, **kwargs)
+
+

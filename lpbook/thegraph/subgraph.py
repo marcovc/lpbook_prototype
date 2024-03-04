@@ -46,7 +46,6 @@ class GraphQLClient:
     async def get_data(self, op, must_have_key=None, keep_trying=False):
         while True:
             data = await self.endpoint(op)
-
             if 'errors' not in data.keys() and (
                 must_have_key is None or must_have_key in data['data'].keys()
             ):

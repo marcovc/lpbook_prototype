@@ -10,9 +10,8 @@ import aiohttp
 
 
 class UniV3GraphQLClient(GraphQLClient):
-    url = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3'
-
-    def __init__(self, session: aiohttp.ClientSession):
+    def __init__(self, url: str, session: aiohttp.ClientSession):
+        self.url = url
         super().__init__(self.url, session)
 
     def set_pool_state_fields(self, pool):

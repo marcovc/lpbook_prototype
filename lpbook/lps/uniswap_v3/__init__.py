@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class UniV3(LP):
+class UniV3Like(LP):
     """UniswapV3 LP."""
     address: str
     token0: Token
@@ -29,20 +29,9 @@ class UniV3(LP):
     tick: int
     liquidity_net: Dict[int, int]
     fee: int
-
     @property
     def uid(self) -> str:
         return self.address
-
-    @classmethod
-    @property
-    def protocol_name(self) -> str:
-        return 'Uniswap'
-
-    @classmethod
-    @property
-    def protocol_version(self) -> str:
-        return '3'
 
     @property
     def tokens(self) -> List[Token]:
@@ -55,33 +44,64 @@ class UniV3(LP):
             'liquidity': self.liquidity,
             'tick': self.tick,
             'liquidity_net': self.liquidity_net,
-            'fee': self.fee
+            'fee': self.fee,
         }
 
     @classmethod
     @property
     def gas_stats(self) -> Dict:
-        # See https://dune.com/queries/1044812 .
+        # See https://dune.com/queries/3270202 .
         return {
-            'nr_obs': 165651,
-            'mean': 108163.62455403227,
-            'stddev': 32600.71669325,
-            'min': 36309,
-            'max': 2862123,
-            'median': 105049
+            'nr_obs': 2309324,
+            'mean': 126908,
+            'stddev': 32312,
+            'min': 21269,
+            'max': 3332226,
+            'median': 127434
         }
 
 
-class UniV3TheGraphProxy(LPAsyncProxy):
+class UniV3(UniV3Like):
+    """Uniswap V3 LP."""
+    @classmethod
+    @property
+    def protocol_name(self) -> str:
+        return 'Uniswap'
+
+    @classmethod
+    @property
+    def protocol_version(self) -> str:
+        return '3'
+
+
+UniV3Like.as_univ3 = lambda self: UniV3(**self.__dict__)
+
+class PancakeswapV3(UniV3Like):
+    """Pancakeswap V3 LP."""
+    @classmethod
+    @property
+    def protocol_name(self) -> str:
+        return 'Pancakeswap'
+
+    @classmethod
+    @property
+    def protocol_version(self) -> str:
+        return '3'
+
+
+UniV3Like.as_pancakeswapv3 = lambda self: PancakeswapV3(**self.__dict__)
+
+
+class UniV3LikeTheGraphProxy(LPAsyncProxy):
     """Loads the state of liquidity from TheGraph."""
     def __init__(self, lp_ids, uniswap_v3_gql_client):
         assert len(lp_ids) >= 1
         self.lp_ids = lp_ids
         self.client = uniswap_v3_gql_client
 
-    def create_from_thegraph(self, thegraph_data) -> Optional[UniV3]:
+    def create_from_thegraph(self, thegraph_data) -> Optional[UniV3Like]:
         try:
-            univ3 = UniV3(
+            univ3 = UniV3Like(
                 address=thegraph_data.id,
                 token0=Token(
                     address=thegraph_data.token0.id,
@@ -100,7 +120,7 @@ class UniV3TheGraphProxy(LPAsyncProxy):
                     int(tick.tick_idx): int(tick.liquidity_net)
                     for tick in thegraph_data.ticks
                 },
-                fee=D(thegraph_data.fee_tier)/D(1000000)
+                fee=D(thegraph_data.fee_tier)/D(1000000),
             )
         except TypeError:
             # Ignore ill-defined pools.
@@ -161,7 +181,16 @@ class UniV3TheGraphProxy(LPAsyncProxy):
         return state
 
 
-class UniV3TheGraphAndWeb3Proxy(LPFromInitialStatePlusChangesProxy):
+class UniV3TheGraphProxy(UniV3LikeTheGraphProxy):
+    def create_from_thegraph(self, thegraph_data) -> Optional[UniV3]:
+        return super().create_from_thegraph(thegraph_data).as_univ3()
+
+class PancakeSwapV3TheGraphProxy(UniV3LikeTheGraphProxy):
+    def create_from_thegraph(self, thegraph_data) -> Optional[PancakeswapV3]:
+        return super().create_from_thegraph(thegraph_data).as_pancakeswapv3()
+
+
+class UniV3LikeTheGraphAndWeb3Proxy(LPFromInitialStatePlusChangesProxy):
     """Queries TheGraph for an initial state, and web3 for state updates."""
 
     def __init__(self, lp_ids, async_proxy, event_stream, web3_client):
@@ -253,7 +282,7 @@ class UniV3TheGraphAndWeb3Proxy(LPFromInitialStatePlusChangesProxy):
         return cur_state
 
 
-class UniV3Driver(LPDriver):
+class UniV3LikeDriver(LPDriver):
     def __init__(
         self,
         event_stream: EventStream,
@@ -261,11 +290,11 @@ class UniV3Driver(LPDriver):
         session: aiohttp.ClientSession,
         web3_client
     ):
-        super().__init__(UniV3)
+        super().__init__(self.UniV3Like)
         self.event_stream = event_stream
         self.block_stream = block_stream
         self.web3_client = web3_client
-        self.graphql_client = UniV3GraphQLClient(session)
+        self.graphql_client = UniV3GraphQLClient(self.thegraph_url, session)
 
     def create_lp_sync_proxy(
         self,
@@ -273,12 +302,12 @@ class UniV3Driver(LPDriver):
         data_source: LPDriver.LPSyncProxyDataSource =
             LPDriver.LPSyncProxyDataSource.Default
     ) -> LPSyncProxy:
-        async_proxy = UniV3TheGraphProxy(lp_ids, self.graphql_client)
+        async_proxy = self.UniV3LikeTheGraphProxy(lp_ids, self.graphql_client)
         if data_source in [
             LPDriver.LPSyncProxyDataSource.Default,
             LPDriver.LPSyncProxyDataSource.TheGraphAndWeb3
         ]:
-            sync_proxy = UniV3TheGraphAndWeb3Proxy(
+            sync_proxy = self.UniV3LikeTheGraphAndWeb3Proxy(
                 lp_ids,
                 async_proxy,
                 self.event_stream,
@@ -300,7 +329,7 @@ class UniV3Driver(LPDriver):
             LPDriver.LPAsyncProxyDataSource.Default,
             LPDriver.LPAsyncProxyDataSource.TheGraph
         ]:
-            return UniV3TheGraphProxy(
+            return self.UniV3LikeTheGraphProxy(
                 lp_ids, self.graphql_client
             )
 
@@ -312,8 +341,26 @@ class UniV3Driver(LPDriver):
                 {
                     'token0_in': token_ids,
                     'token1_in': token_ids,
-                    'liquidity_gt': 0
+                    'liquidity_gt': 0,
+                    'volumeUSD_gt': 1000
                 },
                 field_setter=self.graphql_client.set_pool_id_field
             )
         ]
+
+class UniV3Driver(UniV3LikeDriver):
+    def __init__(self, *args, **kwargs):
+        self.thegraph_url = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3'
+        self.UniV3Like = UniV3
+        self.UniV3LikeTheGraphProxy = UniV3TheGraphProxy
+        self.UniV3LikeTheGraphAndWeb3Proxy = UniV3LikeTheGraphAndWeb3Proxy
+        super().__init__(*args, **kwargs)
+
+
+class PancakeswapV3Driver(UniV3LikeDriver):
+    def __init__(self, *args, **kwargs):
+        self.thegraph_url = 'https://api.thegraph.com/subgraphs/name/pancakeswap/exchange-v3-eth'
+        self.UniV3Like = PancakeswapV3
+        self.UniV3LikeTheGraphProxy = PancakeSwapV3TheGraphProxy
+        self.UniV3LikeTheGraphAndWeb3Proxy = UniV3LikeTheGraphAndWeb3Proxy
+        super().__init__(*args, **kwargs)

@@ -82,7 +82,7 @@ async def assert_equivalent_proxies(
 
     # wait until all caches are filled
     with traced_context(logger, 'Cache warm up'):
-        while block_stream.last_block is None or \
+        while block_stream.last_block is None or block_stream.last_block.number is None  or \
                 block_stream.last_block.number < cur_block.number:
             await asyncio.sleep(5)
 
@@ -159,8 +159,8 @@ async def test_curve():
 
 async def test_uniswap_v2():
     token_ids = {
-        '0x6b175474e89094c44da98b954eedeac495271d0f',
-        '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'.lower()
+        '0x6982508145454ce325ddbe47a25d4ec3d2311933',
+        '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'.lower()
     }
 
     # w3 = Web3(Web3.WebsocketProvider(WS_WEB3_URL))
@@ -178,11 +178,11 @@ async def test_uniswap_v2():
         )
         proxy_web3 = driver.create_lp_sync_proxy(
             lp_ids,
-            LPDriver.LPSyncProxyDataSource.Web3
+            LPDriver.LPSyncProxyDataSource.TheGraphAndWeb3
         )
 
         await assert_equivalent_proxies(w3, proxy_thegraph, proxy_web3, block_stream, 10)
 
-asyncio.run(test_uniswap_v3())
+#asyncio.run(test_uniswap_v3())
 # asyncio.run(test_curve())
-#asyncio.run(test_uniswap_v2())
+asyncio.run(test_uniswap_v2())

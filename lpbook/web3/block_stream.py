@@ -73,7 +73,7 @@ class BlockStream(BlockScanning):
         self.running = True
         if start_block_number is not None:
             w3 = Web3(Web3.WebsocketProvider(self.web3_ws))
-            while True:
+            while self.running:
                 latest_block_number = w3.eth.get_block_number()
                 if start_block_number > latest_block_number:
                     await asyncio.sleep(15)
@@ -85,7 +85,13 @@ class BlockStream(BlockScanning):
                     f'/{start_block.hash.hex()[:8]}'
                 )
                 await self.trigger(BlockId.from_web3(start_block))
+                if start_block_number == latest_block_number:
+                    print("processed block",start_block_number)
+                    break
                 start_block_number += 1
+
+            if not self.running:
+                return
 
         logger.debug(f'{self} has finished processing past blocks')
         async with connect(self.web3_ws) as ws:
@@ -98,11 +104,12 @@ class BlockStream(BlockScanning):
 
             # TODO: How to validate that subscription was correct?
             assert 'id' in json.loads(subscription_response).keys()
-
-            while True:
+            
+            while self.running:
                 message = await ws.recv()
                 message = json.loads(message)
                 block_number = int(message['params']['result']['number'], base=16)
+                print("got block", block_number)
                 assert start_block_number is None or block_number >= start_block_number
                 # this avoids a notifying twice about the same block, which can happen
                 # when "stitching" the processing of past blocks above with this loop.
@@ -123,3 +130,6 @@ class BlockStream(BlockScanning):
         on each block in [start_block_number, current_block_number[
         """
         await self.run_helper(start_block_number)
+
+    def shutdown(self):
+        self.running = False
