@@ -23,6 +23,11 @@ class MakerPSM(LP):
         """Returns a unique identifier for the LP (like its address)."""
         return self.address
 
+    @classmethod
+    @property
+    def kind(self) -> str:
+        return 'MakerPSM'
+
     @property
     def protocol_name(self) -> str:
         """Returns the name of lp protocol (Uniswap, Curve, etc.)."""
@@ -101,7 +106,7 @@ class MakerPSMDriver(LPDriver):
         else:
             return []
 
-    def create_lp_sync_proxy(
+    async def create_lp_sync_proxy(
         self, 
         lp_ids: List[str],
         data_source: LPDriver.LPSyncProxyDataSource =

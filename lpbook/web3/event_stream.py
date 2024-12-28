@@ -1,7 +1,10 @@
+from functools import reduce
 import logging
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional
+import math
+import sys
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from async_timeout import asyncio
 from eth_utils import event_abi_to_log_topic
@@ -29,7 +32,8 @@ class EventStream:
         addresses: List[str],
         events: List[ContractEvent],
         from_block_number: Optional[int],
-        on_dropped_subscription_error_fn: Callable[[RuntimeError], None]
+        on_dropped_subscription_error_fn: Callable[[RuntimeError], None],
+        extra_topics: Tuple[str] = ()
     ):
         """Subscribes the event stream filtered for given addresses and events.
 
@@ -82,6 +86,7 @@ class ServerFilteredEventPollingStream(EventStream):
         filter: Filter
         updated_once: bool = False,
         on_dropped_subscription_error_fn: Callable[[RuntimeError], None] = raise_err
+        extra_topics: Tuple[str] = tuple()
 
     def __init__(self, web3_client):
         self.web3_client = web3_client
@@ -93,12 +98,13 @@ class ServerFilteredEventPollingStream(EventStream):
         addresses: List[str],
         events: List[ContractEvent],
         from_block_number: Optional[int],
-        on_dropped_subscription_error_fn: Callable[[RuntimeError], None]
+        on_dropped_subscription_error_fn: Callable[[RuntimeError], None],
+        extra_topics: Tuple[str] = tuple()
     ):
         assert len(events) > 0
-        filter = self.install_filter(addresses, events, from_block_number)
+        filter = self.install_filter(addresses, events, from_block_number, extra_topics=extra_topics)
         subscription = self.Subscription(
-            addresses, events, filter, False, on_dropped_subscription_error_fn
+            addresses, events, filter, False, on_dropped_subscription_error_fn, extra_topics=extra_topics
         )
         self.subscriptions[subscriber] = subscription
 
@@ -107,16 +113,24 @@ class ServerFilteredEventPollingStream(EventStream):
         subscriber: EventStream.Subscriber,
         addresses: List[str],
         events: List[ContractEvent],
-        from_block_number: Optional[int]
+        from_block_number: Optional[int],
+        extra_topics: Tuple[str] = tuple()
     ):
         assert len(events) > 0
         self.unsubscribe(subscriber)
-        self.subscribe(subscriber, addresses, events, from_block_number)
+        self.subscribe(subscriber, addresses, events, from_block_number, extra_topics=extra_topics)
 
     def unsubscribe(self, subscriber: EventStream.Subscriber):
+        if subscriber not in self.subscriptions.keys():
+            return
         subscription = self.subscriptions[subscriber]
         self.uninstall_filter(subscription.filter)
         self.subscriptions.pop(subscriber)
+
+    # just for debugging/monitoring
+    @abstractmethod
+    def on_processed_events(events):
+        pass
 
     async def poll_for_subscriber_helper(
         self,
@@ -152,8 +166,6 @@ class ServerFilteredEventPollingStream(EventStream):
             )
             assert decoded_event is not None
             
-            if decoded_event in decoded_events:
-                print("FOUNDBUG!") 
             decoded_events.add(decoded_event)
 
         subscription.updated_once = True
@@ -164,8 +176,9 @@ class ServerFilteredEventPollingStream(EventStream):
             key=lambda e: (not e.removed, e.blockNumber, e.logIndex)
         )
 
-        for decoded_event in decoded_events:
-            subscriber(decoded_event)
+        if len(decoded_events) > 0:
+            subscriber(decoded_events)
+            self.on_processed_events(decoded_events)
 
     async def poll_for_subscriber(
         self,
@@ -193,7 +206,7 @@ class ServerFilteredEventPollingStream(EventStream):
     def get_event_as_topic(self, event):
         return '0x' + event_abi_to_log_topic(event._get_event_abi()).hex()
 
-    def install_filter(self, addresses, events, from_block_number: Optional[int]):
+    def install_filter(self, addresses, events, from_block_number: Optional[int], extra_topics: Tuple[str]):
         event_signature_hashes = [
             self.get_event_as_topic(event) for event in events
         ]
@@ -204,7 +217,8 @@ class ServerFilteredEventPollingStream(EventStream):
                 self.web3_client.to_checksum_address(address.lower())
                 for address in addresses
             ]
-        filter_parameters['topics'] = [event_signature_hashes]
+        filter_parameters['topics'] = [event_signature_hashes] + list(extra_topics)
+
         if from_block_number is not None:
             filter_parameters['fromBlock'] = from_block_number
 
@@ -215,6 +229,8 @@ class ServerFilteredEventPollingStream(EventStream):
 
     def uninstall_filter(self, filter):
         try:
+            if sys.meta_path is None:   # In case we are shuting down, below call will fail.
+                return
             self.web3_client.eth.uninstall_filter(filter.filter_id)
         # sometimes the node just drops the filter without notice :(
         except ValueError as err:
@@ -231,9 +247,26 @@ class ServerFilteredEventStream(ServerFilteredEventPollingStream, BlockScanning)
     def __init__(self, block_stream, web3_client):
         ServerFilteredEventPollingStream.__init__(self, web3_client)
         self.block_stream = block_stream
+        self.init_block = block_stream.last_block
         self.block_stream.subscribe(self.poll)
+
+    def __del__(self):
+        self.block_stream.unsubscribe(self.poll)
 
     @property
     def last_block(self) -> Optional[BlockId]:
         return self.block_stream.last_block
 
+    def on_processed_events(self, events):
+        # The code below raises a lot of false positives since it does not account for bulk event processing
+        # when initializing stream.
+        """
+        if len(events) == 0 or self.last_block.number is None or self.init_block == self.last_block:
+            return
+        min_block, max_block = reduce(lambda acc, ev: (min(acc[0], ev.blockNumber), max(acc[1], ev.blockNumber)), events, (math.inf, -math.inf))
+        if max_block < self.last_block.number:
+            logger.warning(f"Event stream most recent event belongs to a previous block {max_block} (current block = {self.last_block})")
+        if max_block > self.last_block.number:
+            logger.error(f"Event stream received an event from future block {max_block}  (current block {self.last_block})")
+        """
+        pass

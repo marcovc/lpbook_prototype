@@ -20,6 +20,7 @@ class BalancerV2GraphQLClient(GraphQLClient):
         pool.tokens().decimals()
         pool.tokens().balance()
         pool.tokens().weight()
+        pool.owner()
 
     def set_pool_state_fields(self, pool):
         self.set_pool_id_and_tokens_fields(pool)
@@ -58,6 +59,7 @@ class BalancerV2GraphQLClient(GraphQLClient):
         meta.block()
         meta.block().number()
         meta.block().hash()
+        meta.block().timestamp()
         data = await self.get_data(op, '_meta')
         query = op + data
         return query._meta.block if hasattr(query, '_meta') else None

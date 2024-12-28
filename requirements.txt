@@ -25,9 +25,11 @@ graphql-core==3.2.3
 h11==0.14.0
 hexbytes==0.3.1
 idna==3.4
+jsonpickle==3.0.3
 jsonschema==4.19.2
 jsonschema-specifications==2023.7.1
 lru-dict==1.2.0
+mergedeep==1.3.4
 multidict==6.0.4
 parsimonious==0.9.0
 prometheus-async==22.2.0
@@ -51,7 +53,7 @@ toolz==0.12.0
 typing_extensions==4.8.0
 urllib3==2.0.7
 uvicorn==0.24.0
-web3==6.11.2
+web3==6.15.1
 websockets==12.0
 wrapt==1.16.0
 yarl==1.9.2

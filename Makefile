@@ -1,14 +1,14 @@
-all: update-uniswap-v3-graphql-schema update-curve-graphql-schema fetch-curve-contract_abis update-uniswap-v2-graphql-schema update-balancer-v2-graphql-schema
+all: update-uniswap-v3-graphql-schema fetch-curve-contract_abis update-uniswap-v2-graphql-schema update-balancer-v2-graphql-schema
 
 update-uniswap-v3-graphql-schema:
-	python -m sgqlc.introspection --exclude-deprecated --exclude-description https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3 uniswap_v3_graphql_schema.json
+	python -m sgqlc.introspection --exclude-deprecated --exclude-description https://gateway-arbitrum.network.thegraph.com/api/${THEGRAPH_API_KEY}/subgraphs/id/5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV uniswap_v3_graphql_schema.json
 	sgqlc-codegen schema uniswap_v3_graphql_schema.json lpbook/lps/uniswap_v3/artifacts/graphql_schema.py
 	rm uniswap_v3_graphql_schema.json
 
-update-curve-graphql-schema:
-	python -m sgqlc.introspection --exclude-deprecated --exclude-description https://api.thegraph.com/subgraphs/name/curvefi/curve curve_graphql_schema.json
-	sgqlc-codegen schema curve_graphql_schema.json lpbook/lps/curve/artifacts/graphql_schema.py
-	rm curve_graphql_schema.json
+#update-curve-graphql-schema:
+#	python -m sgqlc.introspection --exclude-deprecated --exclude-description https://gateway-arbitrum.network.thegraph.com/api/b57c76944b2d70b02b82fb4653dac448/subgraphs/id/3fy93eAT56UJsRCEht8iFhfi6wjHWXtZ9dnnbQmvFopF curve_graphql_schema.json
+#	sgqlc-codegen schema curve_graphql_schema.json lpbook/lps/curve/artifacts/graphql_schema.py
+#	rm curve_graphql_schema.json
 
 fetch-curve-contract_abis:
 	# fetches all "non meta" pools
@@ -38,11 +38,11 @@ fetch-curve-contract_abis:
 		0xfd5db7463a3ab53fd211b4af195c5bccc1a03890 `# eurt`
 
 update-uniswap-v2-graphql-schema:
-	python -m sgqlc.introspection --exclude-deprecated --exclude-description https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2 uniswap_v2_graphql_schema.json
+	python -m sgqlc.introspection --exclude-deprecated --exclude-description https://gateway-arbitrum.network.thegraph.com/api/${THEGRAPH_API_KEY}/subgraphs/id/6NUtT5mGjZ1tSshKLf5Q3uEEJtjBZJo1TpL5MXsUBqrT uniswap_v2_graphql_schema.json
 	sgqlc-codegen schema uniswap_v2_graphql_schema.json lpbook/lps/uniswap_v2/artifacts/graphql_schema.py
 	rm uniswap_v2_graphql_schema.json
 
 update-balancer-v2-graphql-schema:
-	python -m sgqlc.introspection --exclude-deprecated --exclude-description https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-v2 balancer_v2_graphql_schema.json
+	python -m sgqlc.introspection --exclude-deprecated --exclude-description https://gateway-arbitrum.network.thegraph.com/api/${THEGRAPH_API_KEY}/subgraphs/id/C4ayEZP2yTXRAB8vSaTrgN4m9anTe9Mdm2ViyiAuV9TV balancer_v2_graphql_schema.json
 	sgqlc-codegen schema balancer_v2_graphql_schema.json lpbook/lps/balancer_v2/artifacts/graphql_schema.py
 	rm balancer_v2_graphql_schema.json

@@ -140,6 +140,7 @@ class UniV3GraphQLClient(GraphQLClient):
         meta.block()
         meta.block().number()
         meta.block().hash()
+        meta.block().timestamp()
         data = await self.get_data(op, '_meta')
         query = op + data
         return query._meta.block if hasattr(query, '_meta') else None

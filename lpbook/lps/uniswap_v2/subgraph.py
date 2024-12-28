@@ -26,6 +26,7 @@ class UniV2GraphQLClient(GraphQLClient):
         self.set_pair_id_and_tokens_fields(pair)
         pair.reserve0()
         pair.reserve1()
+        pair.total_supply()
 
     async def get_pairs_page(self, pairs_filter, field_setter, last_id, first, **kwargs):
         op = Operation(schema.Query)
@@ -59,6 +60,7 @@ class UniV2GraphQLClient(GraphQLClient):
         meta.block()
         meta.block().number()
         meta.block().hash()
+        meta.block().timestamp()
         data = await self.get_data(op, '_meta')
         query = op + data
         return query._meta.block if hasattr(query, '_meta') else None

@@ -1,5 +1,6 @@
 
 import asyncio
+from itertools import permutations
 import logging
 from copy import deepcopy
 from dataclasses import dataclass
@@ -7,25 +8,32 @@ from decimal import MAX_EMAX, MAX_PREC, MIN_EMIN, Context
 from decimal import Decimal as D
 from decimal import setcontext
 from functools import cache
+from math import ceil, sqrt
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 import aiohttp
 from lpbook import (LPAsyncProxy, LPDriver, LPFromInitialStatePlusChangesProxy,
-                    LPSyncProxy, LPSyncProxyFromAsyncProxy)
+                    LPSyncProxy, LPSyncProxyFromAsyncProxy, MultiLPFromInitialStatePlusChangesProxy)
 from lpbook.error import TemporaryError
 from lpbook.lps.uniswap_v2.subgraph import UniV2GraphQLClient
 from lpbook.thegraph.subgraph import GraphQLClientError
-from lpbook.util import LP, Token
-from lpbook.web3 import BlockId, create_token_from_web3
+from lpbook.util import LP, ExchangeRate, Token, Trade
+from lpbook.web3 import BlockId, create_token_from_web3, get_erc20_contract
 from lpbook.web3.block_stream import BlockStream
 from lpbook.web3.event_stream import EventStream
 from web3.exceptions import BlockNotFound, ContractLogicError
+from dotenv import load_dotenv
+import os
 
 setcontext(Context(prec=MAX_PREC, Emax=MAX_EMAX, Emin=MIN_EMIN))
 
 logger = logging.getLogger(__name__)
 
+load_dotenv()
+THEGRAPH_API_KEY = os.getenv("THEGRAPH_API_KEY")
+
+ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
 @dataclass
 class UniV2Like(LP):
@@ -33,6 +41,12 @@ class UniV2Like(LP):
     address: str
     _tokens: List[Token]
     balances: List[int]
+    lp_token_balance: int
+
+    @classmethod
+    @property
+    def kind(self) -> str:
+        return 'ConstProd'
 
     @property
     def tokens(self) -> List[Token]:
@@ -46,21 +60,39 @@ class UniV2Like(LP):
     def state(self) -> Dict:
         return {
             'balances': self.balances,
+            'lp_token_balance': self.lp_token_balance
         }
 
-    @classmethod
     @property
     def gas_stats(self) -> Dict:
         # See https://dune.com/queries/1043253 .
         return {
             'nr_obs': 39409,
-            'mean': 112091.89634347484,
-            'stddev': 42717.69677854,
+            'mean': 100000,
+            'stddev': 0,
             'min': 30132,
             'max': 695127,
             'median': 97511
         }
 
+    @property
+    def may_have_slippage(self) -> bool:
+        return True
+
+    @property
+    def spot_xrates(self) -> dict[Tuple[Token, Token], ExchangeRate]:
+        r = {}
+        for i, j in permutations(range(len(self.tokens)), 2):
+            t_b = self.tokens[i]
+            t_s = self.tokens[j]
+            r_b = self.balances[i] 
+            r_s =self.balances[j]
+            r[t_b, t_s] = ExchangeRate(
+                buy_token=t_b,
+                sell_token=t_s,
+                p_buy_over_p_sell=r_s / r_b
+            )
+        return r
 
 class UniV2(UniV2Like):
     """Uniswap V2 LP."""
@@ -109,6 +141,22 @@ class PancakeswapV2(UniV2Like):
 UniV2Like.as_pancakeswapv2 = lambda self: PancakeswapV2(**self.__dict__)
 
 
+class SwaprV2(UniV2Like):
+    """SwaprV2 LP."""
+    @classmethod
+    @property
+    def protocol_name(self) -> str:
+        return 'Swapr'
+
+    @classmethod
+    @property
+    def protocol_version(self) -> str:
+        return '2'
+
+
+UniV2Like.as_swaprv2 = lambda self: SwaprV2(**self.__dict__)
+
+
 class UniV2LikeWeb3AsyncProxy(LPAsyncProxy):
     """"Proxies the state of the uniswap v2 LP through web3."""
 
@@ -150,10 +198,15 @@ class UniV2LikeWeb3AsyncProxy(LPAsyncProxy):
         balance0, balance1, _ = self.contracts[lp_id].functions.getReserves().call(
             block_identifier=block_identifier
         )
+        total_supply = self.contracts[lp_id].functions.totalSupply().call(
+            block_identifier=block_identifier
+        )
+
         return UniV2Like(
             address=lp_id,
             _tokens=[token0, token1],
             balances=[balance0, balance1],
+            lp_token_balance=total_supply
         )
 
     async def __call__(
@@ -207,6 +260,9 @@ class PancakeswapV2Web3AsyncProxy(UniV2LikeWeb3AsyncProxy):
     def create_from_blockchain(self, lp_id, block: BlockId) -> UniV2:
         return super().create_from_blockchain(lp_id, block).as_pancakeswapv2()
 
+class SwaprV2Web3AsyncProxy(UniV2LikeWeb3AsyncProxy):
+    def create_from_blockchain(self, lp_id, block: BlockId) -> UniV2:
+        return super().create_from_blockchain(lp_id, block).swaprv2()
 
 class UniV2LikeTheGraphAsyncProxy(LPAsyncProxy):
     """"Proxies the state of the uniswap v2 LP through TheGraph."""
@@ -215,7 +271,7 @@ class UniV2LikeTheGraphAsyncProxy(LPAsyncProxy):
         self.lp_ids = lp_ids
         self.client = uniswap_v2_gql_client
 
-    def create_from_thegraph(self, thegraph_data) -> UniV2Like:
+    def create_from_thegraph(self, thegraph_data, block: BlockId) -> UniV2Like:
         tokens = [
             Token(
                 address=thegraph_data.token0.id,
@@ -232,16 +288,18 @@ class UniV2LikeTheGraphAsyncProxy(LPAsyncProxy):
             int(D(thegraph_data.reserve0) * 10**int(tokens[0].decimals)),
             int(D(thegraph_data.reserve1) * 10**int(tokens[1].decimals))
         ]
+        lp_token_balance = int(D(thegraph_data.total_supply) * 10**18)
 
         return UniV2Like(
             address=thegraph_data.id,
             _tokens=tokens,
             balances=balances,
+            lp_token_balance=lp_token_balance
         )
 
     async def latest_block(self) -> BlockId:
         block = await self.client.get_last_block()
-        return BlockId(number=block.number, hash=str(block.hash))
+        return BlockId(number=block.number, hash=str(block.hash), timestamp=block.timestamp)
 
     async def __call__(
         self,
@@ -284,7 +342,7 @@ class UniV2LikeTheGraphAsyncProxy(LPAsyncProxy):
                 await asyncio.sleep(2)  # wait a bit to allow thegraph to catchup
 
         state = {
-            thegraph_lp_data.id: self.create_from_thegraph(thegraph_lp_data)
+            thegraph_lp_data.id: self.create_from_thegraph(thegraph_lp_data, block=block)
             for thegraph_lp_data in thegraph_data
         }
 
@@ -293,18 +351,33 @@ class UniV2LikeTheGraphAsyncProxy(LPAsyncProxy):
 
 
 class UniV2TheGraphAsyncProxy(UniV2LikeTheGraphAsyncProxy):
-    def create_from_thegraph(self, thegraph_data) -> UniV2:
-        return super().create_from_thegraph(thegraph_data).as_univ2()
+    def create_from_thegraph(self, thegraph_data, block: BlockId) -> UniV2:
+        univ2_like = super().create_from_thegraph(thegraph_data, block=block)
+        if univ2_like is None:
+            return univ2_like
+        return univ2_like.as_univ2()
 
 
 class SushiTheGraphAsyncProxy(UniV2LikeTheGraphAsyncProxy):
-    def create_from_thegraph(self, thegraph_data) -> Sushi:
-        return super().create_from_thegraph(thegraph_data).as_sushi()
+    def create_from_thegraph(self, thegraph_data, block: BlockId) -> Sushi:
+        univ2_like = super().create_from_thegraph(thegraph_data, block=block)
+        if univ2_like is None:
+            return univ2_like
+        return univ2_like.as_sushi()
 
 class PancakeswapV2TheGraphAsyncProxy(UniV2LikeTheGraphAsyncProxy):
-    def create_from_thegraph(self, thegraph_data) -> PancakeswapV2:
-        return super().create_from_thegraph(thegraph_data).as_pancakeswapv2()
+    def create_from_thegraph(self, thegraph_data, block: BlockId) -> PancakeswapV2:
+        univ2_like = super().create_from_thegraph(thegraph_data, block=block)
+        if univ2_like is None:
+            return univ2_like
+        return univ2_like.as_pancakeswapv2()
 
+class SwaprV2TheGraphAsyncProxy(UniV2LikeTheGraphAsyncProxy):
+    def create_from_thegraph(self, thegraph_data, block: BlockId) -> SwaprV2:
+        univ2_like = super().create_from_thegraph(thegraph_data, block=block)
+        if univ2_like is None:
+            return univ2_like
+        return univ2_like.as_swaprv2()
 
 class UniV2LikeTheGraphAndWeb3Proxy(LPFromInitialStatePlusChangesProxy):
     """Queries TheGraph for an initial state, and web3 for state updates."""
@@ -317,7 +390,68 @@ class UniV2LikeTheGraphAndWeb3Proxy(LPFromInitialStatePlusChangesProxy):
 
         super().__init__(
             lp_ids,
-            [UniV2.events.Swap, UniV2.events.Burn, UniV2.events.Mint],
+            [UniV2.events.Sync],
+            async_proxy,
+            event_stream,
+            web3_client
+        )
+
+    def update_state(self, state: Dict[str, LP], d: Any) -> None:
+        """Assembles state from previous state and updates."""
+        lp_id = d.address.lower()
+        if lp_id not in state.keys():
+            return
+        lp = state[lp_id]
+
+        assert d.event == 'Sync'
+        lp.balances[0] = d.args.reserve0
+        lp.balances[1] = d.args.reserve1
+
+
+    def get_trades(self, prev_state: Dict[str, LP], changes: List[Any]) -> list[Trade]:
+        """Assembles list of trades from updates."""
+        trades = []
+
+        cur_state = deepcopy(prev_state)
+
+        for d in changes:
+            lp_id = d.address.lower()
+            if lp_id not in cur_state.keys():
+                continue
+            lp_cur_state = cur_state[lp_id]
+
+            #if d.event != 'Swap':
+            #    continue
+            assert d.event == 'Sync'
+            buy_amount1 = d.args.reserve0 - lp_cur_state.balances[0]
+            buy_amount2 = d.args.reserve1 - lp_cur_state.balances[1]
+            # this is not a mistake! Since we need to diff to the reserves to obtain the deltas, 
+            # we need to update the reserves since several d in changes can refer to the same lp_id 
+            lp_cur_state.balances[0] = d.args.reserve0  
+            lp_cur_state.balances[1] = d.args.reserve1
+
+            trade = Trade(
+                lp_id=lp_id,
+                block_number=d.blockNumber,
+                token1=lp_cur_state.tokens[0],
+                token2=lp_cur_state.tokens[1],
+                buy_amount1=buy_amount1, # d.args.amount0In-d.args.amount0Out,
+                buy_amount2=buy_amount2, # d.args.amount1In-d.args.amount1Out,
+            )
+            trades.append(trade)
+
+        return trades
+
+
+class UniV2LikeLPTheGraphAndWeb3Proxy(LPFromInitialStatePlusChangesProxy):
+    """Queries Web3 for an initial state and for state updates."""
+
+    def __init__(self, lp_ids, async_proxy, event_stream, web3_client):
+        # read abi from same directory as this file.
+        ERC20 = get_erc20_contract(None, web3_client)
+        super().__init__(
+            lp_ids,
+            [ERC20.events.Transfer],
             async_proxy,
             event_stream,
             web3_client
@@ -328,30 +462,26 @@ class UniV2LikeTheGraphAndWeb3Proxy(LPFromInitialStatePlusChangesProxy):
 
         cur_state = deepcopy(prev_state)
 
+        print("HERE", changes)
         for d in changes:
-            lp_id = d.address.lower()
-            assert lp_id in cur_state.keys()
-            lp_cur_state = cur_state[lp_id]
+            assert d.event == 'Transfer'
 
-            if d.event == 'Swap':
-                lp_cur_state.balances[0] += d.args.amount0In
-                lp_cur_state.balances[0] -= d.args.amount0Out
-                lp_cur_state.balances[1] += d.args.amount1In
-                lp_cur_state.balances[1] -= d.args.amount1Out
+            from_ = d.args["from"].lower()
+            to = d.args.to.lower()
+            value = int(d.args.value)
 
-            elif d.event == 'Mint':
-                lp_cur_state.balances[0] += d.args.amount0
-                lp_cur_state.balances[1] += d.args.amount1
+            print("HERE", d)
 
-            elif d.event == 'Burn':
-                lp_cur_state.balances[0] -= d.args.amount0
-                lp_cur_state.balances[1] -= d.args.amount1
-
-            else:
-                assert False
-
+            # mint
+            if from_ == ZERO_ADDRESS and to in cur_state.keys():
+                lp_id = to
+                cur_state[lp_id].lp_token_balance += value
+            # burn
+            elif from_ in cur_state.keys() and to == ZERO_ADDRESS:
+                lp_id = from_
+                cur_state[lp_id].lp_token_balance -= value
+            
         return cur_state
-
 
 class UniV2LikeDriver(LPDriver):
     def __init__(
@@ -367,7 +497,7 @@ class UniV2LikeDriver(LPDriver):
         self.web3_client = web3_client
         self.graphql_client = UniV2GraphQLClient(self.thegraph_url, session)
 
-    def create_lp_sync_proxy(
+    async def create_lp_sync_proxy(
         self,
         lp_ids: List[str],
         data_source: LPDriver.LPSyncProxyDataSource =
@@ -380,12 +510,21 @@ class UniV2LikeDriver(LPDriver):
             async_proxy = self.UniV2LikeTheGraphAsyncProxy(
                 lp_ids, self.graphql_client
             )
-            return UniV2LikeTheGraphAndWeb3Proxy(
+            sync_proxy_1 = UniV2LikeTheGraphAndWeb3Proxy(
                 lp_ids,
                 async_proxy,
                 self.event_stream,
                 self.web3_client
             )
+            #sync_proxy_2 = UniV2LikeLPTheGraphAndWeb3Proxy(
+            #    lp_ids,
+            #    async_proxy,
+            #    self.event_stream,
+            #    self.web3_client
+            #)
+            #sync_proxy = MultiLPFromInitialStatePlusChangesProxy([sync_proxy_1, sync_proxy_2])
+            sync_proxy = sync_proxy_1
+            return sync_proxy
         elif data_source == LPDriver.LPSyncProxyDataSource.Web3:
             async_proxy = self.UniV2LikeWeb3AsyncProxy(lp_ids, self.web3_client)
         else:
@@ -427,7 +566,7 @@ class UniV2LikeDriver(LPDriver):
                 {
                     'token0_in': token_ids,
                     'token1_in': token_ids,
-                    'volume_usd_gt': 1000
+                    'reserve_usd_gt': 1000
                 },
                 field_setter=self.graphql_client.set_pair_id_and_tokens_fields
             )
@@ -437,10 +576,12 @@ class UniV2LikeDriver(LPDriver):
 
 class UniV2Driver(UniV2LikeDriver):
     def __init__(self, *args, **kwargs):
-        # The official subgraph seems to be stuck (and incorrect!):
+        # The official hosted subgraph seems to be stuck (and incorrect!):
         #self.thegraph_url = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2'
         # This is an alternative:
-        self.thegraph_url = 'https://api.thegraph.com/subgraphs/name/ianlapham/uniswap-v2-dev'
+        #self.thegraph_url = 'https://api.thegraph.com/subgraphs/name/ianlapham/uniswap-v2-dev'
+        # This is the official GRT network instance
+        self.thegraph_url = f'https://gateway-arbitrum.network.thegraph.com/api/{THEGRAPH_API_KEY}/subgraphs/id/A3Np3RQbaBA6oKJgiwDJeo5T3zrYfGHPWFYayMwtNDum'
         self.UniV2Like = UniV2
         self.UniV2LikeWeb3AsyncProxy = UniV2Web3AsyncProxy
         self.UniV2LikeTheGraphAsyncProxy = UniV2TheGraphAsyncProxy
@@ -449,7 +590,8 @@ class UniV2Driver(UniV2LikeDriver):
 
 class SushiDriver(UniV2LikeDriver):
     def __init__(self, *args, **kwargs):
-        self.thegraph_url = 'https://api.thegraph.com/subgraphs/name/sushiswap/exchange'
+        #self.thegraph_url = 'https://api.thegraph.com/subgraphs/name/sushiswap/exchange'
+        self.thegraph_url = f'https://gateway-arbitrum.network.thegraph.com/api/{THEGRAPH_API_KEY}/subgraphs/id/6NUtT5mGjZ1tSshKLf5Q3uEEJtjBZJo1TpL5MXsUBqrT'
         self.UniV2Like = Sushi
         self.UniV2LikeWeb3AsyncProxy = SushiWeb3AsyncProxy
         self.UniV2LikeTheGraphAsyncProxy = SushiTheGraphAsyncProxy
@@ -458,10 +600,19 @@ class SushiDriver(UniV2LikeDriver):
 
 class PancakeswapV2Driver(UniV2LikeDriver):
     def __init__(self, *args, **kwargs):
-        self.thegraph_url = 'https://api.thegraph.com/subgraphs/name/pancakeswap/exhange-eth'
+        #self.thegraph_url = 'https://api.thegraph.com/subgraphs/name/pancakeswap/exhange-eth'
+        self.thegraph_url = f'https://gateway-arbitrum.network.thegraph.com/api/{THEGRAPH_API_KEY}/subgraphs/id/9opY17WnEPD4REcC43yHycQthSeUMQE26wyoeMjZTLEx'
         self.UniV2Like = PancakeswapV2
         self.UniV2LikeWeb3AsyncProxy = PancakeswapV2Web3AsyncProxy
         self.UniV2LikeTheGraphAsyncProxy = PancakeswapV2TheGraphAsyncProxy
         super().__init__(*args, **kwargs)
 
+class SwaprV2Driver(UniV2LikeDriver):
+    def __init__(self, *args, **kwargs):
+        #self.thegraph_url = 'https://api.thegraph.com/subgraphs/name/pancakeswap/exhange-eth'
+        self.thegraph_url = f'https://gateway-arbitrum.network.thegraph.com/api/{THEGRAPH_API_KEY}/subgraphs/id/CfBvQzwWyg41ceiR3XM64KzJiAKVPML4iztwEaHYdCFw'
+        self.UniV2Like = SwaprV2
+        self.UniV2LikeWeb3AsyncProxy = SwaprV2Web3AsyncProxy
+        self.UniV2LikeTheGraphAsyncProxy = SwaprV2TheGraphAsyncProxy
+        super().__init__(*args, **kwargs)
 

@@ -3,10 +3,13 @@ import asyncio
 from contextlib import contextmanager
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import List, Dict
+from fractions import Fraction
+from typing import List, Dict, Optional, Tuple
 
 import functools
 import time
+
+from lpbook.web3 import BlockId
 
 
 # possible values for clocks:
@@ -108,7 +111,7 @@ def stringify_numbers(obj, except_keys):
         return data
     elif isinstance(obj, str):
         return obj
-    elif isinstance(obj, float) or isinstance(obj, int) or isinstance(obj, Decimal):
+    elif isinstance(obj, float) or isinstance(obj, int) or isinstance(obj, Decimal) or isinstance(obj, Fraction):
         return str(obj)
     elif isinstance(obj, list):
         return [stringify_numbers(element, except_keys) for element in obj]
@@ -117,11 +120,21 @@ def stringify_numbers(obj, except_keys):
     else:
         raise NotImplementedError(f"Can't stringify {obj}.")
 
-
+@dataclass
+class ExchangeRate:
+    buy_token: Token
+    sell_token: Token
+    p_buy_over_p_sell: float
+        
+@dataclass
 class LP:
     @abstractproperty
     def uid(self) -> str:
         """Returns a unique identifier for the LP (like its address)."""
+
+    @abstractproperty
+    def kind(self) -> str:
+        """Returns the kind of the LP (ConstProd, Concentrated, etc.)."""
 
     @abstractproperty
     def protocol_name(self) -> str:
@@ -135,7 +148,7 @@ class LP:
     def protocol(self) -> str:
         """Returns the name and version of the lp protocol."""
         return f'{self.protocol_name}_{self.protocol_version}'
-
+    
     @abstractproperty
     def tokens(self) -> List[Token]:
         """Returns a list of tokens pooled by this LP."""
@@ -148,16 +161,61 @@ class LP:
     def gas_stats(self) -> Dict:
         """Returns gas stats for swapping using this pool."""
 
+    @property
+    def execution_info(self) -> Dict:
+        """Returns extra info for executing LPBook onchain."""
+        return {}
+
+    @abstractproperty
+    def internalizable(self) -> bool:
+        """Returns if this pool is allowed to be internalized."""
+
+    @property
+    def may_have_slippage(self) -> bool:
+        return False
+
+    @property
+    def spot_xrates(self) -> dict[Tuple[Token, Token], ExchangeRate]:
+        return {}
+    
+    #def estimate_slippage(self, lp_monitors, block_number, risk):
+    #    self.slippage = lp_monitors.slippage_estimators.estimates(self.uid, block_number, tokens=self.tokens, risk=risk)
+
+    #def estimate_signal(self, lp_monitors, block_number):
+    #    self.signal = lp_monitors.slippage_estimators.estimate_signals(self.uid, block_number, tokens=self.tokens)
+
     def marshall(self) -> Dict:
         """Encodes itself to a dict with a common API."""
         api = {
-            'address': self.uid,
-            'protocol': self.protocol,
+            'id': self.uid,
+            'kind': self.kind,
             'tokens': self.tokens,
             'state': self.state,
             'gas_stats': self.gas_stats,
+            'chain_info': {
+                'protocol': self.protocol,
+                'execution': self.execution_info
+            }
         }
+
+        if hasattr(self, "slippage") and self.slippage is not None: 
+            slippage = {t.address: self.slippage[t] for t,s in self.slippage.items() if s is not None and s != 0}
+            if len(slippage) > 0:
+                api['slippage'] = slippage
+        if hasattr(self, "signal") and self.signal is not None: 
+            signal = {t.address: self.signal[t] for t,s in self.signal.items() if s is not None}
+            if len(signal) > 0:
+                api['signal'] = signal
         try:
             return stringify_numbers(to_dict(api), {'decimals'})
         except NotImplementedError:
             raise RuntimeError(f"Can't marshall LP {api}")
+
+@dataclass
+class Trade:
+    lp_id: str
+    block_number: int
+    token1: Token
+    token2: Token
+    buy_amount1: int
+    buy_amount2: int

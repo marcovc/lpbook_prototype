@@ -8,6 +8,11 @@ graphql_schema = sgqlc.types.Schema()
 ########################################################################
 # Scalars and Enumerations
 ########################################################################
+class Aggregation_interval(sgqlc.types.Enum):
+    __schema__ = graphql_schema
+    __choices__ = ('day', 'hour')
+
+
 class AmpUpdate_orderBy(sgqlc.types.Enum):
     __schema__ = graphql_schema
     __choices__ = ('endAmp', 'endTimestamp', 'id', 'poolId', 'poolId__address', 'poolId__alpha', 'poolId__amp', 'poolId__baseToken', 'poolId__beta', 'poolId__c', 'poolId__createTime', 'poolId__dSq', 'poolId__delta', 'poolId__epsilon', 'poolId__expiryTime', 'poolId__factory', 'poolId__holdersCount', 'poolId__id', 'poolId__isInRecoveryMode', 'poolId__isPaused', 'poolId__joinExitEnabled', 'poolId__lambda', 'poolId__lastJoinExitAmp', 'poolId__lastPostJoinExitInvariant', 'poolId__lowerTarget', 'poolId__mainIndex', 'poolId__managementAumFee', 'poolId__managementFee', 'poolId__mustAllowlistLPs', 'poolId__name', 'poolId__oracleEnabled', 'poolId__owner', 'poolId__poolType', 'poolId__poolTypeVersion', 'poolId__principalToken', 'poolId__protocolAumFeeCache', 'poolId__protocolId', 'poolId__protocolSwapFeeCache', 'poolId__protocolYieldFeeCache', 'poolId__root3Alpha', 'poolId__s', 'poolId__sqrtAlpha', 'poolId__sqrtBeta', 'poolId__strategyType', 'poolId__swapEnabled', 'poolId__swapEnabledCurationSignal', 'poolId__swapEnabledInternal', 'poolId__swapFee', 'poolId__swapsCount', 'poolId__symbol', 'poolId__tauAlphaX', 'poolId__tauAlphaY', 'poolId__tauBetaX', 'poolId__tauBetaY', 'poolId__totalAumFeeCollectedInBPT', 'poolId__totalLiquidity', 'poolId__totalLiquiditySansBPT', 'poolId__totalProtocolFee', 'poolId__totalProtocolFeePaidInBPT', 'poolId__totalShares', 'poolId__totalSwapFee', 'poolId__totalSwapVolume', 'poolId__totalWeight', 'poolId__tx', 'poolId__u', 'poolId__unitSeconds', 'poolId__upperTarget', 'poolId__v', 'poolId__w', 'poolId__wrappedIndex', 'poolId__z', 'scheduledTimestamp', 'startAmp', 'startTimestamp')
@@ -44,7 +49,7 @@ class CircuitBreaker_orderBy(sgqlc.types.Enum):
 
 class FXOracle_orderBy(sgqlc.types.Enum):
     __schema__ = graphql_schema
-    __choices__ = ('id', 'tokens')
+    __choices__ = ('decimals', 'divisor', 'id', 'tokens')
 
 
 Float = sgqlc.types.Float
@@ -142,6 +147,10 @@ class SwapFeeUpdate_orderBy(sgqlc.types.Enum):
 class Swap_orderBy(sgqlc.types.Enum):
     __schema__ = graphql_schema
     __choices__ = ('block', 'caller', 'id', 'poolId', 'poolId__address', 'poolId__alpha', 'poolId__amp', 'poolId__baseToken', 'poolId__beta', 'poolId__c', 'poolId__createTime', 'poolId__dSq', 'poolId__delta', 'poolId__epsilon', 'poolId__expiryTime', 'poolId__factory', 'poolId__holdersCount', 'poolId__id', 'poolId__isInRecoveryMode', 'poolId__isPaused', 'poolId__joinExitEnabled', 'poolId__lambda', 'poolId__lastJoinExitAmp', 'poolId__lastPostJoinExitInvariant', 'poolId__lowerTarget', 'poolId__mainIndex', 'poolId__managementAumFee', 'poolId__managementFee', 'poolId__mustAllowlistLPs', 'poolId__name', 'poolId__oracleEnabled', 'poolId__owner', 'poolId__poolType', 'poolId__poolTypeVersion', 'poolId__principalToken', 'poolId__protocolAumFeeCache', 'poolId__protocolId', 'poolId__protocolSwapFeeCache', 'poolId__protocolYieldFeeCache', 'poolId__root3Alpha', 'poolId__s', 'poolId__sqrtAlpha', 'poolId__sqrtBeta', 'poolId__strategyType', 'poolId__swapEnabled', 'poolId__swapEnabledCurationSignal', 'poolId__swapEnabledInternal', 'poolId__swapFee', 'poolId__swapsCount', 'poolId__symbol', 'poolId__tauAlphaX', 'poolId__tauAlphaY', 'poolId__tauBetaX', 'poolId__tauBetaY', 'poolId__totalAumFeeCollectedInBPT', 'poolId__totalLiquidity', 'poolId__totalLiquiditySansBPT', 'poolId__totalProtocolFee', 'poolId__totalProtocolFeePaidInBPT', 'poolId__totalShares', 'poolId__totalSwapFee', 'poolId__totalSwapVolume', 'poolId__totalWeight', 'poolId__tx', 'poolId__u', 'poolId__unitSeconds', 'poolId__upperTarget', 'poolId__v', 'poolId__w', 'poolId__wrappedIndex', 'poolId__z', 'timestamp', 'tokenAmountIn', 'tokenAmountOut', 'tokenIn', 'tokenInSym', 'tokenOut', 'tokenOutSym', 'tx', 'userAddress', 'userAddress__id', 'valueUSD')
+
+
+class Timestamp(sgqlc.types.Scalar):
+    __schema__ = graphql_schema
 
 
 class TokenPrice_orderBy(sgqlc.types.Enum):
@@ -532,7 +541,7 @@ class CircuitBreaker_filter(sgqlc.types.Input):
 
 class FXOracle_filter(sgqlc.types.Input):
     __schema__ = graphql_schema
-    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'tokens', 'tokens_not', 'tokens_contains', 'tokens_contains_nocase', 'tokens_not_contains', 'tokens_not_contains_nocase', '_change_block', 'and_', 'or_')
+    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'tokens', 'tokens_not', 'tokens_contains', 'tokens_contains_nocase', 'tokens_not_contains', 'tokens_not_contains_nocase', 'divisor', 'divisor_not', 'divisor_gt', 'divisor_lt', 'divisor_gte', 'divisor_lte', 'divisor_in', 'divisor_not_in', 'divisor_contains', 'divisor_contains_nocase', 'divisor_not_contains', 'divisor_not_contains_nocase', 'divisor_starts_with', 'divisor_starts_with_nocase', 'divisor_not_starts_with', 'divisor_not_starts_with_nocase', 'divisor_ends_with', 'divisor_ends_with_nocase', 'divisor_not_ends_with', 'divisor_not_ends_with_nocase', 'decimals', 'decimals_not', 'decimals_gt', 'decimals_lt', 'decimals_gte', 'decimals_lte', 'decimals_in', 'decimals_not_in', '_change_block', 'and_', 'or_')
     id = sgqlc.types.Field(ID, graphql_name='id')
     id_not = sgqlc.types.Field(ID, graphql_name='id_not')
     id_gt = sgqlc.types.Field(ID, graphql_name='id_gt')
@@ -547,6 +556,34 @@ class FXOracle_filter(sgqlc.types.Input):
     tokens_contains_nocase = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Bytes)), graphql_name='tokens_contains_nocase')
     tokens_not_contains = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Bytes)), graphql_name='tokens_not_contains')
     tokens_not_contains_nocase = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Bytes)), graphql_name='tokens_not_contains_nocase')
+    divisor = sgqlc.types.Field(String, graphql_name='divisor')
+    divisor_not = sgqlc.types.Field(String, graphql_name='divisor_not')
+    divisor_gt = sgqlc.types.Field(String, graphql_name='divisor_gt')
+    divisor_lt = sgqlc.types.Field(String, graphql_name='divisor_lt')
+    divisor_gte = sgqlc.types.Field(String, graphql_name='divisor_gte')
+    divisor_lte = sgqlc.types.Field(String, graphql_name='divisor_lte')
+    divisor_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='divisor_in')
+    divisor_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='divisor_not_in')
+    divisor_contains = sgqlc.types.Field(String, graphql_name='divisor_contains')
+    divisor_contains_nocase = sgqlc.types.Field(String, graphql_name='divisor_contains_nocase')
+    divisor_not_contains = sgqlc.types.Field(String, graphql_name='divisor_not_contains')
+    divisor_not_contains_nocase = sgqlc.types.Field(String, graphql_name='divisor_not_contains_nocase')
+    divisor_starts_with = sgqlc.types.Field(String, graphql_name='divisor_starts_with')
+    divisor_starts_with_nocase = sgqlc.types.Field(String, graphql_name='divisor_starts_with_nocase')
+    divisor_not_starts_with = sgqlc.types.Field(String, graphql_name='divisor_not_starts_with')
+    divisor_not_starts_with_nocase = sgqlc.types.Field(String, graphql_name='divisor_not_starts_with_nocase')
+    divisor_ends_with = sgqlc.types.Field(String, graphql_name='divisor_ends_with')
+    divisor_ends_with_nocase = sgqlc.types.Field(String, graphql_name='divisor_ends_with_nocase')
+    divisor_not_ends_with = sgqlc.types.Field(String, graphql_name='divisor_not_ends_with')
+    divisor_not_ends_with_nocase = sgqlc.types.Field(String, graphql_name='divisor_not_ends_with_nocase')
+    decimals = sgqlc.types.Field(Int, graphql_name='decimals')
+    decimals_not = sgqlc.types.Field(Int, graphql_name='decimals_not')
+    decimals_gt = sgqlc.types.Field(Int, graphql_name='decimals_gt')
+    decimals_lt = sgqlc.types.Field(Int, graphql_name='decimals_lt')
+    decimals_gte = sgqlc.types.Field(Int, graphql_name='decimals_gte')
+    decimals_lte = sgqlc.types.Field(Int, graphql_name='decimals_lte')
+    decimals_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='decimals_in')
+    decimals_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='decimals_not_in')
     _change_block = sgqlc.types.Field(BlockChangedFilter, graphql_name='_change_block')
     and_ = sgqlc.types.Field(sgqlc.types.list_of('FXOracle_filter'), graphql_name='and')
     or_ = sgqlc.types.Field(sgqlc.types.list_of('FXOracle_filter'), graphql_name='or')
@@ -3094,9 +3131,11 @@ class CircuitBreaker(sgqlc.types.Type):
 
 class FXOracle(sgqlc.types.Type):
     __schema__ = graphql_schema
-    __field_names__ = ('id', 'tokens')
+    __field_names__ = ('id', 'tokens', 'divisor', 'decimals')
     id = sgqlc.types.Field(sgqlc.types.non_null(ID), graphql_name='id')
     tokens = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(Bytes))), graphql_name='tokens')
+    divisor = sgqlc.types.Field(String, graphql_name='divisor')
+    decimals = sgqlc.types.Field(Int, graphql_name='decimals')
 
 
 class GradualWeightUpdate(sgqlc.types.Type):
@@ -4389,10 +4428,11 @@ class UserInternalBalance(sgqlc.types.Type):
 
 class _Block_(sgqlc.types.Type):
     __schema__ = graphql_schema
-    __field_names__ = ('hash', 'number', 'timestamp')
+    __field_names__ = ('hash', 'number', 'timestamp', 'parent_hash')
     hash = sgqlc.types.Field(Bytes, graphql_name='hash')
     number = sgqlc.types.Field(sgqlc.types.non_null(Int), graphql_name='number')
     timestamp = sgqlc.types.Field(Int, graphql_name='timestamp')
+    parent_hash = sgqlc.types.Field(Bytes, graphql_name='parentHash')
 
 
 class _Meta_(sgqlc.types.Type):

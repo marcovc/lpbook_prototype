@@ -15,3 +15,9 @@ class LPExecution(BaseModel):
     sell_amount: str
     sell_token_address: str
     approved_spender: str
+    auction_id: str
+    simulated_gas: Optional[str]
+    
+    @property
+    def short_name(self):
+        return f"{self.protocol}_{self.buy_token_address[:6]}-{self.sell_token_address[:6]}"

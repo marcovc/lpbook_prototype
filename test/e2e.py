@@ -6,7 +6,7 @@ import os
 import aiohttp
 from dotenv import load_dotenv
 from lpbook import LPDriver
-from lpbook.lps.curve import CurveDriver
+from lpbook.lps.curve_old import CurveDriver
 from lpbook.lps.uniswap_v3 import UniV3Driver
 from lpbook.lps.uniswap_v2 import UniV2Driver
 from lpbook.util import traced_context

@@ -1,3 +1,4 @@
+import asyncio
 from collections import namedtuple
 from dataclasses import dataclass
 import json
@@ -13,15 +14,20 @@ from .LPExecution import LPExecution
 import requests
 import web3
 from dotenv import load_dotenv  
+from mergedeep import merge
 
 logger = logging.getLogger(__name__)
 
 load_dotenv()
 
+QUASILABS_ADDRESS = os.getenv("QUASILABS_SUBMISSION_ADDRESS")
+
 TENDERLY_ACCESS_KEY = os.getenv('TENDERLY_ACCESS_KEY')
 
 UNISWAP_V3_CONTRACT_ADDRESS="0xe592427a0aece92de3edee1f18e0157c05861564"
 WETH_ADDRESS="0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+
+WALLET_WITH_SOME_ETH = QUASILABS_ADDRESS
 
 tenderly_headers = {
     'X-Access-Key': TENDERLY_ACCESS_KEY,
@@ -43,16 +49,6 @@ def pad_left(hex_string):
 def to_hex256_string(i):
     return f'{i:#066x}'
 
-# This works when both keys are addresses. 
-def get_map_address_key_slot(map_slot, key1, key2=None):
-    map_slot = f"{map_slot:064}"
-    key1 = pad_left(key1)
-    encoded_key1 =  web3.Web3.keccak(hexstr=key1 + map_slot).hex()
-    if key2 is None:
-        return encoded_key1
-    key2 = pad_left(key2)
-    encoded_key2 = web3.Web3.keccak(hexstr=key2 + encoded_key1[2:]).hex()
-    return encoded_key2
 
 UniV3Pool = namedtuple("UniV3Pool", ['id', 'fee_tier', 'tokens', 'tvl'])
 
@@ -123,60 +119,68 @@ class FailedBuyTransactionException(Exception):
 class NoStateDiffException(Exception):
     pass
 
+class NoAllowanceKeyException(Exception):
+    pass
+
+class NoBalanceKeyException(Exception):
+    pass
+
 class Simulator:
-    def __init__(self, web3_client, session: aiohttp.ClientSession, settlement_address: str):
+    def __init__(self, web3_client, session: aiohttp.ClientSession, settlement_address: str, state_directory: Path, discount_intrinsic_gas=False):
         self.web3_client = web3_client
         self.http_client = session
         self.settlement_address = settlement_address
+        self.state_directory = state_directory
         with open(Path(__file__).parent / 'artifacts' / 'uniswap_v3.abi', 'r') as f:
             uniswap_v3_contract_abi = f.read()
         self.uniswap_v3_contract = web3_client.eth.contract(
             address=web3_client.to_checksum_address(UNISWAP_V3_CONTRACT_ADDRESS),
             abi=uniswap_v3_contract_abi
         )
-        self.init_balance_keys()
+        with open(Path(__file__).parent / 'artifacts' / 'erc20.abi', 'r') as f:
+            self.erc20_abi = f.read()
+        self.init_contract_slots()
+        self.discount_intrinsic_gas = discount_intrinsic_gas
 
-    def get_balance_key(self, token_address) -> Optional[str]:
-        if token_address in self.balance_keys:
-            return self.balance_keys[token_address]
+    def get_map_address_key_slot(self, map_slot, key1, key2=None):
+        enc1 = self.web3_client.codec.encode(("address","uint256"),(key1, map_slot))
+        kenc1 = web3.Web3.keccak(enc1)
+        if key2 is None:
+            return kenc1.hex()
+        enc2 = self.web3_client.codec.encode(("address","bytes32"),(key2, kenc1))
+        kenc2 = web3.Web3.keccak(enc2)
+        return kenc2.hex()
+
+    def get_balance_slot(self, token_address) -> Optional[int]:
+        if token_address in self.balance_slots:
+            return self.balance_slots[token_address]
         elif token_address == WETH_ADDRESS:
-            return get_map_address_key_slot(3, self.settlement_address)
+            return 3
+        return None
+    
+    def get_balance_key(self, token_address) -> Optional[str]:
+        slot = self.get_balance_slot(token_address)
+        if slot is None:
+            return None
+        return self.get_map_address_key_slot(slot, self.settlement_address)
+
+    def get_allowance_slot(self, token_address) -> Optional[int]:
+        if token_address in self.allowance_slots:
+            return self.allowance_slots[token_address]
+        elif token_address == WETH_ADDRESS:
+            return 4
         return None
 
-    # sell_token_amount is a very large number by default, but not the max 2**256-1 (or near) because some tokens use last bits for encoding other things.
-    def create_univ3_buy_token_transaction(self, fee_tier, buy_token_address, buy_token_amount, sell_token_address, sell_token_amount = 1 << 250) -> Transaction:
-        sell_token_balance_key = self.get_balance_key(sell_token_address)
-        assert sell_token_balance_key is not None
-        calldata = self.uniswap_v3_contract.encodeABI(fn_name="exactOutputSingle", args=[(
-            self.web3_client.to_checksum_address(sell_token_address),
-            self.web3_client.to_checksum_address(buy_token_address),
-            fee_tier,
-            self.web3_client.to_checksum_address(self.settlement_address),
-            2**256-1,
-            buy_token_amount,
-            sell_token_amount,
-            0
-        )])
-        state = {
-            sell_token_address: {
-                sell_token_balance_key: to_hex256_string(sell_token_amount),
-                #get_map_address_key_slot(4, UNISWAP_V3_CONTRACT_ADDRESS, self.settlement_address): to_hex256_string(WETH_BALANCE),
-            }
-        }
-        return Transaction(from_=self.settlement_address, to=UNISWAP_V3_CONTRACT_ADDRESS, calldata=calldata, state=state)
+    def get_allowance_key(self, token_address, spender) -> Optional[str]:
+        slot = self.get_allowance_slot(token_address)
+        if slot is None:
+            return None
+        return self.get_map_address_key_slot(slot, self.settlement_address, spender)
 
     def create_lp_execution_transaction(self, lp_execution: LPExecution) -> Transaction:
-        #state = {
-        #    lp_execution.buy_token_address: {
-        #        "storage": {
-        #            get_map_address_key_slot(3, self.settlement_address): to_hex256_string(int(lp_execution.buy_amount)),
-        #            get_map_address_key_slot(4, lp_execution.target, self.settlement_address): to_hex256_string(int(lp_execution.buy_amount)),
-        #        }
-        #    }
-        #}
         return Transaction(from_=self.settlement_address, to=lp_execution.target, calldata=lp_execution.calldata)
 
-    def tenderly_payload_from_transaction(self, transaction: Transaction, max_gas=4707788, block_number=None) -> dict:
+    def tenderly_payload_from_transaction(self, transaction: Transaction, max_gas=4707788, block_number=None, generate_access_list=False) -> dict:
         json_data = {
             'network_id': '1',
             'from': transaction.from_,
@@ -187,8 +191,9 @@ class Simulator:
             'estimate_gas': True,
             'save_if_fails': True,
             'simulation_type': 'quick',
+            'generate_access_list': generate_access_list,
+            'save': True
         }
-
         if transaction.state is not None:
             json_data["state_objects"] =  {k: {"storage": v} for k, v in transaction.state.items()}
 
@@ -197,20 +202,22 @@ class Simulator:
 
         return json_data
 
-    async def simulate_transaction_via_tenderly(self, transaction: Transaction, max_gas=4707788, block_number=None) -> Simulation:
-        json_data = self.tenderly_payload_from_transaction(transaction, max_gas, block_number)
-
+    async def simulate_transaction_via_tenderly(self, transaction: Transaction, max_gas=4707788, block_number=None, generate_access_list=False) -> Simulation:
+        json_data = self.tenderly_payload_from_transaction(transaction, max_gas=max_gas, block_number=block_number, generate_access_list=generate_access_list)
         async with self.http_client.post(
             'https://api.tenderly.co/api/v1/account/marcovc/project/project/simulate',
             headers=tenderly_headers,
             json=json_data
         ) as r:
             r = await r.json()
-            with open("last_tenderly_simulation.json", "w+") as f:  # TMP
-                json.dump(r, f, indent=4)
+            #with open("last_tenderly_simulation.json", "w+") as f:  # TMP
+            #    json.dump(r, f, indent=4)
+            intrinsic_gas = 0
+            if self.discount_intrinsic_gas and r["simulation"]["status"]:
+                intrinsic_gas = r["transaction"]["transaction_info"]["intrinsic_gas"]
             return Simulation(
                 success=r["simulation"]["status"], 
-                gas_used=r["simulation"]["gas_used"], 
+                gas_used=r["simulation"]["gas_used"] - intrinsic_gas, 
                 tenderly_url=f'https://dashboard.tenderly.co/marcovc/project/simulator/{r["simulation"]["id"]}',
                 tenderly_simulation_data=r
             ) 
@@ -229,64 +236,134 @@ class Simulator:
             return Simulation(success=False, gas=None, error=e.message)
         return Simulation(success=True)
 
-    async def get_connected_token_with_balance_key(self, token_address):
-        pool = await get_univ3_pool_trading_tokens(token_address=token_address, token_addresses=self.balance_keys.keys(), http_client=self.http_client)
-        if pool is None:
-            return None, None, None
-        if pool.tokens[0] == token_address:
-            assert pool.tokens[1] in self.balance_keys
-            return pool.tokens[1], pool.fee_tier, pool.tvl[0]
-        else:
-            assert pool.tokens[1] == token_address
-            assert pool.tokens[0] in self.balance_keys
-            return pool.tokens[0], pool.fee_tier, pool.tvl[1]
 
+    def guess_slot(self, key, address1, address2=None):
+        for slot in range(1000):
+            if self.get_map_address_key_slot(slot, address1, address2) == key:
+                return slot
+        return None
+
+    async def get_one_log(self, event):
+        latest_block = await self.web3_client.eth.block_number;
+        max_blocks_to_lookback = 1000
+        page_size = 10
+        cur_block = latest_block
+        while cur_block >= latest_block - max_blocks_to_lookback:
+            logs = await event.get_logs(fromBlock=cur_block-page_size, toBlock=cur_block)
+            if len(logs)>0:
+                return logs[0]
+            cur_block -= page_size
+        return None
+
+    async def compute_balance_slot(self, token_address):
+        token_contract = self.web3_client.eth.contract(
+            address=self.web3_client.to_checksum_address(token_address),
+            abi=self.erc20_abi
+        )
+        # Any two addresses would do, but from_ needs to have enough eth for the simulation
+        from_ = WALLET_WITH_SOME_ETH
+        to = token_address
+        calldata = token_contract.encodeABI(fn_name="balanceOf", args=[
+            self.web3_client.to_checksum_address(self.settlement_address)
+        ])
+        simulation = await self.web3_client.eth.create_access_list({
+            'from': self.web3_client.to_checksum_address(from_), 
+            'to': self.web3_client.to_checksum_address(to), 
+            'data': calldata,
+            'gas': 50000,
+        })
+        for access in simulation.accessList:
+            if access.address.lower() != token_address:
+                continue
+            for key in access.storageKeys:
+                slot = self.guess_slot(key.hex(), address1=self.settlement_address)
+                if slot is not None:
+                    self.balance_slots[token_address] = slot 
+                    self.save_contract_slots()
+                    return slot
+        logger.warn(f"Could not compute balance slot for token {token_address}: {simulation}")
+        return None
+    
+    async def compute_allowance_slot(self, token_address):
+        token_contract = self.web3_client.eth.contract(
+            address=self.web3_client.to_checksum_address(token_address),
+            abi=self.erc20_abi
+        )
+        # Any two addresses would do, but from_ needs to have enough eth for the simulation
+        from_ = WALLET_WITH_SOME_ETH
+        to = token_address
+        dummy_spender = "0xe592427a0aece92de3edee1f18e0157c05861564"
+        calldata = token_contract.encodeABI(fn_name="allowance", args=[
+            self.web3_client.to_checksum_address(self.settlement_address), 
+            self.web3_client.to_checksum_address(dummy_spender)
+        ])
+        simulation = await self.web3_client.eth.create_access_list({
+            'from': self.web3_client.to_checksum_address(from_), 
+            'to': self.web3_client.to_checksum_address(to), 
+            'data': calldata,
+            'gas': 50000,
+        })
+        for access in simulation.accessList:
+            if access.address.lower() != token_address:
+                continue
+            for key in access.storageKeys:
+                slot = self.guess_slot(key.hex(), address1=self.settlement_address, address2=dummy_spender)
+                if slot is not None:
+                    self.allowance_slots[token_address] = slot 
+                    self.save_contract_slots()
+                    return slot
+        return None
+        
     # Try to guess balance key of a ERC20 contract.
     async def compute_balance_key(self, token_address: str) -> str:
         balance_key = self.get_balance_key(token_address)
         if balance_key is not None:
             return balance_key
-        logger.debug(f"Cache miss for balance key for token {token_address}.")
-        sell_token_address, univ3_fee_tier, tvl = await self.get_connected_token_with_balance_key(token_address)
-        if sell_token_address is None:
-            raise NoConnectionException(f"Could not infer balance key in ERC20 contract {token_address} since could not find a uni v3 pool connected to a token with a known balance key.")
-        buy_amount = int(tvl / 10) # Use 1/10 of TVL of token for finding balance key. (TODO: use liquidity and sqrtprice from thegraph call to find what is the min amount we can buy)
-        buy_transaction = self.create_univ3_buy_token_transaction(univ3_fee_tier, token_address, buy_amount, sell_token_address)
-        simulation = await self.simulate_transaction_via_tenderly(buy_transaction)
-        if not simulation.success:
-            raise FailedBuyTransactionException(f"Could not infer balance key in ERC20 contract {token_address} since buy token transaction failed: {simulation.tenderly_url}")
-        state_diff = simulation.tenderly_simulation_data["transaction"]["transaction_info"]["state_diff"]
-        for diff in state_diff:
-            if diff["address"] != token_address:
-                continue
-            d = diff["raw"][0]
-            if int(d["dirty"], 16) == int(d["original"], 16) + buy_amount:
-                key = d["key"]
-                self.balance_keys[token_address] = key 
-                self.save_balance_keys()
-                return key
-        raise NoStateDiffException(f"Could not infer balance key in ERC20 contract {token_address} since could not find any state diff.")
+        logger.debug(f"Cache miss for balance slot for token {token_address}.")
+        balance_slot = await self.compute_balance_slot(token_address)
+        if balance_slot is not None:
+            return self.get_balance_key(token_address)
+        raise NoBalanceKeyException("Failed to compute balance key.")
 
-    def init_balance_keys(self):
-        self.balance_keys = {}
+    # Try to guess allowance key of a ERC20 contract.
+    async def compute_allowance_key(self, token_address: str, spender: str) -> str:
+        allowance_key = self.get_allowance_key(token_address, spender)
+        if allowance_key is not None:
+            return allowance_key
+        logger.debug(f"Cache miss for allowance slot for token {token_address}.")
+        allowance_slot = await self.compute_allowance_slot(token_address)
+        if allowance_slot is not None:
+            return self.get_allowance_key(token_address, spender)
+        raise NoAllowanceKeyException("Failed to compute allowance key.")
+
+    def init_contract_slots(self):
+        self.balance_slots = {}
+        self.allowance_slots = {}
         try:
-            with open("balance_keys.pickle", "rb") as f:
-                self.balance_keys = pickle.load(f)
-        except Exception:
-            logger.exception("Cound not load balance keys.")
+            with open(self.state_directory / "contract_slots.pickle", "rb") as f:
+                self.balance_slots, self.allowance_slots = pickle.load(f)
+        except FileNotFoundError:
+            logger.error("Could not load contract slots. Starting from scratch.")
             pass
 
-    def save_balance_keys(self):
-        with open("balance_keys.pickle", "wb+") as f:
-            pickle.dump(self.balance_keys, f)
-                
+    def save_contract_slots(self):
+        with open(self.state_directory / "contract_slots.pickle", "wb+") as f:
+            pickle.dump((self.balance_slots, self.allowance_slots), f)
+
     async def get_balance_state_override(self, token_address: str, balance: int) -> dict:
         key = await self.compute_balance_key(token_address)
         return {token_address: {key: to_hex256_string(balance)}}
 
+    async def get_allowance_state_override(self, token_address: str, spender: str, balance: int) -> dict:
+        key = await self.compute_allowance_key(token_address, spender)
+        return {token_address: {key: to_hex256_string(balance)}}
+
     async def simulate_execution(self, lp_execution: LPExecution, block_number: int) -> Simulation:
         balance_state_override = await self.get_balance_state_override(lp_execution.buy_token_address, int(lp_execution.buy_amount))
+        allowance_state_override = await self.get_allowance_state_override(lp_execution.buy_token_address, lp_execution.approved_spender, int(lp_execution.buy_amount))
+        state_override = {}
+        merge(state_override, balance_state_override, allowance_state_override)
         lp_execution_transaction = self.create_lp_execution_transaction(lp_execution)
-        lp_execution_transaction.state = balance_state_override
+        lp_execution_transaction.state = state_override
         return await self.simulate_transaction_via_tenderly(lp_execution_transaction, block_number=block_number)
     

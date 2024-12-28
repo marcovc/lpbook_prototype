@@ -31,32 +31,39 @@ class BlockScanning:
 class BlockStream(BlockScanning):
     """Maintains a table of block number/hashes from a given block onwards."""
 
-    def __init__(self, web3_ws):
+    # The "delay" parameter allows to specify a small delay before advertising new block. This
+    # is useful since a node is typically not consistent, e.g. it can advertise
+    # a new block, but then an immediate call for the logs might not return
+    # the most recent results.
+    def __init__(self, web3_ws, delay: float=0):
         """web3_ws should be a node websocket endpoint"""
         self.web3_ws = web3_ws
         self.subscribers = []
         #self._last_block = None
         self._last_block_number = None
         self._last_block_hash = None
+        self._last_block_timestamp = None
         self.running = False
+        self.delay = delay
 
     @property
     def last_block(self) -> Optional[BlockId]:
         #return self._last_block
-        return BlockId(number=self._last_block_number, hash=self._last_block_hash)
+        return BlockId(number=self._last_block_number, hash=self._last_block_hash, timestamp=self._last_block_timestamp)
 
     def subscribe(self, subscriber):
         self.subscribers.append(subscriber)
 
     def unsubscribe(self, subscriber):
         if subscriber not in self.subscribers:
-            raise RuntimeError('Subscriber not in subscribers.')
+            return
         self.subscribers = [s for s in self.subscribers if s != subscriber]
 
     async def trigger(self, block: BlockId):
         assert block.is_fully_qualified()
         self._last_block_number = block.number
         self._last_block_hash = block.hash
+        self._last_block_timestamp = block.timestamp
         await asyncio.gather(
             *[
                 subscriber(block)
@@ -80,13 +87,14 @@ class BlockStream(BlockScanning):
                     continue
                 assert start_block_number <= latest_block_number
                 start_block = w3.eth.get_block(start_block_number)
+                if self.delay > 0:
+                    await asyncio.sleep(self.delay)
                 logger.debug(
                     f'Telling subscribers about past block {start_block_number}'
                     f'/{start_block.hash.hex()[:8]}'
                 )
                 await self.trigger(BlockId.from_web3(start_block))
                 if start_block_number == latest_block_number:
-                    print("processed block",start_block_number)
                     break
                 start_block_number += 1
 
@@ -98,7 +106,8 @@ class BlockStream(BlockScanning):
             await ws.send(json.dumps({
                 'id': 1,
                 'method': 'eth_subscribe',
-                'params': ['newHeads']
+                'params': ['newHeads'],
+                'jsonrpc': '2.0'
             }))
             subscription_response = await ws.recv()
 
@@ -109,7 +118,6 @@ class BlockStream(BlockScanning):
                 message = await ws.recv()
                 message = json.loads(message)
                 block_number = int(message['params']['result']['number'], base=16)
-                print("got block", block_number)
                 assert start_block_number is None or block_number >= start_block_number
                 # this avoids a notifying twice about the same block, which can happen
                 # when "stitching" the processing of past blocks above with this loop.
@@ -120,7 +128,8 @@ class BlockStream(BlockScanning):
                     f'Detected new block {block_number}/{block_hash[:8]}. '
                     'Telling subscribers about it ...'
                 )
-                await self.trigger(BlockId(number=block_number, hash=block_hash))
+                timestamp = int(message['params']['result']['timestamp'], 16)
+                await self.trigger(BlockId(number=block_number, hash=block_hash, timestamp=timestamp))
 
     @traced(logger, 'Running BlockStream')
     async def run(self, start_block_number: int = None):

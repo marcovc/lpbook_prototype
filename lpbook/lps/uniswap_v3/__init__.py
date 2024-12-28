@@ -1,22 +1,29 @@
+import asyncio
+import datetime
 import logging
 from copy import deepcopy
 from dataclasses import dataclass
 from decimal import Decimal as D
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import aiohttp
 from lpbook import (LPAsyncProxy, LPDriver, LPFromInitialStatePlusChangesProxy,
                     LPSyncProxy, LPSyncProxyFromAsyncProxy)
-from lpbook.util import LP, Token
+from lpbook.util import LP, ExchangeRate, Token, Trade
 from lpbook.web3 import BlockId
 from lpbook.web3.block_stream import BlockStream
 from lpbook.web3.event_stream import EventStream
+from collections import defaultdict
 
 from .subgraph import UniV3GraphQLClient
+from dotenv import load_dotenv
+import os
 
 logger = logging.getLogger(__name__)
 
+load_dotenv()
+THEGRAPH_API_KEY = os.getenv("THEGRAPH_API_KEY")
 
 @dataclass
 class UniV3Like(LP):
@@ -29,9 +36,15 @@ class UniV3Like(LP):
     tick: int
     liquidity_net: Dict[int, int]
     fee: int
+
     @property
     def uid(self) -> str:
         return self.address
+
+    @classmethod
+    @property
+    def kind(self) -> str:
+        return 'Concentrated'
 
     @property
     def tokens(self) -> List[Token]:
@@ -47,17 +60,26 @@ class UniV3Like(LP):
             'fee': self.fee,
         }
 
-    @classmethod
     @property
     def gas_stats(self) -> Dict:
         # See https://dune.com/queries/3270202 .
         return {
-            'nr_obs': 2309324,
             'mean': 126908,
             'stddev': 32312,
-            'min': 21269,
-            'max': 3332226,
-            'median': 127434
+        }
+
+    @property
+    def may_have_slippage(self) -> bool:
+        return True
+
+    @property
+    def spot_xrates(self) -> dict[Tuple[Token, Token], ExchangeRate]:
+        sqrt_price = self.sqrt_price / 2**96
+        tb1 = 1
+        tb2 = sqrt_price ** 2
+        return {
+            (self.tokens[0], self.tokens[1]): ExchangeRate(buy_token=self.tokens[0], sell_token=self.tokens[1], p_buy_over_p_sell=tb2/tb1),
+            (self.tokens[1], self.tokens[0]): ExchangeRate(buy_token=self.tokens[1], sell_token=self.tokens[0], p_buy_over_p_sell=tb1/tb2),
         }
 
 
@@ -92,6 +114,22 @@ class PancakeswapV3(UniV3Like):
 UniV3Like.as_pancakeswapv3 = lambda self: PancakeswapV3(**self.__dict__)
 
 
+class SolidlyV3(UniV3Like):
+    """Solidly V3 LP."""
+    @classmethod
+    @property
+    def protocol_name(self) -> str:
+        return 'Solidly'
+
+    @classmethod
+    @property
+    def protocol_version(self) -> str:
+        return '3'
+
+
+UniV3Like.as_solidlyv3 = lambda self: SolidlyV3(**self.__dict__)
+
+
 class UniV3LikeTheGraphProxy(LPAsyncProxy):
     """Loads the state of liquidity from TheGraph."""
     def __init__(self, lp_ids, uniswap_v3_gql_client):
@@ -99,20 +137,23 @@ class UniV3LikeTheGraphProxy(LPAsyncProxy):
         self.lp_ids = lp_ids
         self.client = uniswap_v3_gql_client
 
-    def create_from_thegraph(self, thegraph_data) -> Optional[UniV3Like]:
+    def create_from_thegraph(self, thegraph_data, block: BlockId) -> Optional[UniV3Like]:
         try:
+            address = thegraph_data.id
+            token0 = Token(
+                address=thegraph_data.token0.id,
+                symbol=thegraph_data.token0.symbol,
+                decimals=int(thegraph_data.token0.decimals)
+            )
+            token1 = Token(
+                address=thegraph_data.token1.id,
+                symbol=thegraph_data.token1.symbol,
+                decimals=int(thegraph_data.token1.decimals)
+            )
             univ3 = UniV3Like(
-                address=thegraph_data.id,
-                token0=Token(
-                    address=thegraph_data.token0.id,
-                    symbol=thegraph_data.token0.symbol,
-                    decimals=int(thegraph_data.token0.decimals)
-                ),
-                token1=Token(
-                    address=thegraph_data.token1.id,
-                    symbol=thegraph_data.token1.symbol,
-                    decimals=int(thegraph_data.token1.decimals)
-                ),
+                address=address,
+                token0=token0,
+                token1=token1,
                 sqrt_price=int(thegraph_data.sqrt_price),
                 liquidity=int(thegraph_data.liquidity),
                 tick=int(thegraph_data.tick),
@@ -130,7 +171,7 @@ class UniV3LikeTheGraphProxy(LPAsyncProxy):
 
     async def latest_block(self) -> BlockId:
         block = await self.client.get_last_block()
-        return BlockId(number=block.number, hash=str(block.hash))
+        return BlockId(number=block.number, hash=str(block.hash), timestamp=block.timestamp)
 
     async def __call__(
         self,
@@ -161,7 +202,7 @@ class UniV3LikeTheGraphProxy(LPAsyncProxy):
                 lp_id,
                 **extra_kwargs
             )
-            lp_state = self.create_from_thegraph(thegraph_lp_data)
+            lp_state = self.create_from_thegraph(thegraph_lp_data, block=block)
             if lp_state is not None:
                 state = {lp_id: lp_state}
         else:
@@ -173,29 +214,44 @@ class UniV3LikeTheGraphProxy(LPAsyncProxy):
             )
             state = {}
             for thegraph_lp_data in thegraph_data:
-                lp_state = self.create_from_thegraph(thegraph_lp_data)
+                lp_state = self.create_from_thegraph(thegraph_lp_data, block=block)
                 if lp_state is not None:
                     state[thegraph_lp_data.id] = lp_state
 
-        # logger.debug(state)
+        if state.keys() != set(self.lp_ids):
+            logger.error(f"Univ3 sync solver did not return all lp_ids: missing {set(self.lp_ids) - set(state.keys())}")
         return state
 
 
 class UniV3TheGraphProxy(UniV3LikeTheGraphProxy):
-    def create_from_thegraph(self, thegraph_data) -> Optional[UniV3]:
-        return super().create_from_thegraph(thegraph_data).as_univ3()
+    def create_from_thegraph(self, thegraph_data, block: BlockId) -> Optional[UniV3]:
+        univ3_like = super().create_from_thegraph(thegraph_data, block=block)
+        if univ3_like is None:
+            return None
+        return univ3_like.as_univ3()
 
 class PancakeSwapV3TheGraphProxy(UniV3LikeTheGraphProxy):
-    def create_from_thegraph(self, thegraph_data) -> Optional[PancakeswapV3]:
-        return super().create_from_thegraph(thegraph_data).as_pancakeswapv3()
+    def create_from_thegraph(self, thegraph_data, block: BlockId) -> Optional[PancakeswapV3]:
+        univ3_like = super().create_from_thegraph(thegraph_data, block=block)
+        if univ3_like is None:
+            return None
+        return univ3_like.as_pancakeswapv3()
+
+
+class SolidlyV3TheGraphProxy(UniV3LikeTheGraphProxy):
+    def create_from_thegraph(self, thegraph_data, block: BlockId) -> Optional[SolidlyV3]:
+        univ3_like = super().create_from_thegraph(thegraph_data, block=block)
+        if univ3_like is None:
+            return None
+        return univ3_like.as_solidlyv3()
 
 
 class UniV3LikeTheGraphAndWeb3Proxy(LPFromInitialStatePlusChangesProxy):
     """Queries TheGraph for an initial state, and web3 for state updates."""
 
-    def __init__(self, lp_ids, async_proxy, event_stream, web3_client):
+    def __init__(self, lp_ids, async_proxy, event_stream, web3_client, abi_filename):
         # read abi from same directory as this file.
-        with open(Path(__file__).parent / 'artifacts' / 'uniswap_v3.abi', 'r') as f:
+        with open(Path(__file__).parent / 'artifacts' / abi_filename, 'r') as f:
             contract_abi = f.read()
         UniV3 = web3_client.eth.contract(abi=contract_abi)
 
@@ -207,80 +263,96 @@ class UniV3LikeTheGraphAndWeb3Proxy(LPFromInitialStatePlusChangesProxy):
             web3_client
         )
 
-    def get_state(self, prev_state: Dict[str, LP], changes: List[Any]) -> Dict[str, LP]:
-        """Assembles state from previous state and updates."""
+    def update_state(self, state: Dict[str, LP], d: Any) -> None:
+        lp_id = d.address.lower()
+        if lp_id not in state.keys():
+            return
+        lp = state[lp_id]
 
-        cur_state = deepcopy(prev_state)
+        if d.event == 'Swap':
+            lp.tick = d.args.tick
+            lp.liquidity = d.args.liquidity
+            lp.sqrt_price = d.args.sqrtPriceX96
 
+        elif d.event == 'Mint':
+            tick_lower = d.args.tickLower
+            tick_upper = d.args.tickUpper
+
+            assert d.args.amount is not None
+            assert lp.liquidity is not None
+
+            # liquidity tracks the liquidity on recent tick,
+            # only need to update it if the new position includes the recent tick.
+            if tick_lower <= lp.tick and lp.tick < tick_upper:
+                lp.liquidity += d.args.amount
+
+            if tick_lower not in lp.liquidity_net.keys():
+                lp.liquidity_net[tick_lower] = 0
+
+            if tick_upper not in lp.liquidity_net.keys():
+                lp.liquidity_net[tick_upper] = 0
+
+            lp.liquidity_net[tick_lower] += d.args.amount
+            lp.liquidity_net[tick_upper] -= d.args.amount
+
+            # remove 0 entries to save bandwidth
+            if lp.liquidity_net[tick_lower] == 0:
+                lp.liquidity_net.pop(tick_lower)
+            if lp.liquidity_net[tick_upper] == 0:
+                lp.liquidity_net.pop(tick_upper)
+
+        elif d.event == 'Burn':
+            tick_lower = d.args.tickLower
+            tick_upper = d.args.tickUpper
+
+            assert d.args.amount is not None
+            assert lp.liquidity is not None
+
+            # liquidity tracks the liquidity on recent tick,
+            # only need to update it if the new position includes the recent tick.
+            if tick_lower <= lp.tick and lp.tick < tick_upper:
+                lp.liquidity -= d.args.amount
+
+            if tick_lower not in lp.liquidity_net.keys():
+                lp.liquidity_net[tick_lower] = 0
+
+            if tick_upper not in lp.liquidity_net.keys():
+                lp.liquidity_net[tick_upper] = 0
+
+            lp.liquidity_net[tick_lower] -= d.args.amount
+            lp.liquidity_net[tick_upper] += d.args.amount
+
+            # remove 0 entries to save bandwidth
+            if lp.liquidity_net[tick_lower] == 0:
+                lp.liquidity_net.pop(tick_lower)
+            if lp.liquidity_net[tick_upper] == 0:
+                lp.liquidity_net.pop(tick_upper)
+
+        else:
+            assert False
+
+
+    def get_trades(self, cur_state: Dict[str, LP], changes: List[Any]) -> list[Trade]:
+        """Assembles list of trades from updates."""
+        trades = []
         for d in changes:
+            if d.event != 'Swap':
+                continue
             lp_id = d.address.lower()
-            assert lp_id in cur_state.keys()
+            if lp_id not in cur_state.keys():
+                continue
             lp_cur_state = cur_state[lp_id]
+            trade = Trade(
+                lp_id=lp_id,
+                block_number=d.blockNumber,
+                token1=lp_cur_state.token0,
+                token2=lp_cur_state.token1,
+                buy_amount1=d.args.amount0,
+                buy_amount2=d.args.amount1,
+            )
+            trades.append(trade)
 
-            if d.event == 'Swap':
-                lp_cur_state.tick = d.args.tick
-                lp_cur_state.liquidity = d.args.liquidity
-                lp_cur_state.sqrt_price = d.args.sqrtPriceX96
-
-            elif d.event == 'Mint':
-                tick_lower = d.args.tickLower
-                tick_upper = d.args.tickUpper
-
-                assert d.args.amount is not None
-                assert lp_cur_state.liquidity is not None
-
-                # liquidity tracks the liquidity on recent tick,
-                # only need to update it if the new position includes the recent tick.
-                if tick_lower <= lp_cur_state.tick and lp_cur_state.tick < tick_upper:
-                    lp_cur_state.liquidity += d.args.amount
-
-                if tick_lower not in lp_cur_state.liquidity_net.keys():
-                    lp_cur_state.liquidity_net[tick_lower] = 0
-
-                if tick_upper not in lp_cur_state.liquidity_net.keys():
-                    lp_cur_state.liquidity_net[tick_upper] = 0
-
-                lp_cur_state.liquidity_net[tick_lower] += d.args.amount
-                lp_cur_state.liquidity_net[tick_upper] -= d.args.amount
-
-                # remove 0 entries to save bandwidth
-                if lp_cur_state.liquidity_net[tick_lower] == 0:
-                    lp_cur_state.liquidity_net.pop(tick_lower)
-                if lp_cur_state.liquidity_net[tick_upper] == 0:
-                    lp_cur_state.liquidity_net.pop(tick_upper)
-
-            elif d.event == 'Burn':
-                tick_lower = d.args.tickLower
-                tick_upper = d.args.tickUpper
-
-                assert d.args.amount is not None
-                assert lp_cur_state.liquidity is not None
-
-                # liquidity tracks the liquidity on recent tick,
-                # only need to update it if the new position includes the recent tick.
-                if tick_lower <= lp_cur_state.tick and lp_cur_state.tick < tick_upper:
-                    lp_cur_state.liquidity -= d.args.amount
-
-                if tick_lower not in lp_cur_state.liquidity_net.keys():
-                    lp_cur_state.liquidity_net[tick_lower] = 0
-
-                if tick_upper not in lp_cur_state.liquidity_net.keys():
-                    lp_cur_state.liquidity_net[tick_upper] = 0
-
-                lp_cur_state.liquidity_net[tick_lower] -= d.args.amount
-                lp_cur_state.liquidity_net[tick_upper] += d.args.amount
-
-                # remove 0 entries to save bandwidth
-                if lp_cur_state.liquidity_net[tick_lower] == 0:
-                    lp_cur_state.liquidity_net.pop(tick_lower)
-                if lp_cur_state.liquidity_net[tick_upper] == 0:
-                    lp_cur_state.liquidity_net.pop(tick_upper)
-
-            else:
-                assert False
-
-        return cur_state
-
+        return trades
 
 class UniV3LikeDriver(LPDriver):
     def __init__(
@@ -296,7 +368,7 @@ class UniV3LikeDriver(LPDriver):
         self.web3_client = web3_client
         self.graphql_client = UniV3GraphQLClient(self.thegraph_url, session)
 
-    def create_lp_sync_proxy(
+    async def create_lp_sync_proxy(
         self,
         lp_ids: List[str],
         data_source: LPDriver.LPSyncProxyDataSource =
@@ -311,7 +383,8 @@ class UniV3LikeDriver(LPDriver):
                 lp_ids,
                 async_proxy,
                 self.event_stream,
-                self.web3_client
+                self.web3_client,
+                self.abi_filename
             )
         elif data_source == LPDriver.LPSyncProxyDataSource.TheGraph:
             sync_proxy = LPSyncProxyFromAsyncProxy(async_proxy, self.block_stream)
@@ -342,7 +415,7 @@ class UniV3LikeDriver(LPDriver):
                     'token0_in': token_ids,
                     'token1_in': token_ids,
                     'liquidity_gt': 0,
-                    'volumeUSD_gt': 1000
+                    'total_value_locked_usd_gt': 1000
                 },
                 field_setter=self.graphql_client.set_pool_id_field
             )
@@ -350,17 +423,32 @@ class UniV3LikeDriver(LPDriver):
 
 class UniV3Driver(UniV3LikeDriver):
     def __init__(self, *args, **kwargs):
-        self.thegraph_url = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3'
+        #self.thegraph_url = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3'
+        self.thegraph_url = f'https://gateway-arbitrum.network.thegraph.com/api/{THEGRAPH_API_KEY}/subgraphs/id/5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV'
         self.UniV3Like = UniV3
         self.UniV3LikeTheGraphProxy = UniV3TheGraphProxy
         self.UniV3LikeTheGraphAndWeb3Proxy = UniV3LikeTheGraphAndWeb3Proxy
+        self.abi_filename = 'uniswap_v3.abi'
         super().__init__(*args, **kwargs)
 
 
 class PancakeswapV3Driver(UniV3LikeDriver):
     def __init__(self, *args, **kwargs):
-        self.thegraph_url = 'https://api.thegraph.com/subgraphs/name/pancakeswap/exchange-v3-eth'
+        #self.thegraph_url = 'https://api.thegraph.com/subgraphs/name/pancakeswap/exchange-v3-eth'
+        self.thegraph_url = f'https://gateway-arbitrum.network.thegraph.com/api/{THEGRAPH_API_KEY}/subgraphs/id/CJYGNhb7RvnhfBDjqpRnD3oxgyhibzc7fkAMa38YV3oS'
         self.UniV3Like = PancakeswapV3
         self.UniV3LikeTheGraphProxy = PancakeSwapV3TheGraphProxy
         self.UniV3LikeTheGraphAndWeb3Proxy = UniV3LikeTheGraphAndWeb3Proxy
+        self.abi_filename = 'pancakeswap_v3.abi'
+        super().__init__(*args, **kwargs)
+
+
+class SolidlyV3Driver(UniV3LikeDriver):
+    def __init__(self, *args, **kwargs):
+        #self.thegraph_url = 'https://api.thegraph.com/subgraphs/name/pancakeswap/exchange-v3-eth'
+        self.thegraph_url = f'https://gateway-arbitrum.network.thegraph.com/api/{THEGRAPH_API_KEY}/subgraphs/id/7StqFFqbxi3jcN5C9YxhRiTxQM8HA8XEHopsynqqxw3t'
+        self.UniV3Like = SolidlyV3
+        self.UniV3LikeTheGraphProxy = SolidlyV3TheGraphProxy
+        self.UniV3LikeTheGraphAndWeb3Proxy = UniV3LikeTheGraphAndWeb3Proxy
+        self.abi_filename = 'solidly_v3.abi'
         super().__init__(*args, **kwargs)

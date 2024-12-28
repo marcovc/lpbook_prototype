@@ -54,7 +54,7 @@ class GraphQLClient:
                 raise GraphQLClientError(
                     f'Error accessing thegraph: {str(data["errors"])}'
                 )
-            logger.warn(
+            logger.warning(
                 'Error getting data from graphql endpoint. Retrying in 2 secs ...'
             )
             logger.debug('errors: ' + str(data['errors']))

@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Callable, List
+from typing import Any, Callable, List, Tuple
 
 from lpbook.error import CacheMissError
 from lpbook.util import traced
@@ -22,6 +22,7 @@ class RecentEventLog:
 
         self.events = []
         self.start_block_number = None
+        self.subscribers = []    # call these after each process_new_events
 
     def process_new_event(self, event):
         logger.debug(f'Processing event {event} ...')
@@ -60,13 +61,28 @@ class RecentEventLog:
                 )
                 assert False
 
+    def process_new_events(self, events):
+        for event in events:
+            self.process_new_event(event)
+        for subscriber in self.subscribers:
+            subscriber(events)
+
+    def subscribe(self, subscriber):
+        self.subscribers.append(subscriber)
+
+    def unsubscribe(self, subscriber):
+        if subscriber not in self.subscribers:
+            return
+        self.subscribers = [s for s in self.subscribers if s != subscriber]
+        
     @traced(logger, 'Starting RecentEventLog')
     async def start(
         self,
         addresses: List[str],
         events: List[ContractEvent],
         start_block_number: int,
-        on_dropped_subscription_error_fn: Callable[[RuntimeError], None]
+        on_dropped_subscription_error_fn: Callable[[RuntimeError], None],
+        extra_topics: Tuple[str] = tuple()
     ) -> None:
         """Sets start_block to given block and starts collecting the delta asynchronously.
 
@@ -76,20 +92,21 @@ class RecentEventLog:
         assert start_block_number is not None
         self.start_block_number = start_block_number
         self.event_stream.subscribe(
-            self.process_new_event,
+            self.process_new_events,
             addresses,
             events,
             start_block_number,
-            on_dropped_subscription_error_fn
+            on_dropped_subscription_error_fn,
+            extra_topics=extra_topics
         )
-        await self.event_stream.poll_for_subscriber(self.process_new_event)
+        await self.event_stream.poll_for_subscriber(self.process_new_events)
 
     def stop(self) -> None:
-        self.event_stream.unsubscribe(self.process_new_event)
+        self.event_stream.unsubscribe(self.process_new_events)
         self.start_block_number = None
-        logger.debug('Stopped {self}')
+        logger.debug(f'Stopped {self}')
 
-    def update(self, addresses: List[str], events: List[ContractEvent]):
+    def update(self, addresses: List[str], events: List[ContractEvent], extra_topics: Tuple[str] = tuple()):
         """Updates filter."""
         logger.debug(f'Updating {self} ...')
 
@@ -99,10 +116,11 @@ class RecentEventLog:
         # The cur_block_number + 1 alternative does not look robust to race
         # conditions due to chain reorgs.
         self.event_stream.change_subscription(
-            self.process_new_event,
+            self.process_new_events,
             addresses,
             events,
-            cur_block_hash
+            cur_block_hash,
+            extra_topics=extra_topics
         )
 
     def __call__(self, block: BlockId) -> List[Any]:
@@ -116,16 +134,18 @@ class RecentEventLog:
             block = block.with_number(self.web3_client.eth.get_block(block.hash).number)
         if block.number is not None:
             assert self.event_stream.last_block is not None
+            if self.start_block_number is None:
+                raise CacheMissError(f'No events for block {block} in recent event log since it is stopped (possibly still initializing).')
             if block.number < self.start_block_number or \
                block.number > self.event_stream.last_block.number:
-                raise CacheMissError(f'No events for block {block} in cache.')
+                raise CacheMissError(f'No events for block {block} in recent event log.')
             return [e for e in self.events if e.blockNumber <= block.number]
         return self.events
 
     @property
     def block_count(self) -> int:
         """Get number of blocks in the log."""
-        if self.event_stream.last_block is None:
+        if self.event_stream.last_block is None or self.event_stream.last_block.number is None:
             return 0
         return self.event_stream.last_block.number - self.start_block_number + 1
 

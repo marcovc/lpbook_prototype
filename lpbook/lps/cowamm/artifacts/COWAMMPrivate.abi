@@ -1,0 +1,139 @@
+[
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "initSettlementContractAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "initSolverContractAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "initReservesAddress",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address[]",
+				"name": "tokensIn",
+				"type": "address[]"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256[]",
+				"name": "amountsIn",
+				"type": "uint256[]"
+			},
+			{
+				"indexed": false,
+				"internalType": "address[]",
+				"name": "tokensOut",
+				"type": "address[]"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256[]",
+				"name": "amountsOut",
+				"type": "uint256[]"
+			}
+		],
+		"name": "Rebalance",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address[]",
+				"name": "tokensIn",
+				"type": "address[]"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "amountsIn",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "address[]",
+				"name": "tokensOut",
+				"type": "address[]"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "amountsOut",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "bytes32",
+				"name": "_stateHash",
+				"type": "bytes32"
+			}
+		],
+		"name": "rebalance",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "stateHash",
+		"outputs": [
+			{
+				"internalType": "bytes32",
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newReservesAddress",
+				"type": "address"
+			}
+		],
+		"name": "updateReservesAddress",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newSettlementContractAddress",
+				"type": "address"
+			}
+		],
+		"name": "updateSettlementContractAddress",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newSolverContractAddress",
+				"type": "address"
+			}
+		],
+		"name": "updateSolverContractAddress",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
+]

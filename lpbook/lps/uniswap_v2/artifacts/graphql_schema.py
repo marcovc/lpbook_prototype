@@ -8,6 +8,11 @@ graphql_schema = sgqlc.types.Schema()
 ########################################################################
 # Scalars and Enumerations
 ########################################################################
+class Aggregation_interval(sgqlc.types.Enum):
+    __schema__ = graphql_schema
+    __choices__ = ('day', 'hour')
+
+
 class BigDecimal(sgqlc.types.Scalar):
     __schema__ = graphql_schema
 
@@ -25,32 +30,51 @@ class Bundle_orderBy(sgqlc.types.Enum):
 
 class Burn_orderBy(sgqlc.types.Enum):
     __schema__ = graphql_schema
-    __choices__ = ('amount0', 'amount1', 'amountUSD', 'feeLiquidity', 'feeTo', 'id', 'liquidity', 'logIndex', 'needsComplete', 'pair', 'sender', 'timestamp', 'to', 'transaction')
+    __choices__ = ('amount0', 'amount1', 'amountUSD', 'complete', 'feeLiquidity', 'feeTo', 'id', 'liquidity', 'logIndex', 'pair', 'pair__block', 'pair__id', 'pair__liquidityProviderCount', 'pair__name', 'pair__reserve0', 'pair__reserve1', 'pair__reserveETH', 'pair__reserveUSD', 'pair__timestamp', 'pair__token0Price', 'pair__token1Price', 'pair__totalSupply', 'pair__trackedReserveETH', 'pair__txCount', 'pair__untrackedVolumeUSD', 'pair__volumeToken0', 'pair__volumeToken1', 'pair__volumeUSD', 'sender', 'timestamp', 'to', 'transaction', 'transaction__blockNumber', 'transaction__id', 'transaction__timestamp')
 
 
 class Bytes(sgqlc.types.Scalar):
     __schema__ = graphql_schema
 
 
+class DayData_orderBy(sgqlc.types.Enum):
+    __schema__ = graphql_schema
+    __choices__ = ('date', 'factory', 'factory__id', 'factory__liquidityETH', 'factory__liquidityUSD', 'factory__pairCount', 'factory__tokenCount', 'factory__txCount', 'factory__untrackedVolumeUSD', 'factory__userCount', 'factory__volumeETH', 'factory__volumeUSD', 'id', 'liquidityETH', 'liquidityUSD', 'txCount', 'untrackedVolume', 'volumeETH', 'volumeUSD')
+
+
+class Factory_orderBy(sgqlc.types.Enum):
+    __schema__ = graphql_schema
+    __choices__ = ('dayData', 'hourData', 'id', 'liquidityETH', 'liquidityUSD', 'pairCount', 'pairs', 'tokenCount', 'tokens', 'txCount', 'untrackedVolumeUSD', 'userCount', 'volumeETH', 'volumeUSD')
+
+
 Float = sgqlc.types.Float
+
+class HourData_orderBy(sgqlc.types.Enum):
+    __schema__ = graphql_schema
+    __choices__ = ('date', 'factory', 'factory__id', 'factory__liquidityETH', 'factory__liquidityUSD', 'factory__pairCount', 'factory__tokenCount', 'factory__txCount', 'factory__untrackedVolumeUSD', 'factory__userCount', 'factory__volumeETH', 'factory__volumeUSD', 'id', 'liquidityETH', 'liquidityUSD', 'txCount', 'untrackedVolume', 'volumeETH', 'volumeUSD')
+
 
 ID = sgqlc.types.ID
 
 Int = sgqlc.types.Int
 
+class Int8(sgqlc.types.Scalar):
+    __schema__ = graphql_schema
+
+
 class LiquidityPositionSnapshot_orderBy(sgqlc.types.Enum):
     __schema__ = graphql_schema
-    __choices__ = ('block', 'id', 'liquidityPosition', 'liquidityTokenBalance', 'liquidityTokenTotalSupply', 'pair', 'reserve0', 'reserve1', 'reserveUSD', 'timestamp', 'token0PriceUSD', 'token1PriceUSD', 'user')
+    __choices__ = ('block', 'id', 'liquidityPosition', 'liquidityPosition__block', 'liquidityPosition__id', 'liquidityPosition__liquidityTokenBalance', 'liquidityPosition__timestamp', 'liquidityTokenBalance', 'liquidityTokenTotalSupply', 'pair', 'pair__block', 'pair__id', 'pair__liquidityProviderCount', 'pair__name', 'pair__reserve0', 'pair__reserve1', 'pair__reserveETH', 'pair__reserveUSD', 'pair__timestamp', 'pair__token0Price', 'pair__token1Price', 'pair__totalSupply', 'pair__trackedReserveETH', 'pair__txCount', 'pair__untrackedVolumeUSD', 'pair__volumeToken0', 'pair__volumeToken1', 'pair__volumeUSD', 'reserve0', 'reserve1', 'reserveUSD', 'timestamp', 'token0PriceUSD', 'token1PriceUSD', 'user', 'user__id')
 
 
 class LiquidityPosition_orderBy(sgqlc.types.Enum):
     __schema__ = graphql_schema
-    __choices__ = ('id', 'liquidityTokenBalance', 'pair', 'user')
+    __choices__ = ('block', 'id', 'liquidityTokenBalance', 'pair', 'pair__block', 'pair__id', 'pair__liquidityProviderCount', 'pair__name', 'pair__reserve0', 'pair__reserve1', 'pair__reserveETH', 'pair__reserveUSD', 'pair__timestamp', 'pair__token0Price', 'pair__token1Price', 'pair__totalSupply', 'pair__trackedReserveETH', 'pair__txCount', 'pair__untrackedVolumeUSD', 'pair__volumeToken0', 'pair__volumeToken1', 'pair__volumeUSD', 'snapshots', 'timestamp', 'user', 'user__id')
 
 
 class Mint_orderBy(sgqlc.types.Enum):
     __schema__ = graphql_schema
-    __choices__ = ('amount0', 'amount1', 'amountUSD', 'feeLiquidity', 'feeTo', 'id', 'liquidity', 'logIndex', 'pair', 'sender', 'timestamp', 'to', 'transaction')
+    __choices__ = ('amount0', 'amount1', 'amountUSD', 'feeLiquidity', 'feeTo', 'id', 'liquidity', 'logIndex', 'pair', 'pair__block', 'pair__id', 'pair__liquidityProviderCount', 'pair__name', 'pair__reserve0', 'pair__reserve1', 'pair__reserveETH', 'pair__reserveUSD', 'pair__timestamp', 'pair__token0Price', 'pair__token1Price', 'pair__totalSupply', 'pair__trackedReserveETH', 'pair__txCount', 'pair__untrackedVolumeUSD', 'pair__volumeToken0', 'pair__volumeToken1', 'pair__volumeUSD', 'sender', 'timestamp', 'to', 'transaction', 'transaction__blockNumber', 'transaction__id', 'transaction__timestamp')
 
 
 class OrderDirection(sgqlc.types.Enum):
@@ -60,34 +84,43 @@ class OrderDirection(sgqlc.types.Enum):
 
 class PairDayData_orderBy(sgqlc.types.Enum):
     __schema__ = graphql_schema
-    __choices__ = ('dailyTxns', 'dailyVolumeToken0', 'dailyVolumeToken1', 'dailyVolumeUSD', 'date', 'id', 'pairAddress', 'reserve0', 'reserve1', 'reserveUSD', 'token0', 'token1', 'totalSupply')
+    __choices__ = ('date', 'id', 'pair', 'pair__block', 'pair__id', 'pair__liquidityProviderCount', 'pair__name', 'pair__reserve0', 'pair__reserve1', 'pair__reserveETH', 'pair__reserveUSD', 'pair__timestamp', 'pair__token0Price', 'pair__token1Price', 'pair__totalSupply', 'pair__trackedReserveETH', 'pair__txCount', 'pair__untrackedVolumeUSD', 'pair__volumeToken0', 'pair__volumeToken1', 'pair__volumeUSD', 'reserve0', 'reserve1', 'reserveUSD', 'token0', 'token0__decimals', 'token0__derivedETH', 'token0__id', 'token0__liquidity', 'token0__name', 'token0__symbol', 'token0__totalSupply', 'token0__txCount', 'token0__untrackedVolumeUSD', 'token0__volume', 'token0__volumeUSD', 'token1', 'token1__decimals', 'token1__derivedETH', 'token1__id', 'token1__liquidity', 'token1__name', 'token1__symbol', 'token1__totalSupply', 'token1__txCount', 'token1__untrackedVolumeUSD', 'token1__volume', 'token1__volumeUSD', 'totalSupply', 'txCount', 'volumeToken0', 'volumeToken1', 'volumeUSD')
 
 
 class PairHourData_orderBy(sgqlc.types.Enum):
     __schema__ = graphql_schema
-    __choices__ = ('hourStartUnix', 'hourlyTxns', 'hourlyVolumeToken0', 'hourlyVolumeToken1', 'hourlyVolumeUSD', 'id', 'pair', 'reserve0', 'reserve1', 'reserveUSD')
+    __choices__ = ('date', 'id', 'pair', 'pair__block', 'pair__id', 'pair__liquidityProviderCount', 'pair__name', 'pair__reserve0', 'pair__reserve1', 'pair__reserveETH', 'pair__reserveUSD', 'pair__timestamp', 'pair__token0Price', 'pair__token1Price', 'pair__totalSupply', 'pair__trackedReserveETH', 'pair__txCount', 'pair__untrackedVolumeUSD', 'pair__volumeToken0', 'pair__volumeToken1', 'pair__volumeUSD', 'reserve0', 'reserve1', 'reserveUSD', 'txCount', 'volumeToken0', 'volumeToken1', 'volumeUSD')
 
 
 class Pair_orderBy(sgqlc.types.Enum):
     __schema__ = graphql_schema
-    __choices__ = ('createdAtBlockNumber', 'createdAtTimestamp', 'id', 'liquidityProviderCount', 'reserve0', 'reserve1', 'reserveETH', 'reserveUSD', 'token0', 'token0Price', 'token1', 'token1Price', 'totalSupply', 'trackedReserveETH', 'txCount', 'untrackedVolumeUSD', 'volumeToken0', 'volumeToken1', 'volumeUSD')
+    __choices__ = ('block', 'burns', 'dayData', 'factory', 'factory__id', 'factory__liquidityETH', 'factory__liquidityUSD', 'factory__pairCount', 'factory__tokenCount', 'factory__txCount', 'factory__untrackedVolumeUSD', 'factory__userCount', 'factory__volumeETH', 'factory__volumeUSD', 'hourData', 'id', 'liquidityPositionSnapshots', 'liquidityPositions', 'liquidityProviderCount', 'mints', 'name', 'reserve0', 'reserve1', 'reserveETH', 'reserveUSD', 'swaps', 'timestamp', 'token0', 'token0Price', 'token0__decimals', 'token0__derivedETH', 'token0__id', 'token0__liquidity', 'token0__name', 'token0__symbol', 'token0__totalSupply', 'token0__txCount', 'token0__untrackedVolumeUSD', 'token0__volume', 'token0__volumeUSD', 'token1', 'token1Price', 'token1__decimals', 'token1__derivedETH', 'token1__id', 'token1__liquidity', 'token1__name', 'token1__symbol', 'token1__totalSupply', 'token1__txCount', 'token1__untrackedVolumeUSD', 'token1__volume', 'token1__volumeUSD', 'totalSupply', 'trackedReserveETH', 'txCount', 'untrackedVolumeUSD', 'volumeToken0', 'volumeToken1', 'volumeUSD')
 
 
 String = sgqlc.types.String
 
 class Swap_orderBy(sgqlc.types.Enum):
     __schema__ = graphql_schema
-    __choices__ = ('amount0In', 'amount0Out', 'amount1In', 'amount1Out', 'amountUSD', 'id', 'logIndex', 'pair', 'sender', 'timestamp', 'to', 'transaction')
+    __choices__ = ('amount0In', 'amount0Out', 'amount1In', 'amount1Out', 'amountUSD', 'id', 'logIndex', 'pair', 'pair__block', 'pair__id', 'pair__liquidityProviderCount', 'pair__name', 'pair__reserve0', 'pair__reserve1', 'pair__reserveETH', 'pair__reserveUSD', 'pair__timestamp', 'pair__token0Price', 'pair__token1Price', 'pair__totalSupply', 'pair__trackedReserveETH', 'pair__txCount', 'pair__untrackedVolumeUSD', 'pair__volumeToken0', 'pair__volumeToken1', 'pair__volumeUSD', 'sender', 'timestamp', 'to', 'transaction', 'transaction__blockNumber', 'transaction__id', 'transaction__timestamp')
+
+
+class Timestamp(sgqlc.types.Scalar):
+    __schema__ = graphql_schema
 
 
 class TokenDayData_orderBy(sgqlc.types.Enum):
     __schema__ = graphql_schema
-    __choices__ = ('dailyTxns', 'dailyVolumeETH', 'dailyVolumeToken', 'dailyVolumeUSD', 'date', 'id', 'maxStored', 'mostLiquidPairs', 'priceUSD', 'token', 'totalLiquidityETH', 'totalLiquidityToken', 'totalLiquidityUSD')
+    __choices__ = ('date', 'id', 'liquidity', 'liquidityETH', 'liquidityUSD', 'priceUSD', 'token', 'token__decimals', 'token__derivedETH', 'token__id', 'token__liquidity', 'token__name', 'token__symbol', 'token__totalSupply', 'token__txCount', 'token__untrackedVolumeUSD', 'token__volume', 'token__volumeUSD', 'txCount', 'volume', 'volumeETH', 'volumeUSD')
+
+
+class TokenHourData_orderBy(sgqlc.types.Enum):
+    __schema__ = graphql_schema
+    __choices__ = ('date', 'id', 'liquidity', 'liquidityETH', 'liquidityUSD', 'priceUSD', 'token', 'token__decimals', 'token__derivedETH', 'token__id', 'token__liquidity', 'token__name', 'token__symbol', 'token__totalSupply', 'token__txCount', 'token__untrackedVolumeUSD', 'token__volume', 'token__volumeUSD', 'txCount', 'volume', 'volumeETH', 'volumeUSD')
 
 
 class Token_orderBy(sgqlc.types.Enum):
     __schema__ = graphql_schema
-    __choices__ = ('decimals', 'derivedETH', 'id', 'mostLiquidPairs', 'name', 'symbol', 'totalLiquidity', 'totalSupply', 'tradeVolume', 'tradeVolumeUSD', 'txCount', 'untrackedVolumeUSD')
+    __choices__ = ('basePairs', 'basePairsDayData', 'dayData', 'decimals', 'derivedETH', 'factory', 'factory__id', 'factory__liquidityETH', 'factory__liquidityUSD', 'factory__pairCount', 'factory__tokenCount', 'factory__txCount', 'factory__untrackedVolumeUSD', 'factory__userCount', 'factory__volumeETH', 'factory__volumeUSD', 'hourData', 'id', 'liquidity', 'name', 'quotePairs', 'quotePairsDayData', 'symbol', 'totalSupply', 'txCount', 'untrackedVolumeUSD', 'volume', 'volumeUSD')
 
 
 class Transaction_orderBy(sgqlc.types.Enum):
@@ -95,19 +128,9 @@ class Transaction_orderBy(sgqlc.types.Enum):
     __choices__ = ('blockNumber', 'burns', 'id', 'mints', 'swaps', 'timestamp')
 
 
-class UniswapDayData_orderBy(sgqlc.types.Enum):
-    __schema__ = graphql_schema
-    __choices__ = ('dailyVolumeETH', 'dailyVolumeUSD', 'dailyVolumeUntracked', 'date', 'id', 'maxStored', 'mostLiquidTokens', 'totalLiquidityETH', 'totalLiquidityUSD', 'totalVolumeETH', 'totalVolumeUSD', 'txCount')
-
-
-class UniswapFactory_orderBy(sgqlc.types.Enum):
-    __schema__ = graphql_schema
-    __choices__ = ('id', 'mostLiquidTokens', 'pairCount', 'totalLiquidityETH', 'totalLiquidityUSD', 'totalVolumeETH', 'totalVolumeUSD', 'txCount', 'untrackedVolumeUSD')
-
-
 class User_orderBy(sgqlc.types.Enum):
     __schema__ = graphql_schema
-    __choices__ = ('id', 'liquidityPositions', 'usdSwapped')
+    __choices__ = ('id', 'liquidityPositions')
 
 
 class _SubgraphErrorPolicy_(sgqlc.types.Enum):
@@ -135,7 +158,7 @@ class Block_height(sgqlc.types.Input):
 
 class Bundle_filter(sgqlc.types.Input):
     __schema__ = graphql_schema
-    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'eth_price', 'eth_price_not', 'eth_price_gt', 'eth_price_lt', 'eth_price_gte', 'eth_price_lte', 'eth_price_in', 'eth_price_not_in', '_change_block')
+    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'eth_price', 'eth_price_not', 'eth_price_gt', 'eth_price_lt', 'eth_price_gte', 'eth_price_lte', 'eth_price_in', 'eth_price_not_in', '_change_block', 'and_', 'or_')
     id = sgqlc.types.Field(ID, graphql_name='id')
     id_not = sgqlc.types.Field(ID, graphql_name='id_not')
     id_gt = sgqlc.types.Field(ID, graphql_name='id_gt')
@@ -153,11 +176,13 @@ class Bundle_filter(sgqlc.types.Input):
     eth_price_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='ethPrice_in')
     eth_price_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='ethPrice_not_in')
     _change_block = sgqlc.types.Field(BlockChangedFilter, graphql_name='_change_block')
+    and_ = sgqlc.types.Field(sgqlc.types.list_of('Bundle_filter'), graphql_name='and')
+    or_ = sgqlc.types.Field(sgqlc.types.list_of('Bundle_filter'), graphql_name='or')
 
 
 class Burn_filter(sgqlc.types.Input):
     __schema__ = graphql_schema
-    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'transaction', 'transaction_not', 'transaction_gt', 'transaction_lt', 'transaction_gte', 'transaction_lte', 'transaction_in', 'transaction_not_in', 'transaction_contains', 'transaction_contains_nocase', 'transaction_not_contains', 'transaction_not_contains_nocase', 'transaction_starts_with', 'transaction_starts_with_nocase', 'transaction_not_starts_with', 'transaction_not_starts_with_nocase', 'transaction_ends_with', 'transaction_ends_with_nocase', 'transaction_not_ends_with', 'transaction_not_ends_with_nocase', 'transaction_', 'timestamp', 'timestamp_not', 'timestamp_gt', 'timestamp_lt', 'timestamp_gte', 'timestamp_lte', 'timestamp_in', 'timestamp_not_in', 'pair', 'pair_not', 'pair_gt', 'pair_lt', 'pair_gte', 'pair_lte', 'pair_in', 'pair_not_in', 'pair_contains', 'pair_contains_nocase', 'pair_not_contains', 'pair_not_contains_nocase', 'pair_starts_with', 'pair_starts_with_nocase', 'pair_not_starts_with', 'pair_not_starts_with_nocase', 'pair_ends_with', 'pair_ends_with_nocase', 'pair_not_ends_with', 'pair_not_ends_with_nocase', 'pair_', 'liquidity', 'liquidity_not', 'liquidity_gt', 'liquidity_lt', 'liquidity_gte', 'liquidity_lte', 'liquidity_in', 'liquidity_not_in', 'sender', 'sender_not', 'sender_in', 'sender_not_in', 'sender_contains', 'sender_not_contains', 'amount0', 'amount0_not', 'amount0_gt', 'amount0_lt', 'amount0_gte', 'amount0_lte', 'amount0_in', 'amount0_not_in', 'amount1', 'amount1_not', 'amount1_gt', 'amount1_lt', 'amount1_gte', 'amount1_lte', 'amount1_in', 'amount1_not_in', 'to', 'to_not', 'to_in', 'to_not_in', 'to_contains', 'to_not_contains', 'log_index', 'log_index_not', 'log_index_gt', 'log_index_lt', 'log_index_gte', 'log_index_lte', 'log_index_in', 'log_index_not_in', 'amount_usd', 'amount_usd_not', 'amount_usd_gt', 'amount_usd_lt', 'amount_usd_gte', 'amount_usd_lte', 'amount_usd_in', 'amount_usd_not_in', 'needs_complete', 'needs_complete_not', 'needs_complete_in', 'needs_complete_not_in', 'fee_to', 'fee_to_not', 'fee_to_in', 'fee_to_not_in', 'fee_to_contains', 'fee_to_not_contains', 'fee_liquidity', 'fee_liquidity_not', 'fee_liquidity_gt', 'fee_liquidity_lt', 'fee_liquidity_gte', 'fee_liquidity_lte', 'fee_liquidity_in', 'fee_liquidity_not_in', '_change_block')
+    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'transaction', 'transaction_not', 'transaction_gt', 'transaction_lt', 'transaction_gte', 'transaction_lte', 'transaction_in', 'transaction_not_in', 'transaction_contains', 'transaction_contains_nocase', 'transaction_not_contains', 'transaction_not_contains_nocase', 'transaction_starts_with', 'transaction_starts_with_nocase', 'transaction_not_starts_with', 'transaction_not_starts_with_nocase', 'transaction_ends_with', 'transaction_ends_with_nocase', 'transaction_not_ends_with', 'transaction_not_ends_with_nocase', 'transaction_', 'timestamp', 'timestamp_not', 'timestamp_gt', 'timestamp_lt', 'timestamp_gte', 'timestamp_lte', 'timestamp_in', 'timestamp_not_in', 'pair', 'pair_not', 'pair_gt', 'pair_lt', 'pair_gte', 'pair_lte', 'pair_in', 'pair_not_in', 'pair_contains', 'pair_contains_nocase', 'pair_not_contains', 'pair_not_contains_nocase', 'pair_starts_with', 'pair_starts_with_nocase', 'pair_not_starts_with', 'pair_not_starts_with_nocase', 'pair_ends_with', 'pair_ends_with_nocase', 'pair_not_ends_with', 'pair_not_ends_with_nocase', 'pair_', 'liquidity', 'liquidity_not', 'liquidity_gt', 'liquidity_lt', 'liquidity_gte', 'liquidity_lte', 'liquidity_in', 'liquidity_not_in', 'sender', 'sender_not', 'sender_gt', 'sender_lt', 'sender_gte', 'sender_lte', 'sender_in', 'sender_not_in', 'sender_contains', 'sender_not_contains', 'amount0', 'amount0_not', 'amount0_gt', 'amount0_lt', 'amount0_gte', 'amount0_lte', 'amount0_in', 'amount0_not_in', 'amount1', 'amount1_not', 'amount1_gt', 'amount1_lt', 'amount1_gte', 'amount1_lte', 'amount1_in', 'amount1_not_in', 'to', 'to_not', 'to_gt', 'to_lt', 'to_gte', 'to_lte', 'to_in', 'to_not_in', 'to_contains', 'to_not_contains', 'log_index', 'log_index_not', 'log_index_gt', 'log_index_lt', 'log_index_gte', 'log_index_lte', 'log_index_in', 'log_index_not_in', 'amount_usd', 'amount_usd_not', 'amount_usd_gt', 'amount_usd_lt', 'amount_usd_gte', 'amount_usd_lte', 'amount_usd_in', 'amount_usd_not_in', 'complete', 'complete_not', 'complete_in', 'complete_not_in', 'fee_to', 'fee_to_not', 'fee_to_gt', 'fee_to_lt', 'fee_to_gte', 'fee_to_lte', 'fee_to_in', 'fee_to_not_in', 'fee_to_contains', 'fee_to_not_contains', 'fee_liquidity', 'fee_liquidity_not', 'fee_liquidity_gt', 'fee_liquidity_lt', 'fee_liquidity_gte', 'fee_liquidity_lte', 'fee_liquidity_in', 'fee_liquidity_not_in', '_change_block', 'and_', 'or_')
     id = sgqlc.types.Field(ID, graphql_name='id')
     id_not = sgqlc.types.Field(ID, graphql_name='id_not')
     id_gt = sgqlc.types.Field(ID, graphql_name='id_gt')
@@ -226,6 +251,10 @@ class Burn_filter(sgqlc.types.Input):
     liquidity_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidity_not_in')
     sender = sgqlc.types.Field(Bytes, graphql_name='sender')
     sender_not = sgqlc.types.Field(Bytes, graphql_name='sender_not')
+    sender_gt = sgqlc.types.Field(Bytes, graphql_name='sender_gt')
+    sender_lt = sgqlc.types.Field(Bytes, graphql_name='sender_lt')
+    sender_gte = sgqlc.types.Field(Bytes, graphql_name='sender_gte')
+    sender_lte = sgqlc.types.Field(Bytes, graphql_name='sender_lte')
     sender_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Bytes)), graphql_name='sender_in')
     sender_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Bytes)), graphql_name='sender_not_in')
     sender_contains = sgqlc.types.Field(Bytes, graphql_name='sender_contains')
@@ -248,6 +277,10 @@ class Burn_filter(sgqlc.types.Input):
     amount1_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='amount1_not_in')
     to = sgqlc.types.Field(Bytes, graphql_name='to')
     to_not = sgqlc.types.Field(Bytes, graphql_name='to_not')
+    to_gt = sgqlc.types.Field(Bytes, graphql_name='to_gt')
+    to_lt = sgqlc.types.Field(Bytes, graphql_name='to_lt')
+    to_gte = sgqlc.types.Field(Bytes, graphql_name='to_gte')
+    to_lte = sgqlc.types.Field(Bytes, graphql_name='to_lte')
     to_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Bytes)), graphql_name='to_in')
     to_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Bytes)), graphql_name='to_not_in')
     to_contains = sgqlc.types.Field(Bytes, graphql_name='to_contains')
@@ -268,12 +301,16 @@ class Burn_filter(sgqlc.types.Input):
     amount_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='amountUSD_lte')
     amount_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='amountUSD_in')
     amount_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='amountUSD_not_in')
-    needs_complete = sgqlc.types.Field(Boolean, graphql_name='needsComplete')
-    needs_complete_not = sgqlc.types.Field(Boolean, graphql_name='needsComplete_not')
-    needs_complete_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Boolean)), graphql_name='needsComplete_in')
-    needs_complete_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Boolean)), graphql_name='needsComplete_not_in')
+    complete = sgqlc.types.Field(Boolean, graphql_name='complete')
+    complete_not = sgqlc.types.Field(Boolean, graphql_name='complete_not')
+    complete_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Boolean)), graphql_name='complete_in')
+    complete_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Boolean)), graphql_name='complete_not_in')
     fee_to = sgqlc.types.Field(Bytes, graphql_name='feeTo')
     fee_to_not = sgqlc.types.Field(Bytes, graphql_name='feeTo_not')
+    fee_to_gt = sgqlc.types.Field(Bytes, graphql_name='feeTo_gt')
+    fee_to_lt = sgqlc.types.Field(Bytes, graphql_name='feeTo_lt')
+    fee_to_gte = sgqlc.types.Field(Bytes, graphql_name='feeTo_gte')
+    fee_to_lte = sgqlc.types.Field(Bytes, graphql_name='feeTo_lte')
     fee_to_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Bytes)), graphql_name='feeTo_in')
     fee_to_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Bytes)), graphql_name='feeTo_not_in')
     fee_to_contains = sgqlc.types.Field(Bytes, graphql_name='feeTo_contains')
@@ -287,11 +324,291 @@ class Burn_filter(sgqlc.types.Input):
     fee_liquidity_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='feeLiquidity_in')
     fee_liquidity_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='feeLiquidity_not_in')
     _change_block = sgqlc.types.Field(BlockChangedFilter, graphql_name='_change_block')
+    and_ = sgqlc.types.Field(sgqlc.types.list_of('Burn_filter'), graphql_name='and')
+    or_ = sgqlc.types.Field(sgqlc.types.list_of('Burn_filter'), graphql_name='or')
+
+
+class DayData_filter(sgqlc.types.Input):
+    __schema__ = graphql_schema
+    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'date', 'date_not', 'date_gt', 'date_lt', 'date_gte', 'date_lte', 'date_in', 'date_not_in', 'factory', 'factory_not', 'factory_gt', 'factory_lt', 'factory_gte', 'factory_lte', 'factory_in', 'factory_not_in', 'factory_contains', 'factory_contains_nocase', 'factory_not_contains', 'factory_not_contains_nocase', 'factory_starts_with', 'factory_starts_with_nocase', 'factory_not_starts_with', 'factory_not_starts_with_nocase', 'factory_ends_with', 'factory_ends_with_nocase', 'factory_not_ends_with', 'factory_not_ends_with_nocase', 'factory_', 'volume_eth', 'volume_eth_not', 'volume_eth_gt', 'volume_eth_lt', 'volume_eth_gte', 'volume_eth_lte', 'volume_eth_in', 'volume_eth_not_in', 'volume_usd', 'volume_usd_not', 'volume_usd_gt', 'volume_usd_lt', 'volume_usd_gte', 'volume_usd_lte', 'volume_usd_in', 'volume_usd_not_in', 'untracked_volume', 'untracked_volume_not', 'untracked_volume_gt', 'untracked_volume_lt', 'untracked_volume_gte', 'untracked_volume_lte', 'untracked_volume_in', 'untracked_volume_not_in', 'liquidity_eth', 'liquidity_eth_not', 'liquidity_eth_gt', 'liquidity_eth_lt', 'liquidity_eth_gte', 'liquidity_eth_lte', 'liquidity_eth_in', 'liquidity_eth_not_in', 'liquidity_usd', 'liquidity_usd_not', 'liquidity_usd_gt', 'liquidity_usd_lt', 'liquidity_usd_gte', 'liquidity_usd_lte', 'liquidity_usd_in', 'liquidity_usd_not_in', 'tx_count', 'tx_count_not', 'tx_count_gt', 'tx_count_lt', 'tx_count_gte', 'tx_count_lte', 'tx_count_in', 'tx_count_not_in', '_change_block', 'and_', 'or_')
+    id = sgqlc.types.Field(ID, graphql_name='id')
+    id_not = sgqlc.types.Field(ID, graphql_name='id_not')
+    id_gt = sgqlc.types.Field(ID, graphql_name='id_gt')
+    id_lt = sgqlc.types.Field(ID, graphql_name='id_lt')
+    id_gte = sgqlc.types.Field(ID, graphql_name='id_gte')
+    id_lte = sgqlc.types.Field(ID, graphql_name='id_lte')
+    id_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(ID)), graphql_name='id_in')
+    id_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(ID)), graphql_name='id_not_in')
+    date = sgqlc.types.Field(Int, graphql_name='date')
+    date_not = sgqlc.types.Field(Int, graphql_name='date_not')
+    date_gt = sgqlc.types.Field(Int, graphql_name='date_gt')
+    date_lt = sgqlc.types.Field(Int, graphql_name='date_lt')
+    date_gte = sgqlc.types.Field(Int, graphql_name='date_gte')
+    date_lte = sgqlc.types.Field(Int, graphql_name='date_lte')
+    date_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='date_in')
+    date_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='date_not_in')
+    factory = sgqlc.types.Field(String, graphql_name='factory')
+    factory_not = sgqlc.types.Field(String, graphql_name='factory_not')
+    factory_gt = sgqlc.types.Field(String, graphql_name='factory_gt')
+    factory_lt = sgqlc.types.Field(String, graphql_name='factory_lt')
+    factory_gte = sgqlc.types.Field(String, graphql_name='factory_gte')
+    factory_lte = sgqlc.types.Field(String, graphql_name='factory_lte')
+    factory_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='factory_in')
+    factory_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='factory_not_in')
+    factory_contains = sgqlc.types.Field(String, graphql_name='factory_contains')
+    factory_contains_nocase = sgqlc.types.Field(String, graphql_name='factory_contains_nocase')
+    factory_not_contains = sgqlc.types.Field(String, graphql_name='factory_not_contains')
+    factory_not_contains_nocase = sgqlc.types.Field(String, graphql_name='factory_not_contains_nocase')
+    factory_starts_with = sgqlc.types.Field(String, graphql_name='factory_starts_with')
+    factory_starts_with_nocase = sgqlc.types.Field(String, graphql_name='factory_starts_with_nocase')
+    factory_not_starts_with = sgqlc.types.Field(String, graphql_name='factory_not_starts_with')
+    factory_not_starts_with_nocase = sgqlc.types.Field(String, graphql_name='factory_not_starts_with_nocase')
+    factory_ends_with = sgqlc.types.Field(String, graphql_name='factory_ends_with')
+    factory_ends_with_nocase = sgqlc.types.Field(String, graphql_name='factory_ends_with_nocase')
+    factory_not_ends_with = sgqlc.types.Field(String, graphql_name='factory_not_ends_with')
+    factory_not_ends_with_nocase = sgqlc.types.Field(String, graphql_name='factory_not_ends_with_nocase')
+    factory_ = sgqlc.types.Field('Factory_filter', graphql_name='factory_')
+    volume_eth = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH')
+    volume_eth_not = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_not')
+    volume_eth_gt = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_gt')
+    volume_eth_lt = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_lt')
+    volume_eth_gte = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_gte')
+    volume_eth_lte = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_lte')
+    volume_eth_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeETH_in')
+    volume_eth_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeETH_not_in')
+    volume_usd = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD')
+    volume_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_not')
+    volume_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_gt')
+    volume_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_lt')
+    volume_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_gte')
+    volume_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_lte')
+    volume_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeUSD_in')
+    volume_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeUSD_not_in')
+    untracked_volume = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolume')
+    untracked_volume_not = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolume_not')
+    untracked_volume_gt = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolume_gt')
+    untracked_volume_lt = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolume_lt')
+    untracked_volume_gte = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolume_gte')
+    untracked_volume_lte = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolume_lte')
+    untracked_volume_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='untrackedVolume_in')
+    untracked_volume_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='untrackedVolume_not_in')
+    liquidity_eth = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH')
+    liquidity_eth_not = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_not')
+    liquidity_eth_gt = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_gt')
+    liquidity_eth_lt = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_lt')
+    liquidity_eth_gte = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_gte')
+    liquidity_eth_lte = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_lte')
+    liquidity_eth_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityETH_in')
+    liquidity_eth_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityETH_not_in')
+    liquidity_usd = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD')
+    liquidity_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_not')
+    liquidity_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_gt')
+    liquidity_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_lt')
+    liquidity_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_gte')
+    liquidity_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_lte')
+    liquidity_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityUSD_in')
+    liquidity_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityUSD_not_in')
+    tx_count = sgqlc.types.Field(BigInt, graphql_name='txCount')
+    tx_count_not = sgqlc.types.Field(BigInt, graphql_name='txCount_not')
+    tx_count_gt = sgqlc.types.Field(BigInt, graphql_name='txCount_gt')
+    tx_count_lt = sgqlc.types.Field(BigInt, graphql_name='txCount_lt')
+    tx_count_gte = sgqlc.types.Field(BigInt, graphql_name='txCount_gte')
+    tx_count_lte = sgqlc.types.Field(BigInt, graphql_name='txCount_lte')
+    tx_count_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='txCount_in')
+    tx_count_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='txCount_not_in')
+    _change_block = sgqlc.types.Field(BlockChangedFilter, graphql_name='_change_block')
+    and_ = sgqlc.types.Field(sgqlc.types.list_of('DayData_filter'), graphql_name='and')
+    or_ = sgqlc.types.Field(sgqlc.types.list_of('DayData_filter'), graphql_name='or')
+
+
+class Factory_filter(sgqlc.types.Input):
+    __schema__ = graphql_schema
+    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'pair_count', 'pair_count_not', 'pair_count_gt', 'pair_count_lt', 'pair_count_gte', 'pair_count_lte', 'pair_count_in', 'pair_count_not_in', 'volume_usd', 'volume_usd_not', 'volume_usd_gt', 'volume_usd_lt', 'volume_usd_gte', 'volume_usd_lte', 'volume_usd_in', 'volume_usd_not_in', 'volume_eth', 'volume_eth_not', 'volume_eth_gt', 'volume_eth_lt', 'volume_eth_gte', 'volume_eth_lte', 'volume_eth_in', 'volume_eth_not_in', 'untracked_volume_usd', 'untracked_volume_usd_not', 'untracked_volume_usd_gt', 'untracked_volume_usd_lt', 'untracked_volume_usd_gte', 'untracked_volume_usd_lte', 'untracked_volume_usd_in', 'untracked_volume_usd_not_in', 'liquidity_usd', 'liquidity_usd_not', 'liquidity_usd_gt', 'liquidity_usd_lt', 'liquidity_usd_gte', 'liquidity_usd_lte', 'liquidity_usd_in', 'liquidity_usd_not_in', 'liquidity_eth', 'liquidity_eth_not', 'liquidity_eth_gt', 'liquidity_eth_lt', 'liquidity_eth_gte', 'liquidity_eth_lte', 'liquidity_eth_in', 'liquidity_eth_not_in', 'tx_count', 'tx_count_not', 'tx_count_gt', 'tx_count_lt', 'tx_count_gte', 'tx_count_lte', 'tx_count_in', 'tx_count_not_in', 'token_count', 'token_count_not', 'token_count_gt', 'token_count_lt', 'token_count_gte', 'token_count_lte', 'token_count_in', 'token_count_not_in', 'user_count', 'user_count_not', 'user_count_gt', 'user_count_lt', 'user_count_gte', 'user_count_lte', 'user_count_in', 'user_count_not_in', 'pairs_', 'tokens_', 'hour_data_', 'day_data_', '_change_block', 'and_', 'or_')
+    id = sgqlc.types.Field(ID, graphql_name='id')
+    id_not = sgqlc.types.Field(ID, graphql_name='id_not')
+    id_gt = sgqlc.types.Field(ID, graphql_name='id_gt')
+    id_lt = sgqlc.types.Field(ID, graphql_name='id_lt')
+    id_gte = sgqlc.types.Field(ID, graphql_name='id_gte')
+    id_lte = sgqlc.types.Field(ID, graphql_name='id_lte')
+    id_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(ID)), graphql_name='id_in')
+    id_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(ID)), graphql_name='id_not_in')
+    pair_count = sgqlc.types.Field(BigInt, graphql_name='pairCount')
+    pair_count_not = sgqlc.types.Field(BigInt, graphql_name='pairCount_not')
+    pair_count_gt = sgqlc.types.Field(BigInt, graphql_name='pairCount_gt')
+    pair_count_lt = sgqlc.types.Field(BigInt, graphql_name='pairCount_lt')
+    pair_count_gte = sgqlc.types.Field(BigInt, graphql_name='pairCount_gte')
+    pair_count_lte = sgqlc.types.Field(BigInt, graphql_name='pairCount_lte')
+    pair_count_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='pairCount_in')
+    pair_count_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='pairCount_not_in')
+    volume_usd = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD')
+    volume_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_not')
+    volume_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_gt')
+    volume_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_lt')
+    volume_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_gte')
+    volume_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_lte')
+    volume_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeUSD_in')
+    volume_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeUSD_not_in')
+    volume_eth = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH')
+    volume_eth_not = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_not')
+    volume_eth_gt = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_gt')
+    volume_eth_lt = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_lt')
+    volume_eth_gte = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_gte')
+    volume_eth_lte = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_lte')
+    volume_eth_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeETH_in')
+    volume_eth_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeETH_not_in')
+    untracked_volume_usd = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolumeUSD')
+    untracked_volume_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolumeUSD_not')
+    untracked_volume_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolumeUSD_gt')
+    untracked_volume_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolumeUSD_lt')
+    untracked_volume_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolumeUSD_gte')
+    untracked_volume_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolumeUSD_lte')
+    untracked_volume_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='untrackedVolumeUSD_in')
+    untracked_volume_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='untrackedVolumeUSD_not_in')
+    liquidity_usd = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD')
+    liquidity_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_not')
+    liquidity_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_gt')
+    liquidity_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_lt')
+    liquidity_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_gte')
+    liquidity_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_lte')
+    liquidity_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityUSD_in')
+    liquidity_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityUSD_not_in')
+    liquidity_eth = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH')
+    liquidity_eth_not = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_not')
+    liquidity_eth_gt = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_gt')
+    liquidity_eth_lt = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_lt')
+    liquidity_eth_gte = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_gte')
+    liquidity_eth_lte = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_lte')
+    liquidity_eth_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityETH_in')
+    liquidity_eth_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityETH_not_in')
+    tx_count = sgqlc.types.Field(BigInt, graphql_name='txCount')
+    tx_count_not = sgqlc.types.Field(BigInt, graphql_name='txCount_not')
+    tx_count_gt = sgqlc.types.Field(BigInt, graphql_name='txCount_gt')
+    tx_count_lt = sgqlc.types.Field(BigInt, graphql_name='txCount_lt')
+    tx_count_gte = sgqlc.types.Field(BigInt, graphql_name='txCount_gte')
+    tx_count_lte = sgqlc.types.Field(BigInt, graphql_name='txCount_lte')
+    tx_count_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='txCount_in')
+    tx_count_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='txCount_not_in')
+    token_count = sgqlc.types.Field(BigInt, graphql_name='tokenCount')
+    token_count_not = sgqlc.types.Field(BigInt, graphql_name='tokenCount_not')
+    token_count_gt = sgqlc.types.Field(BigInt, graphql_name='tokenCount_gt')
+    token_count_lt = sgqlc.types.Field(BigInt, graphql_name='tokenCount_lt')
+    token_count_gte = sgqlc.types.Field(BigInt, graphql_name='tokenCount_gte')
+    token_count_lte = sgqlc.types.Field(BigInt, graphql_name='tokenCount_lte')
+    token_count_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='tokenCount_in')
+    token_count_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='tokenCount_not_in')
+    user_count = sgqlc.types.Field(BigInt, graphql_name='userCount')
+    user_count_not = sgqlc.types.Field(BigInt, graphql_name='userCount_not')
+    user_count_gt = sgqlc.types.Field(BigInt, graphql_name='userCount_gt')
+    user_count_lt = sgqlc.types.Field(BigInt, graphql_name='userCount_lt')
+    user_count_gte = sgqlc.types.Field(BigInt, graphql_name='userCount_gte')
+    user_count_lte = sgqlc.types.Field(BigInt, graphql_name='userCount_lte')
+    user_count_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='userCount_in')
+    user_count_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='userCount_not_in')
+    pairs_ = sgqlc.types.Field('Pair_filter', graphql_name='pairs_')
+    tokens_ = sgqlc.types.Field('Token_filter', graphql_name='tokens_')
+    hour_data_ = sgqlc.types.Field('HourData_filter', graphql_name='hourData_')
+    day_data_ = sgqlc.types.Field(DayData_filter, graphql_name='dayData_')
+    _change_block = sgqlc.types.Field(BlockChangedFilter, graphql_name='_change_block')
+    and_ = sgqlc.types.Field(sgqlc.types.list_of('Factory_filter'), graphql_name='and')
+    or_ = sgqlc.types.Field(sgqlc.types.list_of('Factory_filter'), graphql_name='or')
+
+
+class HourData_filter(sgqlc.types.Input):
+    __schema__ = graphql_schema
+    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'date', 'date_not', 'date_gt', 'date_lt', 'date_gte', 'date_lte', 'date_in', 'date_not_in', 'factory', 'factory_not', 'factory_gt', 'factory_lt', 'factory_gte', 'factory_lte', 'factory_in', 'factory_not_in', 'factory_contains', 'factory_contains_nocase', 'factory_not_contains', 'factory_not_contains_nocase', 'factory_starts_with', 'factory_starts_with_nocase', 'factory_not_starts_with', 'factory_not_starts_with_nocase', 'factory_ends_with', 'factory_ends_with_nocase', 'factory_not_ends_with', 'factory_not_ends_with_nocase', 'factory_', 'volume_eth', 'volume_eth_not', 'volume_eth_gt', 'volume_eth_lt', 'volume_eth_gte', 'volume_eth_lte', 'volume_eth_in', 'volume_eth_not_in', 'volume_usd', 'volume_usd_not', 'volume_usd_gt', 'volume_usd_lt', 'volume_usd_gte', 'volume_usd_lte', 'volume_usd_in', 'volume_usd_not_in', 'untracked_volume', 'untracked_volume_not', 'untracked_volume_gt', 'untracked_volume_lt', 'untracked_volume_gte', 'untracked_volume_lte', 'untracked_volume_in', 'untracked_volume_not_in', 'liquidity_eth', 'liquidity_eth_not', 'liquidity_eth_gt', 'liquidity_eth_lt', 'liquidity_eth_gte', 'liquidity_eth_lte', 'liquidity_eth_in', 'liquidity_eth_not_in', 'liquidity_usd', 'liquidity_usd_not', 'liquidity_usd_gt', 'liquidity_usd_lt', 'liquidity_usd_gte', 'liquidity_usd_lte', 'liquidity_usd_in', 'liquidity_usd_not_in', 'tx_count', 'tx_count_not', 'tx_count_gt', 'tx_count_lt', 'tx_count_gte', 'tx_count_lte', 'tx_count_in', 'tx_count_not_in', '_change_block', 'and_', 'or_')
+    id = sgqlc.types.Field(ID, graphql_name='id')
+    id_not = sgqlc.types.Field(ID, graphql_name='id_not')
+    id_gt = sgqlc.types.Field(ID, graphql_name='id_gt')
+    id_lt = sgqlc.types.Field(ID, graphql_name='id_lt')
+    id_gte = sgqlc.types.Field(ID, graphql_name='id_gte')
+    id_lte = sgqlc.types.Field(ID, graphql_name='id_lte')
+    id_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(ID)), graphql_name='id_in')
+    id_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(ID)), graphql_name='id_not_in')
+    date = sgqlc.types.Field(Int, graphql_name='date')
+    date_not = sgqlc.types.Field(Int, graphql_name='date_not')
+    date_gt = sgqlc.types.Field(Int, graphql_name='date_gt')
+    date_lt = sgqlc.types.Field(Int, graphql_name='date_lt')
+    date_gte = sgqlc.types.Field(Int, graphql_name='date_gte')
+    date_lte = sgqlc.types.Field(Int, graphql_name='date_lte')
+    date_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='date_in')
+    date_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='date_not_in')
+    factory = sgqlc.types.Field(String, graphql_name='factory')
+    factory_not = sgqlc.types.Field(String, graphql_name='factory_not')
+    factory_gt = sgqlc.types.Field(String, graphql_name='factory_gt')
+    factory_lt = sgqlc.types.Field(String, graphql_name='factory_lt')
+    factory_gte = sgqlc.types.Field(String, graphql_name='factory_gte')
+    factory_lte = sgqlc.types.Field(String, graphql_name='factory_lte')
+    factory_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='factory_in')
+    factory_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='factory_not_in')
+    factory_contains = sgqlc.types.Field(String, graphql_name='factory_contains')
+    factory_contains_nocase = sgqlc.types.Field(String, graphql_name='factory_contains_nocase')
+    factory_not_contains = sgqlc.types.Field(String, graphql_name='factory_not_contains')
+    factory_not_contains_nocase = sgqlc.types.Field(String, graphql_name='factory_not_contains_nocase')
+    factory_starts_with = sgqlc.types.Field(String, graphql_name='factory_starts_with')
+    factory_starts_with_nocase = sgqlc.types.Field(String, graphql_name='factory_starts_with_nocase')
+    factory_not_starts_with = sgqlc.types.Field(String, graphql_name='factory_not_starts_with')
+    factory_not_starts_with_nocase = sgqlc.types.Field(String, graphql_name='factory_not_starts_with_nocase')
+    factory_ends_with = sgqlc.types.Field(String, graphql_name='factory_ends_with')
+    factory_ends_with_nocase = sgqlc.types.Field(String, graphql_name='factory_ends_with_nocase')
+    factory_not_ends_with = sgqlc.types.Field(String, graphql_name='factory_not_ends_with')
+    factory_not_ends_with_nocase = sgqlc.types.Field(String, graphql_name='factory_not_ends_with_nocase')
+    factory_ = sgqlc.types.Field(Factory_filter, graphql_name='factory_')
+    volume_eth = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH')
+    volume_eth_not = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_not')
+    volume_eth_gt = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_gt')
+    volume_eth_lt = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_lt')
+    volume_eth_gte = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_gte')
+    volume_eth_lte = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_lte')
+    volume_eth_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeETH_in')
+    volume_eth_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeETH_not_in')
+    volume_usd = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD')
+    volume_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_not')
+    volume_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_gt')
+    volume_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_lt')
+    volume_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_gte')
+    volume_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_lte')
+    volume_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeUSD_in')
+    volume_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeUSD_not_in')
+    untracked_volume = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolume')
+    untracked_volume_not = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolume_not')
+    untracked_volume_gt = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolume_gt')
+    untracked_volume_lt = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolume_lt')
+    untracked_volume_gte = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolume_gte')
+    untracked_volume_lte = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolume_lte')
+    untracked_volume_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='untrackedVolume_in')
+    untracked_volume_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='untrackedVolume_not_in')
+    liquidity_eth = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH')
+    liquidity_eth_not = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_not')
+    liquidity_eth_gt = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_gt')
+    liquidity_eth_lt = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_lt')
+    liquidity_eth_gte = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_gte')
+    liquidity_eth_lte = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_lte')
+    liquidity_eth_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityETH_in')
+    liquidity_eth_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityETH_not_in')
+    liquidity_usd = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD')
+    liquidity_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_not')
+    liquidity_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_gt')
+    liquidity_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_lt')
+    liquidity_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_gte')
+    liquidity_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_lte')
+    liquidity_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityUSD_in')
+    liquidity_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityUSD_not_in')
+    tx_count = sgqlc.types.Field(BigInt, graphql_name='txCount')
+    tx_count_not = sgqlc.types.Field(BigInt, graphql_name='txCount_not')
+    tx_count_gt = sgqlc.types.Field(BigInt, graphql_name='txCount_gt')
+    tx_count_lt = sgqlc.types.Field(BigInt, graphql_name='txCount_lt')
+    tx_count_gte = sgqlc.types.Field(BigInt, graphql_name='txCount_gte')
+    tx_count_lte = sgqlc.types.Field(BigInt, graphql_name='txCount_lte')
+    tx_count_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='txCount_in')
+    tx_count_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='txCount_not_in')
+    _change_block = sgqlc.types.Field(BlockChangedFilter, graphql_name='_change_block')
+    and_ = sgqlc.types.Field(sgqlc.types.list_of('HourData_filter'), graphql_name='and')
+    or_ = sgqlc.types.Field(sgqlc.types.list_of('HourData_filter'), graphql_name='or')
 
 
 class LiquidityPositionSnapshot_filter(sgqlc.types.Input):
     __schema__ = graphql_schema
-    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'liquidity_position', 'liquidity_position_not', 'liquidity_position_gt', 'liquidity_position_lt', 'liquidity_position_gte', 'liquidity_position_lte', 'liquidity_position_in', 'liquidity_position_not_in', 'liquidity_position_contains', 'liquidity_position_contains_nocase', 'liquidity_position_not_contains', 'liquidity_position_not_contains_nocase', 'liquidity_position_starts_with', 'liquidity_position_starts_with_nocase', 'liquidity_position_not_starts_with', 'liquidity_position_not_starts_with_nocase', 'liquidity_position_ends_with', 'liquidity_position_ends_with_nocase', 'liquidity_position_not_ends_with', 'liquidity_position_not_ends_with_nocase', 'liquidity_position_', 'timestamp', 'timestamp_not', 'timestamp_gt', 'timestamp_lt', 'timestamp_gte', 'timestamp_lte', 'timestamp_in', 'timestamp_not_in', 'block', 'block_not', 'block_gt', 'block_lt', 'block_gte', 'block_lte', 'block_in', 'block_not_in', 'user', 'user_not', 'user_gt', 'user_lt', 'user_gte', 'user_lte', 'user_in', 'user_not_in', 'user_contains', 'user_contains_nocase', 'user_not_contains', 'user_not_contains_nocase', 'user_starts_with', 'user_starts_with_nocase', 'user_not_starts_with', 'user_not_starts_with_nocase', 'user_ends_with', 'user_ends_with_nocase', 'user_not_ends_with', 'user_not_ends_with_nocase', 'user_', 'pair', 'pair_not', 'pair_gt', 'pair_lt', 'pair_gte', 'pair_lte', 'pair_in', 'pair_not_in', 'pair_contains', 'pair_contains_nocase', 'pair_not_contains', 'pair_not_contains_nocase', 'pair_starts_with', 'pair_starts_with_nocase', 'pair_not_starts_with', 'pair_not_starts_with_nocase', 'pair_ends_with', 'pair_ends_with_nocase', 'pair_not_ends_with', 'pair_not_ends_with_nocase', 'pair_', 'token0_price_usd', 'token0_price_usd_not', 'token0_price_usd_gt', 'token0_price_usd_lt', 'token0_price_usd_gte', 'token0_price_usd_lte', 'token0_price_usd_in', 'token0_price_usd_not_in', 'token1_price_usd', 'token1_price_usd_not', 'token1_price_usd_gt', 'token1_price_usd_lt', 'token1_price_usd_gte', 'token1_price_usd_lte', 'token1_price_usd_in', 'token1_price_usd_not_in', 'reserve0', 'reserve0_not', 'reserve0_gt', 'reserve0_lt', 'reserve0_gte', 'reserve0_lte', 'reserve0_in', 'reserve0_not_in', 'reserve1', 'reserve1_not', 'reserve1_gt', 'reserve1_lt', 'reserve1_gte', 'reserve1_lte', 'reserve1_in', 'reserve1_not_in', 'reserve_usd', 'reserve_usd_not', 'reserve_usd_gt', 'reserve_usd_lt', 'reserve_usd_gte', 'reserve_usd_lte', 'reserve_usd_in', 'reserve_usd_not_in', 'liquidity_token_total_supply', 'liquidity_token_total_supply_not', 'liquidity_token_total_supply_gt', 'liquidity_token_total_supply_lt', 'liquidity_token_total_supply_gte', 'liquidity_token_total_supply_lte', 'liquidity_token_total_supply_in', 'liquidity_token_total_supply_not_in', 'liquidity_token_balance', 'liquidity_token_balance_not', 'liquidity_token_balance_gt', 'liquidity_token_balance_lt', 'liquidity_token_balance_gte', 'liquidity_token_balance_lte', 'liquidity_token_balance_in', 'liquidity_token_balance_not_in', '_change_block')
+    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'liquidity_position', 'liquidity_position_not', 'liquidity_position_gt', 'liquidity_position_lt', 'liquidity_position_gte', 'liquidity_position_lte', 'liquidity_position_in', 'liquidity_position_not_in', 'liquidity_position_contains', 'liquidity_position_contains_nocase', 'liquidity_position_not_contains', 'liquidity_position_not_contains_nocase', 'liquidity_position_starts_with', 'liquidity_position_starts_with_nocase', 'liquidity_position_not_starts_with', 'liquidity_position_not_starts_with_nocase', 'liquidity_position_ends_with', 'liquidity_position_ends_with_nocase', 'liquidity_position_not_ends_with', 'liquidity_position_not_ends_with_nocase', 'liquidity_position_', 'timestamp', 'timestamp_not', 'timestamp_gt', 'timestamp_lt', 'timestamp_gte', 'timestamp_lte', 'timestamp_in', 'timestamp_not_in', 'block', 'block_not', 'block_gt', 'block_lt', 'block_gte', 'block_lte', 'block_in', 'block_not_in', 'user', 'user_not', 'user_gt', 'user_lt', 'user_gte', 'user_lte', 'user_in', 'user_not_in', 'user_contains', 'user_contains_nocase', 'user_not_contains', 'user_not_contains_nocase', 'user_starts_with', 'user_starts_with_nocase', 'user_not_starts_with', 'user_not_starts_with_nocase', 'user_ends_with', 'user_ends_with_nocase', 'user_not_ends_with', 'user_not_ends_with_nocase', 'user_', 'pair', 'pair_not', 'pair_gt', 'pair_lt', 'pair_gte', 'pair_lte', 'pair_in', 'pair_not_in', 'pair_contains', 'pair_contains_nocase', 'pair_not_contains', 'pair_not_contains_nocase', 'pair_starts_with', 'pair_starts_with_nocase', 'pair_not_starts_with', 'pair_not_starts_with_nocase', 'pair_ends_with', 'pair_ends_with_nocase', 'pair_not_ends_with', 'pair_not_ends_with_nocase', 'pair_', 'token0_price_usd', 'token0_price_usd_not', 'token0_price_usd_gt', 'token0_price_usd_lt', 'token0_price_usd_gte', 'token0_price_usd_lte', 'token0_price_usd_in', 'token0_price_usd_not_in', 'token1_price_usd', 'token1_price_usd_not', 'token1_price_usd_gt', 'token1_price_usd_lt', 'token1_price_usd_gte', 'token1_price_usd_lte', 'token1_price_usd_in', 'token1_price_usd_not_in', 'reserve0', 'reserve0_not', 'reserve0_gt', 'reserve0_lt', 'reserve0_gte', 'reserve0_lte', 'reserve0_in', 'reserve0_not_in', 'reserve1', 'reserve1_not', 'reserve1_gt', 'reserve1_lt', 'reserve1_gte', 'reserve1_lte', 'reserve1_in', 'reserve1_not_in', 'reserve_usd', 'reserve_usd_not', 'reserve_usd_gt', 'reserve_usd_lt', 'reserve_usd_gte', 'reserve_usd_lte', 'reserve_usd_in', 'reserve_usd_not_in', 'liquidity_token_total_supply', 'liquidity_token_total_supply_not', 'liquidity_token_total_supply_gt', 'liquidity_token_total_supply_lt', 'liquidity_token_total_supply_gte', 'liquidity_token_total_supply_lte', 'liquidity_token_total_supply_in', 'liquidity_token_total_supply_not_in', 'liquidity_token_balance', 'liquidity_token_balance_not', 'liquidity_token_balance_gt', 'liquidity_token_balance_lt', 'liquidity_token_balance_gte', 'liquidity_token_balance_lte', 'liquidity_token_balance_in', 'liquidity_token_balance_not_in', '_change_block', 'and_', 'or_')
     id = sgqlc.types.Field(ID, graphql_name='id')
     id_not = sgqlc.types.Field(ID, graphql_name='id_not')
     id_gt = sgqlc.types.Field(ID, graphql_name='id_gt')
@@ -436,11 +753,13 @@ class LiquidityPositionSnapshot_filter(sgqlc.types.Input):
     liquidity_token_balance_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityTokenBalance_in')
     liquidity_token_balance_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityTokenBalance_not_in')
     _change_block = sgqlc.types.Field(BlockChangedFilter, graphql_name='_change_block')
+    and_ = sgqlc.types.Field(sgqlc.types.list_of('LiquidityPositionSnapshot_filter'), graphql_name='and')
+    or_ = sgqlc.types.Field(sgqlc.types.list_of('LiquidityPositionSnapshot_filter'), graphql_name='or')
 
 
 class LiquidityPosition_filter(sgqlc.types.Input):
     __schema__ = graphql_schema
-    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'user', 'user_not', 'user_gt', 'user_lt', 'user_gte', 'user_lte', 'user_in', 'user_not_in', 'user_contains', 'user_contains_nocase', 'user_not_contains', 'user_not_contains_nocase', 'user_starts_with', 'user_starts_with_nocase', 'user_not_starts_with', 'user_not_starts_with_nocase', 'user_ends_with', 'user_ends_with_nocase', 'user_not_ends_with', 'user_not_ends_with_nocase', 'user_', 'pair', 'pair_not', 'pair_gt', 'pair_lt', 'pair_gte', 'pair_lte', 'pair_in', 'pair_not_in', 'pair_contains', 'pair_contains_nocase', 'pair_not_contains', 'pair_not_contains_nocase', 'pair_starts_with', 'pair_starts_with_nocase', 'pair_not_starts_with', 'pair_not_starts_with_nocase', 'pair_ends_with', 'pair_ends_with_nocase', 'pair_not_ends_with', 'pair_not_ends_with_nocase', 'pair_', 'liquidity_token_balance', 'liquidity_token_balance_not', 'liquidity_token_balance_gt', 'liquidity_token_balance_lt', 'liquidity_token_balance_gte', 'liquidity_token_balance_lte', 'liquidity_token_balance_in', 'liquidity_token_balance_not_in', '_change_block')
+    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'user', 'user_not', 'user_gt', 'user_lt', 'user_gte', 'user_lte', 'user_in', 'user_not_in', 'user_contains', 'user_contains_nocase', 'user_not_contains', 'user_not_contains_nocase', 'user_starts_with', 'user_starts_with_nocase', 'user_not_starts_with', 'user_not_starts_with_nocase', 'user_ends_with', 'user_ends_with_nocase', 'user_not_ends_with', 'user_not_ends_with_nocase', 'user_', 'pair', 'pair_not', 'pair_gt', 'pair_lt', 'pair_gte', 'pair_lte', 'pair_in', 'pair_not_in', 'pair_contains', 'pair_contains_nocase', 'pair_not_contains', 'pair_not_contains_nocase', 'pair_starts_with', 'pair_starts_with_nocase', 'pair_not_starts_with', 'pair_not_starts_with_nocase', 'pair_ends_with', 'pair_ends_with_nocase', 'pair_not_ends_with', 'pair_not_ends_with_nocase', 'pair_', 'liquidity_token_balance', 'liquidity_token_balance_not', 'liquidity_token_balance_gt', 'liquidity_token_balance_lt', 'liquidity_token_balance_gte', 'liquidity_token_balance_lte', 'liquidity_token_balance_in', 'liquidity_token_balance_not_in', 'snapshots_', 'block', 'block_not', 'block_gt', 'block_lt', 'block_gte', 'block_lte', 'block_in', 'block_not_in', 'timestamp', 'timestamp_not', 'timestamp_gt', 'timestamp_lt', 'timestamp_gte', 'timestamp_lte', 'timestamp_in', 'timestamp_not_in', '_change_block', 'and_', 'or_')
     id = sgqlc.types.Field(ID, graphql_name='id')
     id_not = sgqlc.types.Field(ID, graphql_name='id_not')
     id_gt = sgqlc.types.Field(ID, graphql_name='id_gt')
@@ -499,12 +818,31 @@ class LiquidityPosition_filter(sgqlc.types.Input):
     liquidity_token_balance_lte = sgqlc.types.Field(BigDecimal, graphql_name='liquidityTokenBalance_lte')
     liquidity_token_balance_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityTokenBalance_in')
     liquidity_token_balance_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityTokenBalance_not_in')
+    snapshots_ = sgqlc.types.Field(LiquidityPositionSnapshot_filter, graphql_name='snapshots_')
+    block = sgqlc.types.Field(Int, graphql_name='block')
+    block_not = sgqlc.types.Field(Int, graphql_name='block_not')
+    block_gt = sgqlc.types.Field(Int, graphql_name='block_gt')
+    block_lt = sgqlc.types.Field(Int, graphql_name='block_lt')
+    block_gte = sgqlc.types.Field(Int, graphql_name='block_gte')
+    block_lte = sgqlc.types.Field(Int, graphql_name='block_lte')
+    block_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='block_in')
+    block_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='block_not_in')
+    timestamp = sgqlc.types.Field(Int, graphql_name='timestamp')
+    timestamp_not = sgqlc.types.Field(Int, graphql_name='timestamp_not')
+    timestamp_gt = sgqlc.types.Field(Int, graphql_name='timestamp_gt')
+    timestamp_lt = sgqlc.types.Field(Int, graphql_name='timestamp_lt')
+    timestamp_gte = sgqlc.types.Field(Int, graphql_name='timestamp_gte')
+    timestamp_lte = sgqlc.types.Field(Int, graphql_name='timestamp_lte')
+    timestamp_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='timestamp_in')
+    timestamp_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='timestamp_not_in')
     _change_block = sgqlc.types.Field(BlockChangedFilter, graphql_name='_change_block')
+    and_ = sgqlc.types.Field(sgqlc.types.list_of('LiquidityPosition_filter'), graphql_name='and')
+    or_ = sgqlc.types.Field(sgqlc.types.list_of('LiquidityPosition_filter'), graphql_name='or')
 
 
 class Mint_filter(sgqlc.types.Input):
     __schema__ = graphql_schema
-    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'transaction', 'transaction_not', 'transaction_gt', 'transaction_lt', 'transaction_gte', 'transaction_lte', 'transaction_in', 'transaction_not_in', 'transaction_contains', 'transaction_contains_nocase', 'transaction_not_contains', 'transaction_not_contains_nocase', 'transaction_starts_with', 'transaction_starts_with_nocase', 'transaction_not_starts_with', 'transaction_not_starts_with_nocase', 'transaction_ends_with', 'transaction_ends_with_nocase', 'transaction_not_ends_with', 'transaction_not_ends_with_nocase', 'transaction_', 'timestamp', 'timestamp_not', 'timestamp_gt', 'timestamp_lt', 'timestamp_gte', 'timestamp_lte', 'timestamp_in', 'timestamp_not_in', 'pair', 'pair_not', 'pair_gt', 'pair_lt', 'pair_gte', 'pair_lte', 'pair_in', 'pair_not_in', 'pair_contains', 'pair_contains_nocase', 'pair_not_contains', 'pair_not_contains_nocase', 'pair_starts_with', 'pair_starts_with_nocase', 'pair_not_starts_with', 'pair_not_starts_with_nocase', 'pair_ends_with', 'pair_ends_with_nocase', 'pair_not_ends_with', 'pair_not_ends_with_nocase', 'pair_', 'to', 'to_not', 'to_in', 'to_not_in', 'to_contains', 'to_not_contains', 'liquidity', 'liquidity_not', 'liquidity_gt', 'liquidity_lt', 'liquidity_gte', 'liquidity_lte', 'liquidity_in', 'liquidity_not_in', 'sender', 'sender_not', 'sender_in', 'sender_not_in', 'sender_contains', 'sender_not_contains', 'amount0', 'amount0_not', 'amount0_gt', 'amount0_lt', 'amount0_gte', 'amount0_lte', 'amount0_in', 'amount0_not_in', 'amount1', 'amount1_not', 'amount1_gt', 'amount1_lt', 'amount1_gte', 'amount1_lte', 'amount1_in', 'amount1_not_in', 'log_index', 'log_index_not', 'log_index_gt', 'log_index_lt', 'log_index_gte', 'log_index_lte', 'log_index_in', 'log_index_not_in', 'amount_usd', 'amount_usd_not', 'amount_usd_gt', 'amount_usd_lt', 'amount_usd_gte', 'amount_usd_lte', 'amount_usd_in', 'amount_usd_not_in', 'fee_to', 'fee_to_not', 'fee_to_in', 'fee_to_not_in', 'fee_to_contains', 'fee_to_not_contains', 'fee_liquidity', 'fee_liquidity_not', 'fee_liquidity_gt', 'fee_liquidity_lt', 'fee_liquidity_gte', 'fee_liquidity_lte', 'fee_liquidity_in', 'fee_liquidity_not_in', '_change_block')
+    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'transaction', 'transaction_not', 'transaction_gt', 'transaction_lt', 'transaction_gte', 'transaction_lte', 'transaction_in', 'transaction_not_in', 'transaction_contains', 'transaction_contains_nocase', 'transaction_not_contains', 'transaction_not_contains_nocase', 'transaction_starts_with', 'transaction_starts_with_nocase', 'transaction_not_starts_with', 'transaction_not_starts_with_nocase', 'transaction_ends_with', 'transaction_ends_with_nocase', 'transaction_not_ends_with', 'transaction_not_ends_with_nocase', 'transaction_', 'timestamp', 'timestamp_not', 'timestamp_gt', 'timestamp_lt', 'timestamp_gte', 'timestamp_lte', 'timestamp_in', 'timestamp_not_in', 'pair', 'pair_not', 'pair_gt', 'pair_lt', 'pair_gte', 'pair_lte', 'pair_in', 'pair_not_in', 'pair_contains', 'pair_contains_nocase', 'pair_not_contains', 'pair_not_contains_nocase', 'pair_starts_with', 'pair_starts_with_nocase', 'pair_not_starts_with', 'pair_not_starts_with_nocase', 'pair_ends_with', 'pair_ends_with_nocase', 'pair_not_ends_with', 'pair_not_ends_with_nocase', 'pair_', 'to', 'to_not', 'to_gt', 'to_lt', 'to_gte', 'to_lte', 'to_in', 'to_not_in', 'to_contains', 'to_not_contains', 'liquidity', 'liquidity_not', 'liquidity_gt', 'liquidity_lt', 'liquidity_gte', 'liquidity_lte', 'liquidity_in', 'liquidity_not_in', 'sender', 'sender_not', 'sender_gt', 'sender_lt', 'sender_gte', 'sender_lte', 'sender_in', 'sender_not_in', 'sender_contains', 'sender_not_contains', 'amount0', 'amount0_not', 'amount0_gt', 'amount0_lt', 'amount0_gte', 'amount0_lte', 'amount0_in', 'amount0_not_in', 'amount1', 'amount1_not', 'amount1_gt', 'amount1_lt', 'amount1_gte', 'amount1_lte', 'amount1_in', 'amount1_not_in', 'log_index', 'log_index_not', 'log_index_gt', 'log_index_lt', 'log_index_gte', 'log_index_lte', 'log_index_in', 'log_index_not_in', 'amount_usd', 'amount_usd_not', 'amount_usd_gt', 'amount_usd_lt', 'amount_usd_gte', 'amount_usd_lte', 'amount_usd_in', 'amount_usd_not_in', 'fee_to', 'fee_to_not', 'fee_to_gt', 'fee_to_lt', 'fee_to_gte', 'fee_to_lte', 'fee_to_in', 'fee_to_not_in', 'fee_to_contains', 'fee_to_not_contains', 'fee_liquidity', 'fee_liquidity_not', 'fee_liquidity_gt', 'fee_liquidity_lt', 'fee_liquidity_gte', 'fee_liquidity_lte', 'fee_liquidity_in', 'fee_liquidity_not_in', '_change_block', 'and_', 'or_')
     id = sgqlc.types.Field(ID, graphql_name='id')
     id_not = sgqlc.types.Field(ID, graphql_name='id_not')
     id_gt = sgqlc.types.Field(ID, graphql_name='id_gt')
@@ -565,6 +903,10 @@ class Mint_filter(sgqlc.types.Input):
     pair_ = sgqlc.types.Field('Pair_filter', graphql_name='pair_')
     to = sgqlc.types.Field(Bytes, graphql_name='to')
     to_not = sgqlc.types.Field(Bytes, graphql_name='to_not')
+    to_gt = sgqlc.types.Field(Bytes, graphql_name='to_gt')
+    to_lt = sgqlc.types.Field(Bytes, graphql_name='to_lt')
+    to_gte = sgqlc.types.Field(Bytes, graphql_name='to_gte')
+    to_lte = sgqlc.types.Field(Bytes, graphql_name='to_lte')
     to_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Bytes)), graphql_name='to_in')
     to_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Bytes)), graphql_name='to_not_in')
     to_contains = sgqlc.types.Field(Bytes, graphql_name='to_contains')
@@ -579,6 +921,10 @@ class Mint_filter(sgqlc.types.Input):
     liquidity_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidity_not_in')
     sender = sgqlc.types.Field(Bytes, graphql_name='sender')
     sender_not = sgqlc.types.Field(Bytes, graphql_name='sender_not')
+    sender_gt = sgqlc.types.Field(Bytes, graphql_name='sender_gt')
+    sender_lt = sgqlc.types.Field(Bytes, graphql_name='sender_lt')
+    sender_gte = sgqlc.types.Field(Bytes, graphql_name='sender_gte')
+    sender_lte = sgqlc.types.Field(Bytes, graphql_name='sender_lte')
     sender_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Bytes)), graphql_name='sender_in')
     sender_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Bytes)), graphql_name='sender_not_in')
     sender_contains = sgqlc.types.Field(Bytes, graphql_name='sender_contains')
@@ -617,6 +963,10 @@ class Mint_filter(sgqlc.types.Input):
     amount_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='amountUSD_not_in')
     fee_to = sgqlc.types.Field(Bytes, graphql_name='feeTo')
     fee_to_not = sgqlc.types.Field(Bytes, graphql_name='feeTo_not')
+    fee_to_gt = sgqlc.types.Field(Bytes, graphql_name='feeTo_gt')
+    fee_to_lt = sgqlc.types.Field(Bytes, graphql_name='feeTo_lt')
+    fee_to_gte = sgqlc.types.Field(Bytes, graphql_name='feeTo_gte')
+    fee_to_lte = sgqlc.types.Field(Bytes, graphql_name='feeTo_lte')
     fee_to_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Bytes)), graphql_name='feeTo_in')
     fee_to_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Bytes)), graphql_name='feeTo_not_in')
     fee_to_contains = sgqlc.types.Field(Bytes, graphql_name='feeTo_contains')
@@ -630,11 +980,13 @@ class Mint_filter(sgqlc.types.Input):
     fee_liquidity_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='feeLiquidity_in')
     fee_liquidity_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='feeLiquidity_not_in')
     _change_block = sgqlc.types.Field(BlockChangedFilter, graphql_name='_change_block')
+    and_ = sgqlc.types.Field(sgqlc.types.list_of('Mint_filter'), graphql_name='and')
+    or_ = sgqlc.types.Field(sgqlc.types.list_of('Mint_filter'), graphql_name='or')
 
 
 class PairDayData_filter(sgqlc.types.Input):
     __schema__ = graphql_schema
-    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'date', 'date_not', 'date_gt', 'date_lt', 'date_gte', 'date_lte', 'date_in', 'date_not_in', 'pair_address', 'pair_address_not', 'pair_address_in', 'pair_address_not_in', 'pair_address_contains', 'pair_address_not_contains', 'token0', 'token0_not', 'token0_gt', 'token0_lt', 'token0_gte', 'token0_lte', 'token0_in', 'token0_not_in', 'token0_contains', 'token0_contains_nocase', 'token0_not_contains', 'token0_not_contains_nocase', 'token0_starts_with', 'token0_starts_with_nocase', 'token0_not_starts_with', 'token0_not_starts_with_nocase', 'token0_ends_with', 'token0_ends_with_nocase', 'token0_not_ends_with', 'token0_not_ends_with_nocase', 'token0_', 'token1', 'token1_not', 'token1_gt', 'token1_lt', 'token1_gte', 'token1_lte', 'token1_in', 'token1_not_in', 'token1_contains', 'token1_contains_nocase', 'token1_not_contains', 'token1_not_contains_nocase', 'token1_starts_with', 'token1_starts_with_nocase', 'token1_not_starts_with', 'token1_not_starts_with_nocase', 'token1_ends_with', 'token1_ends_with_nocase', 'token1_not_ends_with', 'token1_not_ends_with_nocase', 'token1_', 'reserve0', 'reserve0_not', 'reserve0_gt', 'reserve0_lt', 'reserve0_gte', 'reserve0_lte', 'reserve0_in', 'reserve0_not_in', 'reserve1', 'reserve1_not', 'reserve1_gt', 'reserve1_lt', 'reserve1_gte', 'reserve1_lte', 'reserve1_in', 'reserve1_not_in', 'total_supply', 'total_supply_not', 'total_supply_gt', 'total_supply_lt', 'total_supply_gte', 'total_supply_lte', 'total_supply_in', 'total_supply_not_in', 'reserve_usd', 'reserve_usd_not', 'reserve_usd_gt', 'reserve_usd_lt', 'reserve_usd_gte', 'reserve_usd_lte', 'reserve_usd_in', 'reserve_usd_not_in', 'daily_volume_token0', 'daily_volume_token0_not', 'daily_volume_token0_gt', 'daily_volume_token0_lt', 'daily_volume_token0_gte', 'daily_volume_token0_lte', 'daily_volume_token0_in', 'daily_volume_token0_not_in', 'daily_volume_token1', 'daily_volume_token1_not', 'daily_volume_token1_gt', 'daily_volume_token1_lt', 'daily_volume_token1_gte', 'daily_volume_token1_lte', 'daily_volume_token1_in', 'daily_volume_token1_not_in', 'daily_volume_usd', 'daily_volume_usd_not', 'daily_volume_usd_gt', 'daily_volume_usd_lt', 'daily_volume_usd_gte', 'daily_volume_usd_lte', 'daily_volume_usd_in', 'daily_volume_usd_not_in', 'daily_txns', 'daily_txns_not', 'daily_txns_gt', 'daily_txns_lt', 'daily_txns_gte', 'daily_txns_lte', 'daily_txns_in', 'daily_txns_not_in', '_change_block')
+    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'date', 'date_not', 'date_gt', 'date_lt', 'date_gte', 'date_lte', 'date_in', 'date_not_in', 'pair', 'pair_not', 'pair_gt', 'pair_lt', 'pair_gte', 'pair_lte', 'pair_in', 'pair_not_in', 'pair_contains', 'pair_contains_nocase', 'pair_not_contains', 'pair_not_contains_nocase', 'pair_starts_with', 'pair_starts_with_nocase', 'pair_not_starts_with', 'pair_not_starts_with_nocase', 'pair_ends_with', 'pair_ends_with_nocase', 'pair_not_ends_with', 'pair_not_ends_with_nocase', 'pair_', 'token0', 'token0_not', 'token0_gt', 'token0_lt', 'token0_gte', 'token0_lte', 'token0_in', 'token0_not_in', 'token0_contains', 'token0_contains_nocase', 'token0_not_contains', 'token0_not_contains_nocase', 'token0_starts_with', 'token0_starts_with_nocase', 'token0_not_starts_with', 'token0_not_starts_with_nocase', 'token0_ends_with', 'token0_ends_with_nocase', 'token0_not_ends_with', 'token0_not_ends_with_nocase', 'token0_', 'token1', 'token1_not', 'token1_gt', 'token1_lt', 'token1_gte', 'token1_lte', 'token1_in', 'token1_not_in', 'token1_contains', 'token1_contains_nocase', 'token1_not_contains', 'token1_not_contains_nocase', 'token1_starts_with', 'token1_starts_with_nocase', 'token1_not_starts_with', 'token1_not_starts_with_nocase', 'token1_ends_with', 'token1_ends_with_nocase', 'token1_not_ends_with', 'token1_not_ends_with_nocase', 'token1_', 'reserve0', 'reserve0_not', 'reserve0_gt', 'reserve0_lt', 'reserve0_gte', 'reserve0_lte', 'reserve0_in', 'reserve0_not_in', 'reserve1', 'reserve1_not', 'reserve1_gt', 'reserve1_lt', 'reserve1_gte', 'reserve1_lte', 'reserve1_in', 'reserve1_not_in', 'total_supply', 'total_supply_not', 'total_supply_gt', 'total_supply_lt', 'total_supply_gte', 'total_supply_lte', 'total_supply_in', 'total_supply_not_in', 'reserve_usd', 'reserve_usd_not', 'reserve_usd_gt', 'reserve_usd_lt', 'reserve_usd_gte', 'reserve_usd_lte', 'reserve_usd_in', 'reserve_usd_not_in', 'volume_token0', 'volume_token0_not', 'volume_token0_gt', 'volume_token0_lt', 'volume_token0_gte', 'volume_token0_lte', 'volume_token0_in', 'volume_token0_not_in', 'volume_token1', 'volume_token1_not', 'volume_token1_gt', 'volume_token1_lt', 'volume_token1_gte', 'volume_token1_lte', 'volume_token1_in', 'volume_token1_not_in', 'volume_usd', 'volume_usd_not', 'volume_usd_gt', 'volume_usd_lt', 'volume_usd_gte', 'volume_usd_lte', 'volume_usd_in', 'volume_usd_not_in', 'tx_count', 'tx_count_not', 'tx_count_gt', 'tx_count_lt', 'tx_count_gte', 'tx_count_lte', 'tx_count_in', 'tx_count_not_in', '_change_block', 'and_', 'or_')
     id = sgqlc.types.Field(ID, graphql_name='id')
     id_not = sgqlc.types.Field(ID, graphql_name='id_not')
     id_gt = sgqlc.types.Field(ID, graphql_name='id_gt')
@@ -651,12 +1003,27 @@ class PairDayData_filter(sgqlc.types.Input):
     date_lte = sgqlc.types.Field(Int, graphql_name='date_lte')
     date_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='date_in')
     date_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='date_not_in')
-    pair_address = sgqlc.types.Field(Bytes, graphql_name='pairAddress')
-    pair_address_not = sgqlc.types.Field(Bytes, graphql_name='pairAddress_not')
-    pair_address_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Bytes)), graphql_name='pairAddress_in')
-    pair_address_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Bytes)), graphql_name='pairAddress_not_in')
-    pair_address_contains = sgqlc.types.Field(Bytes, graphql_name='pairAddress_contains')
-    pair_address_not_contains = sgqlc.types.Field(Bytes, graphql_name='pairAddress_not_contains')
+    pair = sgqlc.types.Field(String, graphql_name='pair')
+    pair_not = sgqlc.types.Field(String, graphql_name='pair_not')
+    pair_gt = sgqlc.types.Field(String, graphql_name='pair_gt')
+    pair_lt = sgqlc.types.Field(String, graphql_name='pair_lt')
+    pair_gte = sgqlc.types.Field(String, graphql_name='pair_gte')
+    pair_lte = sgqlc.types.Field(String, graphql_name='pair_lte')
+    pair_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='pair_in')
+    pair_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='pair_not_in')
+    pair_contains = sgqlc.types.Field(String, graphql_name='pair_contains')
+    pair_contains_nocase = sgqlc.types.Field(String, graphql_name='pair_contains_nocase')
+    pair_not_contains = sgqlc.types.Field(String, graphql_name='pair_not_contains')
+    pair_not_contains_nocase = sgqlc.types.Field(String, graphql_name='pair_not_contains_nocase')
+    pair_starts_with = sgqlc.types.Field(String, graphql_name='pair_starts_with')
+    pair_starts_with_nocase = sgqlc.types.Field(String, graphql_name='pair_starts_with_nocase')
+    pair_not_starts_with = sgqlc.types.Field(String, graphql_name='pair_not_starts_with')
+    pair_not_starts_with_nocase = sgqlc.types.Field(String, graphql_name='pair_not_starts_with_nocase')
+    pair_ends_with = sgqlc.types.Field(String, graphql_name='pair_ends_with')
+    pair_ends_with_nocase = sgqlc.types.Field(String, graphql_name='pair_ends_with_nocase')
+    pair_not_ends_with = sgqlc.types.Field(String, graphql_name='pair_not_ends_with')
+    pair_not_ends_with_nocase = sgqlc.types.Field(String, graphql_name='pair_not_ends_with_nocase')
+    pair_ = sgqlc.types.Field('Pair_filter', graphql_name='pair_')
     token0 = sgqlc.types.Field(String, graphql_name='token0')
     token0_not = sgqlc.types.Field(String, graphql_name='token0_not')
     token0_gt = sgqlc.types.Field(String, graphql_name='token0_gt')
@@ -731,44 +1098,46 @@ class PairDayData_filter(sgqlc.types.Input):
     reserve_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='reserveUSD_lte')
     reserve_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='reserveUSD_in')
     reserve_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='reserveUSD_not_in')
-    daily_volume_token0 = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeToken0')
-    daily_volume_token0_not = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeToken0_not')
-    daily_volume_token0_gt = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeToken0_gt')
-    daily_volume_token0_lt = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeToken0_lt')
-    daily_volume_token0_gte = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeToken0_gte')
-    daily_volume_token0_lte = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeToken0_lte')
-    daily_volume_token0_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='dailyVolumeToken0_in')
-    daily_volume_token0_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='dailyVolumeToken0_not_in')
-    daily_volume_token1 = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeToken1')
-    daily_volume_token1_not = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeToken1_not')
-    daily_volume_token1_gt = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeToken1_gt')
-    daily_volume_token1_lt = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeToken1_lt')
-    daily_volume_token1_gte = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeToken1_gte')
-    daily_volume_token1_lte = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeToken1_lte')
-    daily_volume_token1_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='dailyVolumeToken1_in')
-    daily_volume_token1_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='dailyVolumeToken1_not_in')
-    daily_volume_usd = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUSD')
-    daily_volume_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUSD_not')
-    daily_volume_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUSD_gt')
-    daily_volume_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUSD_lt')
-    daily_volume_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUSD_gte')
-    daily_volume_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUSD_lte')
-    daily_volume_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='dailyVolumeUSD_in')
-    daily_volume_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='dailyVolumeUSD_not_in')
-    daily_txns = sgqlc.types.Field(BigInt, graphql_name='dailyTxns')
-    daily_txns_not = sgqlc.types.Field(BigInt, graphql_name='dailyTxns_not')
-    daily_txns_gt = sgqlc.types.Field(BigInt, graphql_name='dailyTxns_gt')
-    daily_txns_lt = sgqlc.types.Field(BigInt, graphql_name='dailyTxns_lt')
-    daily_txns_gte = sgqlc.types.Field(BigInt, graphql_name='dailyTxns_gte')
-    daily_txns_lte = sgqlc.types.Field(BigInt, graphql_name='dailyTxns_lte')
-    daily_txns_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='dailyTxns_in')
-    daily_txns_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='dailyTxns_not_in')
+    volume_token0 = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken0')
+    volume_token0_not = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken0_not')
+    volume_token0_gt = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken0_gt')
+    volume_token0_lt = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken0_lt')
+    volume_token0_gte = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken0_gte')
+    volume_token0_lte = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken0_lte')
+    volume_token0_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeToken0_in')
+    volume_token0_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeToken0_not_in')
+    volume_token1 = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken1')
+    volume_token1_not = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken1_not')
+    volume_token1_gt = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken1_gt')
+    volume_token1_lt = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken1_lt')
+    volume_token1_gte = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken1_gte')
+    volume_token1_lte = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken1_lte')
+    volume_token1_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeToken1_in')
+    volume_token1_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeToken1_not_in')
+    volume_usd = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD')
+    volume_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_not')
+    volume_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_gt')
+    volume_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_lt')
+    volume_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_gte')
+    volume_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_lte')
+    volume_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeUSD_in')
+    volume_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeUSD_not_in')
+    tx_count = sgqlc.types.Field(BigInt, graphql_name='txCount')
+    tx_count_not = sgqlc.types.Field(BigInt, graphql_name='txCount_not')
+    tx_count_gt = sgqlc.types.Field(BigInt, graphql_name='txCount_gt')
+    tx_count_lt = sgqlc.types.Field(BigInt, graphql_name='txCount_lt')
+    tx_count_gte = sgqlc.types.Field(BigInt, graphql_name='txCount_gte')
+    tx_count_lte = sgqlc.types.Field(BigInt, graphql_name='txCount_lte')
+    tx_count_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='txCount_in')
+    tx_count_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='txCount_not_in')
     _change_block = sgqlc.types.Field(BlockChangedFilter, graphql_name='_change_block')
+    and_ = sgqlc.types.Field(sgqlc.types.list_of('PairDayData_filter'), graphql_name='and')
+    or_ = sgqlc.types.Field(sgqlc.types.list_of('PairDayData_filter'), graphql_name='or')
 
 
 class PairHourData_filter(sgqlc.types.Input):
     __schema__ = graphql_schema
-    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'hour_start_unix', 'hour_start_unix_not', 'hour_start_unix_gt', 'hour_start_unix_lt', 'hour_start_unix_gte', 'hour_start_unix_lte', 'hour_start_unix_in', 'hour_start_unix_not_in', 'pair', 'pair_not', 'pair_gt', 'pair_lt', 'pair_gte', 'pair_lte', 'pair_in', 'pair_not_in', 'pair_contains', 'pair_contains_nocase', 'pair_not_contains', 'pair_not_contains_nocase', 'pair_starts_with', 'pair_starts_with_nocase', 'pair_not_starts_with', 'pair_not_starts_with_nocase', 'pair_ends_with', 'pair_ends_with_nocase', 'pair_not_ends_with', 'pair_not_ends_with_nocase', 'pair_', 'reserve0', 'reserve0_not', 'reserve0_gt', 'reserve0_lt', 'reserve0_gte', 'reserve0_lte', 'reserve0_in', 'reserve0_not_in', 'reserve1', 'reserve1_not', 'reserve1_gt', 'reserve1_lt', 'reserve1_gte', 'reserve1_lte', 'reserve1_in', 'reserve1_not_in', 'reserve_usd', 'reserve_usd_not', 'reserve_usd_gt', 'reserve_usd_lt', 'reserve_usd_gte', 'reserve_usd_lte', 'reserve_usd_in', 'reserve_usd_not_in', 'hourly_volume_token0', 'hourly_volume_token0_not', 'hourly_volume_token0_gt', 'hourly_volume_token0_lt', 'hourly_volume_token0_gte', 'hourly_volume_token0_lte', 'hourly_volume_token0_in', 'hourly_volume_token0_not_in', 'hourly_volume_token1', 'hourly_volume_token1_not', 'hourly_volume_token1_gt', 'hourly_volume_token1_lt', 'hourly_volume_token1_gte', 'hourly_volume_token1_lte', 'hourly_volume_token1_in', 'hourly_volume_token1_not_in', 'hourly_volume_usd', 'hourly_volume_usd_not', 'hourly_volume_usd_gt', 'hourly_volume_usd_lt', 'hourly_volume_usd_gte', 'hourly_volume_usd_lte', 'hourly_volume_usd_in', 'hourly_volume_usd_not_in', 'hourly_txns', 'hourly_txns_not', 'hourly_txns_gt', 'hourly_txns_lt', 'hourly_txns_gte', 'hourly_txns_lte', 'hourly_txns_in', 'hourly_txns_not_in', '_change_block')
+    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'date', 'date_not', 'date_gt', 'date_lt', 'date_gte', 'date_lte', 'date_in', 'date_not_in', 'pair', 'pair_not', 'pair_gt', 'pair_lt', 'pair_gte', 'pair_lte', 'pair_in', 'pair_not_in', 'pair_contains', 'pair_contains_nocase', 'pair_not_contains', 'pair_not_contains_nocase', 'pair_starts_with', 'pair_starts_with_nocase', 'pair_not_starts_with', 'pair_not_starts_with_nocase', 'pair_ends_with', 'pair_ends_with_nocase', 'pair_not_ends_with', 'pair_not_ends_with_nocase', 'pair_', 'reserve0', 'reserve0_not', 'reserve0_gt', 'reserve0_lt', 'reserve0_gte', 'reserve0_lte', 'reserve0_in', 'reserve0_not_in', 'reserve1', 'reserve1_not', 'reserve1_gt', 'reserve1_lt', 'reserve1_gte', 'reserve1_lte', 'reserve1_in', 'reserve1_not_in', 'reserve_usd', 'reserve_usd_not', 'reserve_usd_gt', 'reserve_usd_lt', 'reserve_usd_gte', 'reserve_usd_lte', 'reserve_usd_in', 'reserve_usd_not_in', 'volume_token0', 'volume_token0_not', 'volume_token0_gt', 'volume_token0_lt', 'volume_token0_gte', 'volume_token0_lte', 'volume_token0_in', 'volume_token0_not_in', 'volume_token1', 'volume_token1_not', 'volume_token1_gt', 'volume_token1_lt', 'volume_token1_gte', 'volume_token1_lte', 'volume_token1_in', 'volume_token1_not_in', 'volume_usd', 'volume_usd_not', 'volume_usd_gt', 'volume_usd_lt', 'volume_usd_gte', 'volume_usd_lte', 'volume_usd_in', 'volume_usd_not_in', 'tx_count', 'tx_count_not', 'tx_count_gt', 'tx_count_lt', 'tx_count_gte', 'tx_count_lte', 'tx_count_in', 'tx_count_not_in', '_change_block', 'and_', 'or_')
     id = sgqlc.types.Field(ID, graphql_name='id')
     id_not = sgqlc.types.Field(ID, graphql_name='id_not')
     id_gt = sgqlc.types.Field(ID, graphql_name='id_gt')
@@ -777,14 +1146,14 @@ class PairHourData_filter(sgqlc.types.Input):
     id_lte = sgqlc.types.Field(ID, graphql_name='id_lte')
     id_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(ID)), graphql_name='id_in')
     id_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(ID)), graphql_name='id_not_in')
-    hour_start_unix = sgqlc.types.Field(Int, graphql_name='hourStartUnix')
-    hour_start_unix_not = sgqlc.types.Field(Int, graphql_name='hourStartUnix_not')
-    hour_start_unix_gt = sgqlc.types.Field(Int, graphql_name='hourStartUnix_gt')
-    hour_start_unix_lt = sgqlc.types.Field(Int, graphql_name='hourStartUnix_lt')
-    hour_start_unix_gte = sgqlc.types.Field(Int, graphql_name='hourStartUnix_gte')
-    hour_start_unix_lte = sgqlc.types.Field(Int, graphql_name='hourStartUnix_lte')
-    hour_start_unix_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='hourStartUnix_in')
-    hour_start_unix_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='hourStartUnix_not_in')
+    date = sgqlc.types.Field(Int, graphql_name='date')
+    date_not = sgqlc.types.Field(Int, graphql_name='date_not')
+    date_gt = sgqlc.types.Field(Int, graphql_name='date_gt')
+    date_lt = sgqlc.types.Field(Int, graphql_name='date_lt')
+    date_gte = sgqlc.types.Field(Int, graphql_name='date_gte')
+    date_lte = sgqlc.types.Field(Int, graphql_name='date_lte')
+    date_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='date_in')
+    date_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='date_not_in')
     pair = sgqlc.types.Field(String, graphql_name='pair')
     pair_not = sgqlc.types.Field(String, graphql_name='pair_not')
     pair_gt = sgqlc.types.Field(String, graphql_name='pair_gt')
@@ -830,44 +1199,46 @@ class PairHourData_filter(sgqlc.types.Input):
     reserve_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='reserveUSD_lte')
     reserve_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='reserveUSD_in')
     reserve_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='reserveUSD_not_in')
-    hourly_volume_token0 = sgqlc.types.Field(BigDecimal, graphql_name='hourlyVolumeToken0')
-    hourly_volume_token0_not = sgqlc.types.Field(BigDecimal, graphql_name='hourlyVolumeToken0_not')
-    hourly_volume_token0_gt = sgqlc.types.Field(BigDecimal, graphql_name='hourlyVolumeToken0_gt')
-    hourly_volume_token0_lt = sgqlc.types.Field(BigDecimal, graphql_name='hourlyVolumeToken0_lt')
-    hourly_volume_token0_gte = sgqlc.types.Field(BigDecimal, graphql_name='hourlyVolumeToken0_gte')
-    hourly_volume_token0_lte = sgqlc.types.Field(BigDecimal, graphql_name='hourlyVolumeToken0_lte')
-    hourly_volume_token0_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='hourlyVolumeToken0_in')
-    hourly_volume_token0_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='hourlyVolumeToken0_not_in')
-    hourly_volume_token1 = sgqlc.types.Field(BigDecimal, graphql_name='hourlyVolumeToken1')
-    hourly_volume_token1_not = sgqlc.types.Field(BigDecimal, graphql_name='hourlyVolumeToken1_not')
-    hourly_volume_token1_gt = sgqlc.types.Field(BigDecimal, graphql_name='hourlyVolumeToken1_gt')
-    hourly_volume_token1_lt = sgqlc.types.Field(BigDecimal, graphql_name='hourlyVolumeToken1_lt')
-    hourly_volume_token1_gte = sgqlc.types.Field(BigDecimal, graphql_name='hourlyVolumeToken1_gte')
-    hourly_volume_token1_lte = sgqlc.types.Field(BigDecimal, graphql_name='hourlyVolumeToken1_lte')
-    hourly_volume_token1_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='hourlyVolumeToken1_in')
-    hourly_volume_token1_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='hourlyVolumeToken1_not_in')
-    hourly_volume_usd = sgqlc.types.Field(BigDecimal, graphql_name='hourlyVolumeUSD')
-    hourly_volume_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='hourlyVolumeUSD_not')
-    hourly_volume_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='hourlyVolumeUSD_gt')
-    hourly_volume_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='hourlyVolumeUSD_lt')
-    hourly_volume_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='hourlyVolumeUSD_gte')
-    hourly_volume_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='hourlyVolumeUSD_lte')
-    hourly_volume_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='hourlyVolumeUSD_in')
-    hourly_volume_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='hourlyVolumeUSD_not_in')
-    hourly_txns = sgqlc.types.Field(BigInt, graphql_name='hourlyTxns')
-    hourly_txns_not = sgqlc.types.Field(BigInt, graphql_name='hourlyTxns_not')
-    hourly_txns_gt = sgqlc.types.Field(BigInt, graphql_name='hourlyTxns_gt')
-    hourly_txns_lt = sgqlc.types.Field(BigInt, graphql_name='hourlyTxns_lt')
-    hourly_txns_gte = sgqlc.types.Field(BigInt, graphql_name='hourlyTxns_gte')
-    hourly_txns_lte = sgqlc.types.Field(BigInt, graphql_name='hourlyTxns_lte')
-    hourly_txns_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='hourlyTxns_in')
-    hourly_txns_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='hourlyTxns_not_in')
+    volume_token0 = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken0')
+    volume_token0_not = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken0_not')
+    volume_token0_gt = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken0_gt')
+    volume_token0_lt = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken0_lt')
+    volume_token0_gte = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken0_gte')
+    volume_token0_lte = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken0_lte')
+    volume_token0_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeToken0_in')
+    volume_token0_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeToken0_not_in')
+    volume_token1 = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken1')
+    volume_token1_not = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken1_not')
+    volume_token1_gt = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken1_gt')
+    volume_token1_lt = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken1_lt')
+    volume_token1_gte = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken1_gte')
+    volume_token1_lte = sgqlc.types.Field(BigDecimal, graphql_name='volumeToken1_lte')
+    volume_token1_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeToken1_in')
+    volume_token1_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeToken1_not_in')
+    volume_usd = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD')
+    volume_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_not')
+    volume_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_gt')
+    volume_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_lt')
+    volume_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_gte')
+    volume_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_lte')
+    volume_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeUSD_in')
+    volume_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeUSD_not_in')
+    tx_count = sgqlc.types.Field(BigInt, graphql_name='txCount')
+    tx_count_not = sgqlc.types.Field(BigInt, graphql_name='txCount_not')
+    tx_count_gt = sgqlc.types.Field(BigInt, graphql_name='txCount_gt')
+    tx_count_lt = sgqlc.types.Field(BigInt, graphql_name='txCount_lt')
+    tx_count_gte = sgqlc.types.Field(BigInt, graphql_name='txCount_gte')
+    tx_count_lte = sgqlc.types.Field(BigInt, graphql_name='txCount_lte')
+    tx_count_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='txCount_in')
+    tx_count_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='txCount_not_in')
     _change_block = sgqlc.types.Field(BlockChangedFilter, graphql_name='_change_block')
+    and_ = sgqlc.types.Field(sgqlc.types.list_of('PairHourData_filter'), graphql_name='and')
+    or_ = sgqlc.types.Field(sgqlc.types.list_of('PairHourData_filter'), graphql_name='or')
 
 
 class Pair_filter(sgqlc.types.Input):
     __schema__ = graphql_schema
-    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'token0', 'token0_not', 'token0_gt', 'token0_lt', 'token0_gte', 'token0_lte', 'token0_in', 'token0_not_in', 'token0_contains', 'token0_contains_nocase', 'token0_not_contains', 'token0_not_contains_nocase', 'token0_starts_with', 'token0_starts_with_nocase', 'token0_not_starts_with', 'token0_not_starts_with_nocase', 'token0_ends_with', 'token0_ends_with_nocase', 'token0_not_ends_with', 'token0_not_ends_with_nocase', 'token0_', 'token1', 'token1_not', 'token1_gt', 'token1_lt', 'token1_gte', 'token1_lte', 'token1_in', 'token1_not_in', 'token1_contains', 'token1_contains_nocase', 'token1_not_contains', 'token1_not_contains_nocase', 'token1_starts_with', 'token1_starts_with_nocase', 'token1_not_starts_with', 'token1_not_starts_with_nocase', 'token1_ends_with', 'token1_ends_with_nocase', 'token1_not_ends_with', 'token1_not_ends_with_nocase', 'token1_', 'reserve0', 'reserve0_not', 'reserve0_gt', 'reserve0_lt', 'reserve0_gte', 'reserve0_lte', 'reserve0_in', 'reserve0_not_in', 'reserve1', 'reserve1_not', 'reserve1_gt', 'reserve1_lt', 'reserve1_gte', 'reserve1_lte', 'reserve1_in', 'reserve1_not_in', 'total_supply', 'total_supply_not', 'total_supply_gt', 'total_supply_lt', 'total_supply_gte', 'total_supply_lte', 'total_supply_in', 'total_supply_not_in', 'reserve_eth', 'reserve_eth_not', 'reserve_eth_gt', 'reserve_eth_lt', 'reserve_eth_gte', 'reserve_eth_lte', 'reserve_eth_in', 'reserve_eth_not_in', 'reserve_usd', 'reserve_usd_not', 'reserve_usd_gt', 'reserve_usd_lt', 'reserve_usd_gte', 'reserve_usd_lte', 'reserve_usd_in', 'reserve_usd_not_in', 'tracked_reserve_eth', 'tracked_reserve_eth_not', 'tracked_reserve_eth_gt', 'tracked_reserve_eth_lt', 'tracked_reserve_eth_gte', 'tracked_reserve_eth_lte', 'tracked_reserve_eth_in', 'tracked_reserve_eth_not_in', 'token0_price', 'token0_price_not', 'token0_price_gt', 'token0_price_lt', 'token0_price_gte', 'token0_price_lte', 'token0_price_in', 'token0_price_not_in', 'token1_price', 'token1_price_not', 'token1_price_gt', 'token1_price_lt', 'token1_price_gte', 'token1_price_lte', 'token1_price_in', 'token1_price_not_in', 'volume_token0', 'volume_token0_not', 'volume_token0_gt', 'volume_token0_lt', 'volume_token0_gte', 'volume_token0_lte', 'volume_token0_in', 'volume_token0_not_in', 'volume_token1', 'volume_token1_not', 'volume_token1_gt', 'volume_token1_lt', 'volume_token1_gte', 'volume_token1_lte', 'volume_token1_in', 'volume_token1_not_in', 'volume_usd', 'volume_usd_not', 'volume_usd_gt', 'volume_usd_lt', 'volume_usd_gte', 'volume_usd_lte', 'volume_usd_in', 'volume_usd_not_in', 'untracked_volume_usd', 'untracked_volume_usd_not', 'untracked_volume_usd_gt', 'untracked_volume_usd_lt', 'untracked_volume_usd_gte', 'untracked_volume_usd_lte', 'untracked_volume_usd_in', 'untracked_volume_usd_not_in', 'tx_count', 'tx_count_not', 'tx_count_gt', 'tx_count_lt', 'tx_count_gte', 'tx_count_lte', 'tx_count_in', 'tx_count_not_in', 'created_at_timestamp', 'created_at_timestamp_not', 'created_at_timestamp_gt', 'created_at_timestamp_lt', 'created_at_timestamp_gte', 'created_at_timestamp_lte', 'created_at_timestamp_in', 'created_at_timestamp_not_in', 'created_at_block_number', 'created_at_block_number_not', 'created_at_block_number_gt', 'created_at_block_number_lt', 'created_at_block_number_gte', 'created_at_block_number_lte', 'created_at_block_number_in', 'created_at_block_number_not_in', 'liquidity_provider_count', 'liquidity_provider_count_not', 'liquidity_provider_count_gt', 'liquidity_provider_count_lt', 'liquidity_provider_count_gte', 'liquidity_provider_count_lte', 'liquidity_provider_count_in', 'liquidity_provider_count_not_in', '_change_block')
+    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'factory', 'factory_not', 'factory_gt', 'factory_lt', 'factory_gte', 'factory_lte', 'factory_in', 'factory_not_in', 'factory_contains', 'factory_contains_nocase', 'factory_not_contains', 'factory_not_contains_nocase', 'factory_starts_with', 'factory_starts_with_nocase', 'factory_not_starts_with', 'factory_not_starts_with_nocase', 'factory_ends_with', 'factory_ends_with_nocase', 'factory_not_ends_with', 'factory_not_ends_with_nocase', 'factory_', 'name', 'name_not', 'name_gt', 'name_lt', 'name_gte', 'name_lte', 'name_in', 'name_not_in', 'name_contains', 'name_contains_nocase', 'name_not_contains', 'name_not_contains_nocase', 'name_starts_with', 'name_starts_with_nocase', 'name_not_starts_with', 'name_not_starts_with_nocase', 'name_ends_with', 'name_ends_with_nocase', 'name_not_ends_with', 'name_not_ends_with_nocase', 'token0', 'token0_not', 'token0_gt', 'token0_lt', 'token0_gte', 'token0_lte', 'token0_in', 'token0_not_in', 'token0_contains', 'token0_contains_nocase', 'token0_not_contains', 'token0_not_contains_nocase', 'token0_starts_with', 'token0_starts_with_nocase', 'token0_not_starts_with', 'token0_not_starts_with_nocase', 'token0_ends_with', 'token0_ends_with_nocase', 'token0_not_ends_with', 'token0_not_ends_with_nocase', 'token0_', 'token1', 'token1_not', 'token1_gt', 'token1_lt', 'token1_gte', 'token1_lte', 'token1_in', 'token1_not_in', 'token1_contains', 'token1_contains_nocase', 'token1_not_contains', 'token1_not_contains_nocase', 'token1_starts_with', 'token1_starts_with_nocase', 'token1_not_starts_with', 'token1_not_starts_with_nocase', 'token1_ends_with', 'token1_ends_with_nocase', 'token1_not_ends_with', 'token1_not_ends_with_nocase', 'token1_', 'reserve0', 'reserve0_not', 'reserve0_gt', 'reserve0_lt', 'reserve0_gte', 'reserve0_lte', 'reserve0_in', 'reserve0_not_in', 'reserve1', 'reserve1_not', 'reserve1_gt', 'reserve1_lt', 'reserve1_gte', 'reserve1_lte', 'reserve1_in', 'reserve1_not_in', 'total_supply', 'total_supply_not', 'total_supply_gt', 'total_supply_lt', 'total_supply_gte', 'total_supply_lte', 'total_supply_in', 'total_supply_not_in', 'reserve_eth', 'reserve_eth_not', 'reserve_eth_gt', 'reserve_eth_lt', 'reserve_eth_gte', 'reserve_eth_lte', 'reserve_eth_in', 'reserve_eth_not_in', 'reserve_usd', 'reserve_usd_not', 'reserve_usd_gt', 'reserve_usd_lt', 'reserve_usd_gte', 'reserve_usd_lte', 'reserve_usd_in', 'reserve_usd_not_in', 'tracked_reserve_eth', 'tracked_reserve_eth_not', 'tracked_reserve_eth_gt', 'tracked_reserve_eth_lt', 'tracked_reserve_eth_gte', 'tracked_reserve_eth_lte', 'tracked_reserve_eth_in', 'tracked_reserve_eth_not_in', 'token0_price', 'token0_price_not', 'token0_price_gt', 'token0_price_lt', 'token0_price_gte', 'token0_price_lte', 'token0_price_in', 'token0_price_not_in', 'token1_price', 'token1_price_not', 'token1_price_gt', 'token1_price_lt', 'token1_price_gte', 'token1_price_lte', 'token1_price_in', 'token1_price_not_in', 'volume_token0', 'volume_token0_not', 'volume_token0_gt', 'volume_token0_lt', 'volume_token0_gte', 'volume_token0_lte', 'volume_token0_in', 'volume_token0_not_in', 'volume_token1', 'volume_token1_not', 'volume_token1_gt', 'volume_token1_lt', 'volume_token1_gte', 'volume_token1_lte', 'volume_token1_in', 'volume_token1_not_in', 'volume_usd', 'volume_usd_not', 'volume_usd_gt', 'volume_usd_lt', 'volume_usd_gte', 'volume_usd_lte', 'volume_usd_in', 'volume_usd_not_in', 'untracked_volume_usd', 'untracked_volume_usd_not', 'untracked_volume_usd_gt', 'untracked_volume_usd_lt', 'untracked_volume_usd_gte', 'untracked_volume_usd_lte', 'untracked_volume_usd_in', 'untracked_volume_usd_not_in', 'tx_count', 'tx_count_not', 'tx_count_gt', 'tx_count_lt', 'tx_count_gte', 'tx_count_lte', 'tx_count_in', 'tx_count_not_in', 'liquidity_provider_count', 'liquidity_provider_count_not', 'liquidity_provider_count_gt', 'liquidity_provider_count_lt', 'liquidity_provider_count_gte', 'liquidity_provider_count_lte', 'liquidity_provider_count_in', 'liquidity_provider_count_not_in', 'liquidity_positions_', 'liquidity_position_snapshots_', 'day_data_', 'hour_data_', 'mints_', 'burns_', 'swaps_', 'timestamp', 'timestamp_not', 'timestamp_gt', 'timestamp_lt', 'timestamp_gte', 'timestamp_lte', 'timestamp_in', 'timestamp_not_in', 'block', 'block_not', 'block_gt', 'block_lt', 'block_gte', 'block_lte', 'block_in', 'block_not_in', '_change_block', 'and_', 'or_')
     id = sgqlc.types.Field(ID, graphql_name='id')
     id_not = sgqlc.types.Field(ID, graphql_name='id_not')
     id_gt = sgqlc.types.Field(ID, graphql_name='id_gt')
@@ -876,6 +1247,47 @@ class Pair_filter(sgqlc.types.Input):
     id_lte = sgqlc.types.Field(ID, graphql_name='id_lte')
     id_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(ID)), graphql_name='id_in')
     id_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(ID)), graphql_name='id_not_in')
+    factory = sgqlc.types.Field(String, graphql_name='factory')
+    factory_not = sgqlc.types.Field(String, graphql_name='factory_not')
+    factory_gt = sgqlc.types.Field(String, graphql_name='factory_gt')
+    factory_lt = sgqlc.types.Field(String, graphql_name='factory_lt')
+    factory_gte = sgqlc.types.Field(String, graphql_name='factory_gte')
+    factory_lte = sgqlc.types.Field(String, graphql_name='factory_lte')
+    factory_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='factory_in')
+    factory_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='factory_not_in')
+    factory_contains = sgqlc.types.Field(String, graphql_name='factory_contains')
+    factory_contains_nocase = sgqlc.types.Field(String, graphql_name='factory_contains_nocase')
+    factory_not_contains = sgqlc.types.Field(String, graphql_name='factory_not_contains')
+    factory_not_contains_nocase = sgqlc.types.Field(String, graphql_name='factory_not_contains_nocase')
+    factory_starts_with = sgqlc.types.Field(String, graphql_name='factory_starts_with')
+    factory_starts_with_nocase = sgqlc.types.Field(String, graphql_name='factory_starts_with_nocase')
+    factory_not_starts_with = sgqlc.types.Field(String, graphql_name='factory_not_starts_with')
+    factory_not_starts_with_nocase = sgqlc.types.Field(String, graphql_name='factory_not_starts_with_nocase')
+    factory_ends_with = sgqlc.types.Field(String, graphql_name='factory_ends_with')
+    factory_ends_with_nocase = sgqlc.types.Field(String, graphql_name='factory_ends_with_nocase')
+    factory_not_ends_with = sgqlc.types.Field(String, graphql_name='factory_not_ends_with')
+    factory_not_ends_with_nocase = sgqlc.types.Field(String, graphql_name='factory_not_ends_with_nocase')
+    factory_ = sgqlc.types.Field(Factory_filter, graphql_name='factory_')
+    name = sgqlc.types.Field(String, graphql_name='name')
+    name_not = sgqlc.types.Field(String, graphql_name='name_not')
+    name_gt = sgqlc.types.Field(String, graphql_name='name_gt')
+    name_lt = sgqlc.types.Field(String, graphql_name='name_lt')
+    name_gte = sgqlc.types.Field(String, graphql_name='name_gte')
+    name_lte = sgqlc.types.Field(String, graphql_name='name_lte')
+    name_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='name_in')
+    name_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='name_not_in')
+    name_contains = sgqlc.types.Field(String, graphql_name='name_contains')
+    name_contains_nocase = sgqlc.types.Field(String, graphql_name='name_contains_nocase')
+    name_not_contains = sgqlc.types.Field(String, graphql_name='name_not_contains')
+    name_not_contains_nocase = sgqlc.types.Field(String, graphql_name='name_not_contains_nocase')
+    name_starts_with = sgqlc.types.Field(String, graphql_name='name_starts_with')
+    name_starts_with_nocase = sgqlc.types.Field(String, graphql_name='name_starts_with_nocase')
+    name_not_starts_with = sgqlc.types.Field(String, graphql_name='name_not_starts_with')
+    name_not_starts_with_nocase = sgqlc.types.Field(String, graphql_name='name_not_starts_with_nocase')
+    name_ends_with = sgqlc.types.Field(String, graphql_name='name_ends_with')
+    name_ends_with_nocase = sgqlc.types.Field(String, graphql_name='name_ends_with_nocase')
+    name_not_ends_with = sgqlc.types.Field(String, graphql_name='name_not_ends_with')
+    name_not_ends_with_nocase = sgqlc.types.Field(String, graphql_name='name_not_ends_with_nocase')
     token0 = sgqlc.types.Field(String, graphql_name='token0')
     token0_not = sgqlc.types.Field(String, graphql_name='token0_not')
     token0_gt = sgqlc.types.Field(String, graphql_name='token0_gt')
@@ -1022,22 +1434,6 @@ class Pair_filter(sgqlc.types.Input):
     tx_count_lte = sgqlc.types.Field(BigInt, graphql_name='txCount_lte')
     tx_count_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='txCount_in')
     tx_count_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='txCount_not_in')
-    created_at_timestamp = sgqlc.types.Field(BigInt, graphql_name='createdAtTimestamp')
-    created_at_timestamp_not = sgqlc.types.Field(BigInt, graphql_name='createdAtTimestamp_not')
-    created_at_timestamp_gt = sgqlc.types.Field(BigInt, graphql_name='createdAtTimestamp_gt')
-    created_at_timestamp_lt = sgqlc.types.Field(BigInt, graphql_name='createdAtTimestamp_lt')
-    created_at_timestamp_gte = sgqlc.types.Field(BigInt, graphql_name='createdAtTimestamp_gte')
-    created_at_timestamp_lte = sgqlc.types.Field(BigInt, graphql_name='createdAtTimestamp_lte')
-    created_at_timestamp_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='createdAtTimestamp_in')
-    created_at_timestamp_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='createdAtTimestamp_not_in')
-    created_at_block_number = sgqlc.types.Field(BigInt, graphql_name='createdAtBlockNumber')
-    created_at_block_number_not = sgqlc.types.Field(BigInt, graphql_name='createdAtBlockNumber_not')
-    created_at_block_number_gt = sgqlc.types.Field(BigInt, graphql_name='createdAtBlockNumber_gt')
-    created_at_block_number_lt = sgqlc.types.Field(BigInt, graphql_name='createdAtBlockNumber_lt')
-    created_at_block_number_gte = sgqlc.types.Field(BigInt, graphql_name='createdAtBlockNumber_gte')
-    created_at_block_number_lte = sgqlc.types.Field(BigInt, graphql_name='createdAtBlockNumber_lte')
-    created_at_block_number_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='createdAtBlockNumber_in')
-    created_at_block_number_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='createdAtBlockNumber_not_in')
     liquidity_provider_count = sgqlc.types.Field(BigInt, graphql_name='liquidityProviderCount')
     liquidity_provider_count_not = sgqlc.types.Field(BigInt, graphql_name='liquidityProviderCount_not')
     liquidity_provider_count_gt = sgqlc.types.Field(BigInt, graphql_name='liquidityProviderCount_gt')
@@ -1046,12 +1442,37 @@ class Pair_filter(sgqlc.types.Input):
     liquidity_provider_count_lte = sgqlc.types.Field(BigInt, graphql_name='liquidityProviderCount_lte')
     liquidity_provider_count_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='liquidityProviderCount_in')
     liquidity_provider_count_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='liquidityProviderCount_not_in')
+    liquidity_positions_ = sgqlc.types.Field(LiquidityPosition_filter, graphql_name='liquidityPositions_')
+    liquidity_position_snapshots_ = sgqlc.types.Field(LiquidityPositionSnapshot_filter, graphql_name='liquidityPositionSnapshots_')
+    day_data_ = sgqlc.types.Field(PairDayData_filter, graphql_name='dayData_')
+    hour_data_ = sgqlc.types.Field(PairHourData_filter, graphql_name='hourData_')
+    mints_ = sgqlc.types.Field(Mint_filter, graphql_name='mints_')
+    burns_ = sgqlc.types.Field(Burn_filter, graphql_name='burns_')
+    swaps_ = sgqlc.types.Field('Swap_filter', graphql_name='swaps_')
+    timestamp = sgqlc.types.Field(BigInt, graphql_name='timestamp')
+    timestamp_not = sgqlc.types.Field(BigInt, graphql_name='timestamp_not')
+    timestamp_gt = sgqlc.types.Field(BigInt, graphql_name='timestamp_gt')
+    timestamp_lt = sgqlc.types.Field(BigInt, graphql_name='timestamp_lt')
+    timestamp_gte = sgqlc.types.Field(BigInt, graphql_name='timestamp_gte')
+    timestamp_lte = sgqlc.types.Field(BigInt, graphql_name='timestamp_lte')
+    timestamp_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='timestamp_in')
+    timestamp_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='timestamp_not_in')
+    block = sgqlc.types.Field(BigInt, graphql_name='block')
+    block_not = sgqlc.types.Field(BigInt, graphql_name='block_not')
+    block_gt = sgqlc.types.Field(BigInt, graphql_name='block_gt')
+    block_lt = sgqlc.types.Field(BigInt, graphql_name='block_lt')
+    block_gte = sgqlc.types.Field(BigInt, graphql_name='block_gte')
+    block_lte = sgqlc.types.Field(BigInt, graphql_name='block_lte')
+    block_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='block_in')
+    block_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='block_not_in')
     _change_block = sgqlc.types.Field(BlockChangedFilter, graphql_name='_change_block')
+    and_ = sgqlc.types.Field(sgqlc.types.list_of('Pair_filter'), graphql_name='and')
+    or_ = sgqlc.types.Field(sgqlc.types.list_of('Pair_filter'), graphql_name='or')
 
 
 class Swap_filter(sgqlc.types.Input):
     __schema__ = graphql_schema
-    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'transaction', 'transaction_not', 'transaction_gt', 'transaction_lt', 'transaction_gte', 'transaction_lte', 'transaction_in', 'transaction_not_in', 'transaction_contains', 'transaction_contains_nocase', 'transaction_not_contains', 'transaction_not_contains_nocase', 'transaction_starts_with', 'transaction_starts_with_nocase', 'transaction_not_starts_with', 'transaction_not_starts_with_nocase', 'transaction_ends_with', 'transaction_ends_with_nocase', 'transaction_not_ends_with', 'transaction_not_ends_with_nocase', 'transaction_', 'timestamp', 'timestamp_not', 'timestamp_gt', 'timestamp_lt', 'timestamp_gte', 'timestamp_lte', 'timestamp_in', 'timestamp_not_in', 'pair', 'pair_not', 'pair_gt', 'pair_lt', 'pair_gte', 'pair_lte', 'pair_in', 'pair_not_in', 'pair_contains', 'pair_contains_nocase', 'pair_not_contains', 'pair_not_contains_nocase', 'pair_starts_with', 'pair_starts_with_nocase', 'pair_not_starts_with', 'pair_not_starts_with_nocase', 'pair_ends_with', 'pair_ends_with_nocase', 'pair_not_ends_with', 'pair_not_ends_with_nocase', 'pair_', 'sender', 'sender_not', 'sender_in', 'sender_not_in', 'sender_contains', 'sender_not_contains', 'amount0_in', 'amount0_in_not', 'amount0_in_gt', 'amount0_in_lt', 'amount0_in_gte', 'amount0_in_lte', 'amount0_in_in', 'amount0_in_not_in', 'amount1_in', 'amount1_in_not', 'amount1_in_gt', 'amount1_in_lt', 'amount1_in_gte', 'amount1_in_lte', 'amount1_in_in', 'amount1_in_not_in', 'amount0_out', 'amount0_out_not', 'amount0_out_gt', 'amount0_out_lt', 'amount0_out_gte', 'amount0_out_lte', 'amount0_out_in', 'amount0_out_not_in', 'amount1_out', 'amount1_out_not', 'amount1_out_gt', 'amount1_out_lt', 'amount1_out_gte', 'amount1_out_lte', 'amount1_out_in', 'amount1_out_not_in', 'to', 'to_not', 'to_in', 'to_not_in', 'to_contains', 'to_not_contains', 'log_index', 'log_index_not', 'log_index_gt', 'log_index_lt', 'log_index_gte', 'log_index_lte', 'log_index_in', 'log_index_not_in', 'amount_usd', 'amount_usd_not', 'amount_usd_gt', 'amount_usd_lt', 'amount_usd_gte', 'amount_usd_lte', 'amount_usd_in', 'amount_usd_not_in', '_change_block')
+    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'transaction', 'transaction_not', 'transaction_gt', 'transaction_lt', 'transaction_gte', 'transaction_lte', 'transaction_in', 'transaction_not_in', 'transaction_contains', 'transaction_contains_nocase', 'transaction_not_contains', 'transaction_not_contains_nocase', 'transaction_starts_with', 'transaction_starts_with_nocase', 'transaction_not_starts_with', 'transaction_not_starts_with_nocase', 'transaction_ends_with', 'transaction_ends_with_nocase', 'transaction_not_ends_with', 'transaction_not_ends_with_nocase', 'transaction_', 'timestamp', 'timestamp_not', 'timestamp_gt', 'timestamp_lt', 'timestamp_gte', 'timestamp_lte', 'timestamp_in', 'timestamp_not_in', 'pair', 'pair_not', 'pair_gt', 'pair_lt', 'pair_gte', 'pair_lte', 'pair_in', 'pair_not_in', 'pair_contains', 'pair_contains_nocase', 'pair_not_contains', 'pair_not_contains_nocase', 'pair_starts_with', 'pair_starts_with_nocase', 'pair_not_starts_with', 'pair_not_starts_with_nocase', 'pair_ends_with', 'pair_ends_with_nocase', 'pair_not_ends_with', 'pair_not_ends_with_nocase', 'pair_', 'sender', 'sender_not', 'sender_gt', 'sender_lt', 'sender_gte', 'sender_lte', 'sender_in', 'sender_not_in', 'sender_contains', 'sender_not_contains', 'amount0_in', 'amount0_in_not', 'amount0_in_gt', 'amount0_in_lt', 'amount0_in_gte', 'amount0_in_lte', 'amount0_in_in', 'amount0_in_not_in', 'amount1_in', 'amount1_in_not', 'amount1_in_gt', 'amount1_in_lt', 'amount1_in_gte', 'amount1_in_lte', 'amount1_in_in', 'amount1_in_not_in', 'amount0_out', 'amount0_out_not', 'amount0_out_gt', 'amount0_out_lt', 'amount0_out_gte', 'amount0_out_lte', 'amount0_out_in', 'amount0_out_not_in', 'amount1_out', 'amount1_out_not', 'amount1_out_gt', 'amount1_out_lt', 'amount1_out_gte', 'amount1_out_lte', 'amount1_out_in', 'amount1_out_not_in', 'to', 'to_not', 'to_gt', 'to_lt', 'to_gte', 'to_lte', 'to_in', 'to_not_in', 'to_contains', 'to_not_contains', 'log_index', 'log_index_not', 'log_index_gt', 'log_index_lt', 'log_index_gte', 'log_index_lte', 'log_index_in', 'log_index_not_in', 'amount_usd', 'amount_usd_not', 'amount_usd_gt', 'amount_usd_lt', 'amount_usd_gte', 'amount_usd_lte', 'amount_usd_in', 'amount_usd_not_in', '_change_block', 'and_', 'or_')
     id = sgqlc.types.Field(ID, graphql_name='id')
     id_not = sgqlc.types.Field(ID, graphql_name='id_not')
     id_gt = sgqlc.types.Field(ID, graphql_name='id_gt')
@@ -1112,6 +1533,10 @@ class Swap_filter(sgqlc.types.Input):
     pair_ = sgqlc.types.Field(Pair_filter, graphql_name='pair_')
     sender = sgqlc.types.Field(Bytes, graphql_name='sender')
     sender_not = sgqlc.types.Field(Bytes, graphql_name='sender_not')
+    sender_gt = sgqlc.types.Field(Bytes, graphql_name='sender_gt')
+    sender_lt = sgqlc.types.Field(Bytes, graphql_name='sender_lt')
+    sender_gte = sgqlc.types.Field(Bytes, graphql_name='sender_gte')
+    sender_lte = sgqlc.types.Field(Bytes, graphql_name='sender_lte')
     sender_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Bytes)), graphql_name='sender_in')
     sender_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Bytes)), graphql_name='sender_not_in')
     sender_contains = sgqlc.types.Field(Bytes, graphql_name='sender_contains')
@@ -1150,6 +1575,10 @@ class Swap_filter(sgqlc.types.Input):
     amount1_out_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='amount1Out_not_in')
     to = sgqlc.types.Field(Bytes, graphql_name='to')
     to_not = sgqlc.types.Field(Bytes, graphql_name='to_not')
+    to_gt = sgqlc.types.Field(Bytes, graphql_name='to_gt')
+    to_lt = sgqlc.types.Field(Bytes, graphql_name='to_lt')
+    to_gte = sgqlc.types.Field(Bytes, graphql_name='to_gte')
+    to_lte = sgqlc.types.Field(Bytes, graphql_name='to_lte')
     to_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Bytes)), graphql_name='to_in')
     to_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Bytes)), graphql_name='to_not_in')
     to_contains = sgqlc.types.Field(Bytes, graphql_name='to_contains')
@@ -1171,11 +1600,13 @@ class Swap_filter(sgqlc.types.Input):
     amount_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='amountUSD_in')
     amount_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='amountUSD_not_in')
     _change_block = sgqlc.types.Field(BlockChangedFilter, graphql_name='_change_block')
+    and_ = sgqlc.types.Field(sgqlc.types.list_of('Swap_filter'), graphql_name='and')
+    or_ = sgqlc.types.Field(sgqlc.types.list_of('Swap_filter'), graphql_name='or')
 
 
 class TokenDayData_filter(sgqlc.types.Input):
     __schema__ = graphql_schema
-    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'date', 'date_not', 'date_gt', 'date_lt', 'date_gte', 'date_lte', 'date_in', 'date_not_in', 'token', 'token_not', 'token_gt', 'token_lt', 'token_gte', 'token_lte', 'token_in', 'token_not_in', 'token_contains', 'token_contains_nocase', 'token_not_contains', 'token_not_contains_nocase', 'token_starts_with', 'token_starts_with_nocase', 'token_not_starts_with', 'token_not_starts_with_nocase', 'token_ends_with', 'token_ends_with_nocase', 'token_not_ends_with', 'token_not_ends_with_nocase', 'token_', 'daily_volume_token', 'daily_volume_token_not', 'daily_volume_token_gt', 'daily_volume_token_lt', 'daily_volume_token_gte', 'daily_volume_token_lte', 'daily_volume_token_in', 'daily_volume_token_not_in', 'daily_volume_eth', 'daily_volume_eth_not', 'daily_volume_eth_gt', 'daily_volume_eth_lt', 'daily_volume_eth_gte', 'daily_volume_eth_lte', 'daily_volume_eth_in', 'daily_volume_eth_not_in', 'daily_volume_usd', 'daily_volume_usd_not', 'daily_volume_usd_gt', 'daily_volume_usd_lt', 'daily_volume_usd_gte', 'daily_volume_usd_lte', 'daily_volume_usd_in', 'daily_volume_usd_not_in', 'daily_txns', 'daily_txns_not', 'daily_txns_gt', 'daily_txns_lt', 'daily_txns_gte', 'daily_txns_lte', 'daily_txns_in', 'daily_txns_not_in', 'total_liquidity_token', 'total_liquidity_token_not', 'total_liquidity_token_gt', 'total_liquidity_token_lt', 'total_liquidity_token_gte', 'total_liquidity_token_lte', 'total_liquidity_token_in', 'total_liquidity_token_not_in', 'total_liquidity_eth', 'total_liquidity_eth_not', 'total_liquidity_eth_gt', 'total_liquidity_eth_lt', 'total_liquidity_eth_gte', 'total_liquidity_eth_lte', 'total_liquidity_eth_in', 'total_liquidity_eth_not_in', 'total_liquidity_usd', 'total_liquidity_usd_not', 'total_liquidity_usd_gt', 'total_liquidity_usd_lt', 'total_liquidity_usd_gte', 'total_liquidity_usd_lte', 'total_liquidity_usd_in', 'total_liquidity_usd_not_in', 'price_usd', 'price_usd_not', 'price_usd_gt', 'price_usd_lt', 'price_usd_gte', 'price_usd_lte', 'price_usd_in', 'price_usd_not_in', 'max_stored', 'max_stored_not', 'max_stored_gt', 'max_stored_lt', 'max_stored_gte', 'max_stored_lte', 'max_stored_in', 'max_stored_not_in', 'most_liquid_pairs', 'most_liquid_pairs_not', 'most_liquid_pairs_contains', 'most_liquid_pairs_contains_nocase', 'most_liquid_pairs_not_contains', 'most_liquid_pairs_not_contains_nocase', 'most_liquid_pairs_', '_change_block')
+    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'date', 'date_not', 'date_gt', 'date_lt', 'date_gte', 'date_lte', 'date_in', 'date_not_in', 'token', 'token_not', 'token_gt', 'token_lt', 'token_gte', 'token_lte', 'token_in', 'token_not_in', 'token_contains', 'token_contains_nocase', 'token_not_contains', 'token_not_contains_nocase', 'token_starts_with', 'token_starts_with_nocase', 'token_not_starts_with', 'token_not_starts_with_nocase', 'token_ends_with', 'token_ends_with_nocase', 'token_not_ends_with', 'token_not_ends_with_nocase', 'token_', 'volume', 'volume_not', 'volume_gt', 'volume_lt', 'volume_gte', 'volume_lte', 'volume_in', 'volume_not_in', 'volume_eth', 'volume_eth_not', 'volume_eth_gt', 'volume_eth_lt', 'volume_eth_gte', 'volume_eth_lte', 'volume_eth_in', 'volume_eth_not_in', 'volume_usd', 'volume_usd_not', 'volume_usd_gt', 'volume_usd_lt', 'volume_usd_gte', 'volume_usd_lte', 'volume_usd_in', 'volume_usd_not_in', 'tx_count', 'tx_count_not', 'tx_count_gt', 'tx_count_lt', 'tx_count_gte', 'tx_count_lte', 'tx_count_in', 'tx_count_not_in', 'liquidity', 'liquidity_not', 'liquidity_gt', 'liquidity_lt', 'liquidity_gte', 'liquidity_lte', 'liquidity_in', 'liquidity_not_in', 'liquidity_eth', 'liquidity_eth_not', 'liquidity_eth_gt', 'liquidity_eth_lt', 'liquidity_eth_gte', 'liquidity_eth_lte', 'liquidity_eth_in', 'liquidity_eth_not_in', 'liquidity_usd', 'liquidity_usd_not', 'liquidity_usd_gt', 'liquidity_usd_lt', 'liquidity_usd_gte', 'liquidity_usd_lte', 'liquidity_usd_in', 'liquidity_usd_not_in', 'price_usd', 'price_usd_not', 'price_usd_gt', 'price_usd_lt', 'price_usd_gte', 'price_usd_lte', 'price_usd_in', 'price_usd_not_in', '_change_block', 'and_', 'or_')
     id = sgqlc.types.Field(ID, graphql_name='id')
     id_not = sgqlc.types.Field(ID, graphql_name='id_not')
     id_gt = sgqlc.types.Field(ID, graphql_name='id_gt')
@@ -1213,62 +1644,62 @@ class TokenDayData_filter(sgqlc.types.Input):
     token_not_ends_with = sgqlc.types.Field(String, graphql_name='token_not_ends_with')
     token_not_ends_with_nocase = sgqlc.types.Field(String, graphql_name='token_not_ends_with_nocase')
     token_ = sgqlc.types.Field('Token_filter', graphql_name='token_')
-    daily_volume_token = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeToken')
-    daily_volume_token_not = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeToken_not')
-    daily_volume_token_gt = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeToken_gt')
-    daily_volume_token_lt = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeToken_lt')
-    daily_volume_token_gte = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeToken_gte')
-    daily_volume_token_lte = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeToken_lte')
-    daily_volume_token_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='dailyVolumeToken_in')
-    daily_volume_token_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='dailyVolumeToken_not_in')
-    daily_volume_eth = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeETH')
-    daily_volume_eth_not = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeETH_not')
-    daily_volume_eth_gt = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeETH_gt')
-    daily_volume_eth_lt = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeETH_lt')
-    daily_volume_eth_gte = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeETH_gte')
-    daily_volume_eth_lte = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeETH_lte')
-    daily_volume_eth_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='dailyVolumeETH_in')
-    daily_volume_eth_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='dailyVolumeETH_not_in')
-    daily_volume_usd = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUSD')
-    daily_volume_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUSD_not')
-    daily_volume_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUSD_gt')
-    daily_volume_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUSD_lt')
-    daily_volume_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUSD_gte')
-    daily_volume_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUSD_lte')
-    daily_volume_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='dailyVolumeUSD_in')
-    daily_volume_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='dailyVolumeUSD_not_in')
-    daily_txns = sgqlc.types.Field(BigInt, graphql_name='dailyTxns')
-    daily_txns_not = sgqlc.types.Field(BigInt, graphql_name='dailyTxns_not')
-    daily_txns_gt = sgqlc.types.Field(BigInt, graphql_name='dailyTxns_gt')
-    daily_txns_lt = sgqlc.types.Field(BigInt, graphql_name='dailyTxns_lt')
-    daily_txns_gte = sgqlc.types.Field(BigInt, graphql_name='dailyTxns_gte')
-    daily_txns_lte = sgqlc.types.Field(BigInt, graphql_name='dailyTxns_lte')
-    daily_txns_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='dailyTxns_in')
-    daily_txns_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='dailyTxns_not_in')
-    total_liquidity_token = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityToken')
-    total_liquidity_token_not = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityToken_not')
-    total_liquidity_token_gt = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityToken_gt')
-    total_liquidity_token_lt = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityToken_lt')
-    total_liquidity_token_gte = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityToken_gte')
-    total_liquidity_token_lte = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityToken_lte')
-    total_liquidity_token_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalLiquidityToken_in')
-    total_liquidity_token_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalLiquidityToken_not_in')
-    total_liquidity_eth = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityETH')
-    total_liquidity_eth_not = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityETH_not')
-    total_liquidity_eth_gt = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityETH_gt')
-    total_liquidity_eth_lt = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityETH_lt')
-    total_liquidity_eth_gte = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityETH_gte')
-    total_liquidity_eth_lte = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityETH_lte')
-    total_liquidity_eth_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalLiquidityETH_in')
-    total_liquidity_eth_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalLiquidityETH_not_in')
-    total_liquidity_usd = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityUSD')
-    total_liquidity_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityUSD_not')
-    total_liquidity_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityUSD_gt')
-    total_liquidity_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityUSD_lt')
-    total_liquidity_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityUSD_gte')
-    total_liquidity_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityUSD_lte')
-    total_liquidity_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalLiquidityUSD_in')
-    total_liquidity_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalLiquidityUSD_not_in')
+    volume = sgqlc.types.Field(BigDecimal, graphql_name='volume')
+    volume_not = sgqlc.types.Field(BigDecimal, graphql_name='volume_not')
+    volume_gt = sgqlc.types.Field(BigDecimal, graphql_name='volume_gt')
+    volume_lt = sgqlc.types.Field(BigDecimal, graphql_name='volume_lt')
+    volume_gte = sgqlc.types.Field(BigDecimal, graphql_name='volume_gte')
+    volume_lte = sgqlc.types.Field(BigDecimal, graphql_name='volume_lte')
+    volume_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volume_in')
+    volume_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volume_not_in')
+    volume_eth = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH')
+    volume_eth_not = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_not')
+    volume_eth_gt = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_gt')
+    volume_eth_lt = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_lt')
+    volume_eth_gte = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_gte')
+    volume_eth_lte = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_lte')
+    volume_eth_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeETH_in')
+    volume_eth_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeETH_not_in')
+    volume_usd = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD')
+    volume_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_not')
+    volume_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_gt')
+    volume_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_lt')
+    volume_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_gte')
+    volume_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_lte')
+    volume_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeUSD_in')
+    volume_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeUSD_not_in')
+    tx_count = sgqlc.types.Field(BigInt, graphql_name='txCount')
+    tx_count_not = sgqlc.types.Field(BigInt, graphql_name='txCount_not')
+    tx_count_gt = sgqlc.types.Field(BigInt, graphql_name='txCount_gt')
+    tx_count_lt = sgqlc.types.Field(BigInt, graphql_name='txCount_lt')
+    tx_count_gte = sgqlc.types.Field(BigInt, graphql_name='txCount_gte')
+    tx_count_lte = sgqlc.types.Field(BigInt, graphql_name='txCount_lte')
+    tx_count_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='txCount_in')
+    tx_count_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='txCount_not_in')
+    liquidity = sgqlc.types.Field(BigDecimal, graphql_name='liquidity')
+    liquidity_not = sgqlc.types.Field(BigDecimal, graphql_name='liquidity_not')
+    liquidity_gt = sgqlc.types.Field(BigDecimal, graphql_name='liquidity_gt')
+    liquidity_lt = sgqlc.types.Field(BigDecimal, graphql_name='liquidity_lt')
+    liquidity_gte = sgqlc.types.Field(BigDecimal, graphql_name='liquidity_gte')
+    liquidity_lte = sgqlc.types.Field(BigDecimal, graphql_name='liquidity_lte')
+    liquidity_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidity_in')
+    liquidity_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidity_not_in')
+    liquidity_eth = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH')
+    liquidity_eth_not = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_not')
+    liquidity_eth_gt = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_gt')
+    liquidity_eth_lt = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_lt')
+    liquidity_eth_gte = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_gte')
+    liquidity_eth_lte = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_lte')
+    liquidity_eth_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityETH_in')
+    liquidity_eth_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityETH_not_in')
+    liquidity_usd = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD')
+    liquidity_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_not')
+    liquidity_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_gt')
+    liquidity_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_lt')
+    liquidity_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_gte')
+    liquidity_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_lte')
+    liquidity_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityUSD_in')
+    liquidity_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityUSD_not_in')
     price_usd = sgqlc.types.Field(BigDecimal, graphql_name='priceUSD')
     price_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='priceUSD_not')
     price_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='priceUSD_gt')
@@ -1277,27 +1708,14 @@ class TokenDayData_filter(sgqlc.types.Input):
     price_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='priceUSD_lte')
     price_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='priceUSD_in')
     price_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='priceUSD_not_in')
-    max_stored = sgqlc.types.Field(Int, graphql_name='maxStored')
-    max_stored_not = sgqlc.types.Field(Int, graphql_name='maxStored_not')
-    max_stored_gt = sgqlc.types.Field(Int, graphql_name='maxStored_gt')
-    max_stored_lt = sgqlc.types.Field(Int, graphql_name='maxStored_lt')
-    max_stored_gte = sgqlc.types.Field(Int, graphql_name='maxStored_gte')
-    max_stored_lte = sgqlc.types.Field(Int, graphql_name='maxStored_lte')
-    max_stored_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='maxStored_in')
-    max_stored_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='maxStored_not_in')
-    most_liquid_pairs = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidPairs')
-    most_liquid_pairs_not = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidPairs_not')
-    most_liquid_pairs_contains = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidPairs_contains')
-    most_liquid_pairs_contains_nocase = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidPairs_contains_nocase')
-    most_liquid_pairs_not_contains = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidPairs_not_contains')
-    most_liquid_pairs_not_contains_nocase = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidPairs_not_contains_nocase')
-    most_liquid_pairs_ = sgqlc.types.Field(PairDayData_filter, graphql_name='mostLiquidPairs_')
     _change_block = sgqlc.types.Field(BlockChangedFilter, graphql_name='_change_block')
+    and_ = sgqlc.types.Field(sgqlc.types.list_of('TokenDayData_filter'), graphql_name='and')
+    or_ = sgqlc.types.Field(sgqlc.types.list_of('TokenDayData_filter'), graphql_name='or')
 
 
-class Token_filter(sgqlc.types.Input):
+class TokenHourData_filter(sgqlc.types.Input):
     __schema__ = graphql_schema
-    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'symbol', 'symbol_not', 'symbol_gt', 'symbol_lt', 'symbol_gte', 'symbol_lte', 'symbol_in', 'symbol_not_in', 'symbol_contains', 'symbol_contains_nocase', 'symbol_not_contains', 'symbol_not_contains_nocase', 'symbol_starts_with', 'symbol_starts_with_nocase', 'symbol_not_starts_with', 'symbol_not_starts_with_nocase', 'symbol_ends_with', 'symbol_ends_with_nocase', 'symbol_not_ends_with', 'symbol_not_ends_with_nocase', 'name', 'name_not', 'name_gt', 'name_lt', 'name_gte', 'name_lte', 'name_in', 'name_not_in', 'name_contains', 'name_contains_nocase', 'name_not_contains', 'name_not_contains_nocase', 'name_starts_with', 'name_starts_with_nocase', 'name_not_starts_with', 'name_not_starts_with_nocase', 'name_ends_with', 'name_ends_with_nocase', 'name_not_ends_with', 'name_not_ends_with_nocase', 'decimals', 'decimals_not', 'decimals_gt', 'decimals_lt', 'decimals_gte', 'decimals_lte', 'decimals_in', 'decimals_not_in', 'total_supply', 'total_supply_not', 'total_supply_gt', 'total_supply_lt', 'total_supply_gte', 'total_supply_lte', 'total_supply_in', 'total_supply_not_in', 'trade_volume', 'trade_volume_not', 'trade_volume_gt', 'trade_volume_lt', 'trade_volume_gte', 'trade_volume_lte', 'trade_volume_in', 'trade_volume_not_in', 'trade_volume_usd', 'trade_volume_usd_not', 'trade_volume_usd_gt', 'trade_volume_usd_lt', 'trade_volume_usd_gte', 'trade_volume_usd_lte', 'trade_volume_usd_in', 'trade_volume_usd_not_in', 'untracked_volume_usd', 'untracked_volume_usd_not', 'untracked_volume_usd_gt', 'untracked_volume_usd_lt', 'untracked_volume_usd_gte', 'untracked_volume_usd_lte', 'untracked_volume_usd_in', 'untracked_volume_usd_not_in', 'tx_count', 'tx_count_not', 'tx_count_gt', 'tx_count_lt', 'tx_count_gte', 'tx_count_lte', 'tx_count_in', 'tx_count_not_in', 'total_liquidity', 'total_liquidity_not', 'total_liquidity_gt', 'total_liquidity_lt', 'total_liquidity_gte', 'total_liquidity_lte', 'total_liquidity_in', 'total_liquidity_not_in', 'derived_eth', 'derived_eth_not', 'derived_eth_gt', 'derived_eth_lt', 'derived_eth_gte', 'derived_eth_lte', 'derived_eth_in', 'derived_eth_not_in', 'most_liquid_pairs', 'most_liquid_pairs_not', 'most_liquid_pairs_contains', 'most_liquid_pairs_contains_nocase', 'most_liquid_pairs_not_contains', 'most_liquid_pairs_not_contains_nocase', 'most_liquid_pairs_', '_change_block')
+    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'date', 'date_not', 'date_gt', 'date_lt', 'date_gte', 'date_lte', 'date_in', 'date_not_in', 'token', 'token_not', 'token_gt', 'token_lt', 'token_gte', 'token_lte', 'token_in', 'token_not_in', 'token_contains', 'token_contains_nocase', 'token_not_contains', 'token_not_contains_nocase', 'token_starts_with', 'token_starts_with_nocase', 'token_not_starts_with', 'token_not_starts_with_nocase', 'token_ends_with', 'token_ends_with_nocase', 'token_not_ends_with', 'token_not_ends_with_nocase', 'token_', 'volume', 'volume_not', 'volume_gt', 'volume_lt', 'volume_gte', 'volume_lte', 'volume_in', 'volume_not_in', 'volume_eth', 'volume_eth_not', 'volume_eth_gt', 'volume_eth_lt', 'volume_eth_gte', 'volume_eth_lte', 'volume_eth_in', 'volume_eth_not_in', 'volume_usd', 'volume_usd_not', 'volume_usd_gt', 'volume_usd_lt', 'volume_usd_gte', 'volume_usd_lte', 'volume_usd_in', 'volume_usd_not_in', 'tx_count', 'tx_count_not', 'tx_count_gt', 'tx_count_lt', 'tx_count_gte', 'tx_count_lte', 'tx_count_in', 'tx_count_not_in', 'liquidity', 'liquidity_not', 'liquidity_gt', 'liquidity_lt', 'liquidity_gte', 'liquidity_lte', 'liquidity_in', 'liquidity_not_in', 'liquidity_eth', 'liquidity_eth_not', 'liquidity_eth_gt', 'liquidity_eth_lt', 'liquidity_eth_gte', 'liquidity_eth_lte', 'liquidity_eth_in', 'liquidity_eth_not_in', 'liquidity_usd', 'liquidity_usd_not', 'liquidity_usd_gt', 'liquidity_usd_lt', 'liquidity_usd_gte', 'liquidity_usd_lte', 'liquidity_usd_in', 'liquidity_usd_not_in', 'price_usd', 'price_usd_not', 'price_usd_gt', 'price_usd_lt', 'price_usd_gte', 'price_usd_lte', 'price_usd_in', 'price_usd_not_in', '_change_block', 'and_', 'or_')
     id = sgqlc.types.Field(ID, graphql_name='id')
     id_not = sgqlc.types.Field(ID, graphql_name='id_not')
     id_gt = sgqlc.types.Field(ID, graphql_name='id_gt')
@@ -1306,6 +1724,136 @@ class Token_filter(sgqlc.types.Input):
     id_lte = sgqlc.types.Field(ID, graphql_name='id_lte')
     id_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(ID)), graphql_name='id_in')
     id_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(ID)), graphql_name='id_not_in')
+    date = sgqlc.types.Field(Int, graphql_name='date')
+    date_not = sgqlc.types.Field(Int, graphql_name='date_not')
+    date_gt = sgqlc.types.Field(Int, graphql_name='date_gt')
+    date_lt = sgqlc.types.Field(Int, graphql_name='date_lt')
+    date_gte = sgqlc.types.Field(Int, graphql_name='date_gte')
+    date_lte = sgqlc.types.Field(Int, graphql_name='date_lte')
+    date_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='date_in')
+    date_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='date_not_in')
+    token = sgqlc.types.Field(String, graphql_name='token')
+    token_not = sgqlc.types.Field(String, graphql_name='token_not')
+    token_gt = sgqlc.types.Field(String, graphql_name='token_gt')
+    token_lt = sgqlc.types.Field(String, graphql_name='token_lt')
+    token_gte = sgqlc.types.Field(String, graphql_name='token_gte')
+    token_lte = sgqlc.types.Field(String, graphql_name='token_lte')
+    token_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='token_in')
+    token_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='token_not_in')
+    token_contains = sgqlc.types.Field(String, graphql_name='token_contains')
+    token_contains_nocase = sgqlc.types.Field(String, graphql_name='token_contains_nocase')
+    token_not_contains = sgqlc.types.Field(String, graphql_name='token_not_contains')
+    token_not_contains_nocase = sgqlc.types.Field(String, graphql_name='token_not_contains_nocase')
+    token_starts_with = sgqlc.types.Field(String, graphql_name='token_starts_with')
+    token_starts_with_nocase = sgqlc.types.Field(String, graphql_name='token_starts_with_nocase')
+    token_not_starts_with = sgqlc.types.Field(String, graphql_name='token_not_starts_with')
+    token_not_starts_with_nocase = sgqlc.types.Field(String, graphql_name='token_not_starts_with_nocase')
+    token_ends_with = sgqlc.types.Field(String, graphql_name='token_ends_with')
+    token_ends_with_nocase = sgqlc.types.Field(String, graphql_name='token_ends_with_nocase')
+    token_not_ends_with = sgqlc.types.Field(String, graphql_name='token_not_ends_with')
+    token_not_ends_with_nocase = sgqlc.types.Field(String, graphql_name='token_not_ends_with_nocase')
+    token_ = sgqlc.types.Field('Token_filter', graphql_name='token_')
+    volume = sgqlc.types.Field(BigDecimal, graphql_name='volume')
+    volume_not = sgqlc.types.Field(BigDecimal, graphql_name='volume_not')
+    volume_gt = sgqlc.types.Field(BigDecimal, graphql_name='volume_gt')
+    volume_lt = sgqlc.types.Field(BigDecimal, graphql_name='volume_lt')
+    volume_gte = sgqlc.types.Field(BigDecimal, graphql_name='volume_gte')
+    volume_lte = sgqlc.types.Field(BigDecimal, graphql_name='volume_lte')
+    volume_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volume_in')
+    volume_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volume_not_in')
+    volume_eth = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH')
+    volume_eth_not = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_not')
+    volume_eth_gt = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_gt')
+    volume_eth_lt = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_lt')
+    volume_eth_gte = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_gte')
+    volume_eth_lte = sgqlc.types.Field(BigDecimal, graphql_name='volumeETH_lte')
+    volume_eth_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeETH_in')
+    volume_eth_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeETH_not_in')
+    volume_usd = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD')
+    volume_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_not')
+    volume_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_gt')
+    volume_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_lt')
+    volume_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_gte')
+    volume_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_lte')
+    volume_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeUSD_in')
+    volume_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeUSD_not_in')
+    tx_count = sgqlc.types.Field(BigInt, graphql_name='txCount')
+    tx_count_not = sgqlc.types.Field(BigInt, graphql_name='txCount_not')
+    tx_count_gt = sgqlc.types.Field(BigInt, graphql_name='txCount_gt')
+    tx_count_lt = sgqlc.types.Field(BigInt, graphql_name='txCount_lt')
+    tx_count_gte = sgqlc.types.Field(BigInt, graphql_name='txCount_gte')
+    tx_count_lte = sgqlc.types.Field(BigInt, graphql_name='txCount_lte')
+    tx_count_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='txCount_in')
+    tx_count_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='txCount_not_in')
+    liquidity = sgqlc.types.Field(BigDecimal, graphql_name='liquidity')
+    liquidity_not = sgqlc.types.Field(BigDecimal, graphql_name='liquidity_not')
+    liquidity_gt = sgqlc.types.Field(BigDecimal, graphql_name='liquidity_gt')
+    liquidity_lt = sgqlc.types.Field(BigDecimal, graphql_name='liquidity_lt')
+    liquidity_gte = sgqlc.types.Field(BigDecimal, graphql_name='liquidity_gte')
+    liquidity_lte = sgqlc.types.Field(BigDecimal, graphql_name='liquidity_lte')
+    liquidity_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidity_in')
+    liquidity_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidity_not_in')
+    liquidity_eth = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH')
+    liquidity_eth_not = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_not')
+    liquidity_eth_gt = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_gt')
+    liquidity_eth_lt = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_lt')
+    liquidity_eth_gte = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_gte')
+    liquidity_eth_lte = sgqlc.types.Field(BigDecimal, graphql_name='liquidityETH_lte')
+    liquidity_eth_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityETH_in')
+    liquidity_eth_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityETH_not_in')
+    liquidity_usd = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD')
+    liquidity_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_not')
+    liquidity_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_gt')
+    liquidity_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_lt')
+    liquidity_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_gte')
+    liquidity_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='liquidityUSD_lte')
+    liquidity_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityUSD_in')
+    liquidity_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidityUSD_not_in')
+    price_usd = sgqlc.types.Field(BigDecimal, graphql_name='priceUSD')
+    price_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='priceUSD_not')
+    price_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='priceUSD_gt')
+    price_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='priceUSD_lt')
+    price_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='priceUSD_gte')
+    price_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='priceUSD_lte')
+    price_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='priceUSD_in')
+    price_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='priceUSD_not_in')
+    _change_block = sgqlc.types.Field(BlockChangedFilter, graphql_name='_change_block')
+    and_ = sgqlc.types.Field(sgqlc.types.list_of('TokenHourData_filter'), graphql_name='and')
+    or_ = sgqlc.types.Field(sgqlc.types.list_of('TokenHourData_filter'), graphql_name='or')
+
+
+class Token_filter(sgqlc.types.Input):
+    __schema__ = graphql_schema
+    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'factory', 'factory_not', 'factory_gt', 'factory_lt', 'factory_gte', 'factory_lte', 'factory_in', 'factory_not_in', 'factory_contains', 'factory_contains_nocase', 'factory_not_contains', 'factory_not_contains_nocase', 'factory_starts_with', 'factory_starts_with_nocase', 'factory_not_starts_with', 'factory_not_starts_with_nocase', 'factory_ends_with', 'factory_ends_with_nocase', 'factory_not_ends_with', 'factory_not_ends_with_nocase', 'factory_', 'symbol', 'symbol_not', 'symbol_gt', 'symbol_lt', 'symbol_gte', 'symbol_lte', 'symbol_in', 'symbol_not_in', 'symbol_contains', 'symbol_contains_nocase', 'symbol_not_contains', 'symbol_not_contains_nocase', 'symbol_starts_with', 'symbol_starts_with_nocase', 'symbol_not_starts_with', 'symbol_not_starts_with_nocase', 'symbol_ends_with', 'symbol_ends_with_nocase', 'symbol_not_ends_with', 'symbol_not_ends_with_nocase', 'name', 'name_not', 'name_gt', 'name_lt', 'name_gte', 'name_lte', 'name_in', 'name_not_in', 'name_contains', 'name_contains_nocase', 'name_not_contains', 'name_not_contains_nocase', 'name_starts_with', 'name_starts_with_nocase', 'name_not_starts_with', 'name_not_starts_with_nocase', 'name_ends_with', 'name_ends_with_nocase', 'name_not_ends_with', 'name_not_ends_with_nocase', 'decimals', 'decimals_not', 'decimals_gt', 'decimals_lt', 'decimals_gte', 'decimals_lte', 'decimals_in', 'decimals_not_in', 'total_supply', 'total_supply_not', 'total_supply_gt', 'total_supply_lt', 'total_supply_gte', 'total_supply_lte', 'total_supply_in', 'total_supply_not_in', 'volume', 'volume_not', 'volume_gt', 'volume_lt', 'volume_gte', 'volume_lte', 'volume_in', 'volume_not_in', 'volume_usd', 'volume_usd_not', 'volume_usd_gt', 'volume_usd_lt', 'volume_usd_gte', 'volume_usd_lte', 'volume_usd_in', 'volume_usd_not_in', 'untracked_volume_usd', 'untracked_volume_usd_not', 'untracked_volume_usd_gt', 'untracked_volume_usd_lt', 'untracked_volume_usd_gte', 'untracked_volume_usd_lte', 'untracked_volume_usd_in', 'untracked_volume_usd_not_in', 'tx_count', 'tx_count_not', 'tx_count_gt', 'tx_count_lt', 'tx_count_gte', 'tx_count_lte', 'tx_count_in', 'tx_count_not_in', 'liquidity', 'liquidity_not', 'liquidity_gt', 'liquidity_lt', 'liquidity_gte', 'liquidity_lte', 'liquidity_in', 'liquidity_not_in', 'derived_eth', 'derived_eth_not', 'derived_eth_gt', 'derived_eth_lt', 'derived_eth_gte', 'derived_eth_lte', 'derived_eth_in', 'derived_eth_not_in', 'hour_data_', 'day_data_', 'base_pairs_', 'quote_pairs_', 'base_pairs_day_data_', 'quote_pairs_day_data_', '_change_block', 'and_', 'or_')
+    id = sgqlc.types.Field(ID, graphql_name='id')
+    id_not = sgqlc.types.Field(ID, graphql_name='id_not')
+    id_gt = sgqlc.types.Field(ID, graphql_name='id_gt')
+    id_lt = sgqlc.types.Field(ID, graphql_name='id_lt')
+    id_gte = sgqlc.types.Field(ID, graphql_name='id_gte')
+    id_lte = sgqlc.types.Field(ID, graphql_name='id_lte')
+    id_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(ID)), graphql_name='id_in')
+    id_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(ID)), graphql_name='id_not_in')
+    factory = sgqlc.types.Field(String, graphql_name='factory')
+    factory_not = sgqlc.types.Field(String, graphql_name='factory_not')
+    factory_gt = sgqlc.types.Field(String, graphql_name='factory_gt')
+    factory_lt = sgqlc.types.Field(String, graphql_name='factory_lt')
+    factory_gte = sgqlc.types.Field(String, graphql_name='factory_gte')
+    factory_lte = sgqlc.types.Field(String, graphql_name='factory_lte')
+    factory_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='factory_in')
+    factory_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='factory_not_in')
+    factory_contains = sgqlc.types.Field(String, graphql_name='factory_contains')
+    factory_contains_nocase = sgqlc.types.Field(String, graphql_name='factory_contains_nocase')
+    factory_not_contains = sgqlc.types.Field(String, graphql_name='factory_not_contains')
+    factory_not_contains_nocase = sgqlc.types.Field(String, graphql_name='factory_not_contains_nocase')
+    factory_starts_with = sgqlc.types.Field(String, graphql_name='factory_starts_with')
+    factory_starts_with_nocase = sgqlc.types.Field(String, graphql_name='factory_starts_with_nocase')
+    factory_not_starts_with = sgqlc.types.Field(String, graphql_name='factory_not_starts_with')
+    factory_not_starts_with_nocase = sgqlc.types.Field(String, graphql_name='factory_not_starts_with_nocase')
+    factory_ends_with = sgqlc.types.Field(String, graphql_name='factory_ends_with')
+    factory_ends_with_nocase = sgqlc.types.Field(String, graphql_name='factory_ends_with_nocase')
+    factory_not_ends_with = sgqlc.types.Field(String, graphql_name='factory_not_ends_with')
+    factory_not_ends_with_nocase = sgqlc.types.Field(String, graphql_name='factory_not_ends_with_nocase')
+    factory_ = sgqlc.types.Field(Factory_filter, graphql_name='factory_')
     symbol = sgqlc.types.Field(String, graphql_name='symbol')
     symbol_not = sgqlc.types.Field(String, graphql_name='symbol_not')
     symbol_gt = sgqlc.types.Field(String, graphql_name='symbol_gt')
@@ -1362,22 +1910,22 @@ class Token_filter(sgqlc.types.Input):
     total_supply_lte = sgqlc.types.Field(BigInt, graphql_name='totalSupply_lte')
     total_supply_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='totalSupply_in')
     total_supply_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='totalSupply_not_in')
-    trade_volume = sgqlc.types.Field(BigDecimal, graphql_name='tradeVolume')
-    trade_volume_not = sgqlc.types.Field(BigDecimal, graphql_name='tradeVolume_not')
-    trade_volume_gt = sgqlc.types.Field(BigDecimal, graphql_name='tradeVolume_gt')
-    trade_volume_lt = sgqlc.types.Field(BigDecimal, graphql_name='tradeVolume_lt')
-    trade_volume_gte = sgqlc.types.Field(BigDecimal, graphql_name='tradeVolume_gte')
-    trade_volume_lte = sgqlc.types.Field(BigDecimal, graphql_name='tradeVolume_lte')
-    trade_volume_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='tradeVolume_in')
-    trade_volume_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='tradeVolume_not_in')
-    trade_volume_usd = sgqlc.types.Field(BigDecimal, graphql_name='tradeVolumeUSD')
-    trade_volume_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='tradeVolumeUSD_not')
-    trade_volume_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='tradeVolumeUSD_gt')
-    trade_volume_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='tradeVolumeUSD_lt')
-    trade_volume_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='tradeVolumeUSD_gte')
-    trade_volume_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='tradeVolumeUSD_lte')
-    trade_volume_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='tradeVolumeUSD_in')
-    trade_volume_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='tradeVolumeUSD_not_in')
+    volume = sgqlc.types.Field(BigDecimal, graphql_name='volume')
+    volume_not = sgqlc.types.Field(BigDecimal, graphql_name='volume_not')
+    volume_gt = sgqlc.types.Field(BigDecimal, graphql_name='volume_gt')
+    volume_lt = sgqlc.types.Field(BigDecimal, graphql_name='volume_lt')
+    volume_gte = sgqlc.types.Field(BigDecimal, graphql_name='volume_gte')
+    volume_lte = sgqlc.types.Field(BigDecimal, graphql_name='volume_lte')
+    volume_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volume_in')
+    volume_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volume_not_in')
+    volume_usd = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD')
+    volume_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_not')
+    volume_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_gt')
+    volume_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_lt')
+    volume_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_gte')
+    volume_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='volumeUSD_lte')
+    volume_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeUSD_in')
+    volume_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='volumeUSD_not_in')
     untracked_volume_usd = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolumeUSD')
     untracked_volume_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolumeUSD_not')
     untracked_volume_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolumeUSD_gt')
@@ -1394,14 +1942,14 @@ class Token_filter(sgqlc.types.Input):
     tx_count_lte = sgqlc.types.Field(BigInt, graphql_name='txCount_lte')
     tx_count_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='txCount_in')
     tx_count_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='txCount_not_in')
-    total_liquidity = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidity')
-    total_liquidity_not = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidity_not')
-    total_liquidity_gt = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidity_gt')
-    total_liquidity_lt = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidity_lt')
-    total_liquidity_gte = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidity_gte')
-    total_liquidity_lte = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidity_lte')
-    total_liquidity_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalLiquidity_in')
-    total_liquidity_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalLiquidity_not_in')
+    liquidity = sgqlc.types.Field(BigDecimal, graphql_name='liquidity')
+    liquidity_not = sgqlc.types.Field(BigDecimal, graphql_name='liquidity_not')
+    liquidity_gt = sgqlc.types.Field(BigDecimal, graphql_name='liquidity_gt')
+    liquidity_lt = sgqlc.types.Field(BigDecimal, graphql_name='liquidity_lt')
+    liquidity_gte = sgqlc.types.Field(BigDecimal, graphql_name='liquidity_gte')
+    liquidity_lte = sgqlc.types.Field(BigDecimal, graphql_name='liquidity_lte')
+    liquidity_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidity_in')
+    liquidity_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='liquidity_not_in')
     derived_eth = sgqlc.types.Field(BigDecimal, graphql_name='derivedETH')
     derived_eth_not = sgqlc.types.Field(BigDecimal, graphql_name='derivedETH_not')
     derived_eth_gt = sgqlc.types.Field(BigDecimal, graphql_name='derivedETH_gt')
@@ -1410,19 +1958,20 @@ class Token_filter(sgqlc.types.Input):
     derived_eth_lte = sgqlc.types.Field(BigDecimal, graphql_name='derivedETH_lte')
     derived_eth_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='derivedETH_in')
     derived_eth_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='derivedETH_not_in')
-    most_liquid_pairs = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidPairs')
-    most_liquid_pairs_not = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidPairs_not')
-    most_liquid_pairs_contains = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidPairs_contains')
-    most_liquid_pairs_contains_nocase = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidPairs_contains_nocase')
-    most_liquid_pairs_not_contains = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidPairs_not_contains')
-    most_liquid_pairs_not_contains_nocase = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidPairs_not_contains_nocase')
-    most_liquid_pairs_ = sgqlc.types.Field(PairDayData_filter, graphql_name='mostLiquidPairs_')
+    hour_data_ = sgqlc.types.Field(TokenHourData_filter, graphql_name='hourData_')
+    day_data_ = sgqlc.types.Field(TokenDayData_filter, graphql_name='dayData_')
+    base_pairs_ = sgqlc.types.Field(Pair_filter, graphql_name='basePairs_')
+    quote_pairs_ = sgqlc.types.Field(Pair_filter, graphql_name='quotePairs_')
+    base_pairs_day_data_ = sgqlc.types.Field(PairDayData_filter, graphql_name='basePairsDayData_')
+    quote_pairs_day_data_ = sgqlc.types.Field(PairDayData_filter, graphql_name='quotePairsDayData_')
     _change_block = sgqlc.types.Field(BlockChangedFilter, graphql_name='_change_block')
+    and_ = sgqlc.types.Field(sgqlc.types.list_of('Token_filter'), graphql_name='and')
+    or_ = sgqlc.types.Field(sgqlc.types.list_of('Token_filter'), graphql_name='or')
 
 
 class Transaction_filter(sgqlc.types.Input):
     __schema__ = graphql_schema
-    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'block_number', 'block_number_not', 'block_number_gt', 'block_number_lt', 'block_number_gte', 'block_number_lte', 'block_number_in', 'block_number_not_in', 'timestamp', 'timestamp_not', 'timestamp_gt', 'timestamp_lt', 'timestamp_gte', 'timestamp_lte', 'timestamp_in', 'timestamp_not_in', 'mints', 'mints_not', 'mints_contains', 'mints_contains_nocase', 'mints_not_contains', 'mints_not_contains_nocase', 'mints_', 'burns', 'burns_not', 'burns_contains', 'burns_contains_nocase', 'burns_not_contains', 'burns_not_contains_nocase', 'burns_', 'swaps', 'swaps_not', 'swaps_contains', 'swaps_contains_nocase', 'swaps_not_contains', 'swaps_not_contains_nocase', 'swaps_', '_change_block')
+    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'block_number', 'block_number_not', 'block_number_gt', 'block_number_lt', 'block_number_gte', 'block_number_lte', 'block_number_in', 'block_number_not_in', 'timestamp', 'timestamp_not', 'timestamp_gt', 'timestamp_lt', 'timestamp_gte', 'timestamp_lte', 'timestamp_in', 'timestamp_not_in', 'mints', 'mints_not', 'mints_contains', 'mints_contains_nocase', 'mints_not_contains', 'mints_not_contains_nocase', 'mints_', 'burns', 'burns_not', 'burns_contains', 'burns_contains_nocase', 'burns_not_contains', 'burns_not_contains_nocase', 'burns_', 'swaps', 'swaps_not', 'swaps_contains', 'swaps_contains_nocase', 'swaps_not_contains', 'swaps_not_contains_nocase', 'swaps_', '_change_block', 'and_', 'or_')
     id = sgqlc.types.Field(ID, graphql_name='id')
     id_not = sgqlc.types.Field(ID, graphql_name='id_not')
     id_gt = sgqlc.types.Field(ID, graphql_name='id_gt')
@@ -1469,189 +2018,13 @@ class Transaction_filter(sgqlc.types.Input):
     swaps_not_contains_nocase = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='swaps_not_contains_nocase')
     swaps_ = sgqlc.types.Field(Swap_filter, graphql_name='swaps_')
     _change_block = sgqlc.types.Field(BlockChangedFilter, graphql_name='_change_block')
-
-
-class UniswapDayData_filter(sgqlc.types.Input):
-    __schema__ = graphql_schema
-    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'date', 'date_not', 'date_gt', 'date_lt', 'date_gte', 'date_lte', 'date_in', 'date_not_in', 'daily_volume_eth', 'daily_volume_eth_not', 'daily_volume_eth_gt', 'daily_volume_eth_lt', 'daily_volume_eth_gte', 'daily_volume_eth_lte', 'daily_volume_eth_in', 'daily_volume_eth_not_in', 'daily_volume_usd', 'daily_volume_usd_not', 'daily_volume_usd_gt', 'daily_volume_usd_lt', 'daily_volume_usd_gte', 'daily_volume_usd_lte', 'daily_volume_usd_in', 'daily_volume_usd_not_in', 'daily_volume_untracked', 'daily_volume_untracked_not', 'daily_volume_untracked_gt', 'daily_volume_untracked_lt', 'daily_volume_untracked_gte', 'daily_volume_untracked_lte', 'daily_volume_untracked_in', 'daily_volume_untracked_not_in', 'total_volume_eth', 'total_volume_eth_not', 'total_volume_eth_gt', 'total_volume_eth_lt', 'total_volume_eth_gte', 'total_volume_eth_lte', 'total_volume_eth_in', 'total_volume_eth_not_in', 'total_liquidity_eth', 'total_liquidity_eth_not', 'total_liquidity_eth_gt', 'total_liquidity_eth_lt', 'total_liquidity_eth_gte', 'total_liquidity_eth_lte', 'total_liquidity_eth_in', 'total_liquidity_eth_not_in', 'total_volume_usd', 'total_volume_usd_not', 'total_volume_usd_gt', 'total_volume_usd_lt', 'total_volume_usd_gte', 'total_volume_usd_lte', 'total_volume_usd_in', 'total_volume_usd_not_in', 'total_liquidity_usd', 'total_liquidity_usd_not', 'total_liquidity_usd_gt', 'total_liquidity_usd_lt', 'total_liquidity_usd_gte', 'total_liquidity_usd_lte', 'total_liquidity_usd_in', 'total_liquidity_usd_not_in', 'max_stored', 'max_stored_not', 'max_stored_gt', 'max_stored_lt', 'max_stored_gte', 'max_stored_lte', 'max_stored_in', 'max_stored_not_in', 'most_liquid_tokens', 'most_liquid_tokens_not', 'most_liquid_tokens_contains', 'most_liquid_tokens_contains_nocase', 'most_liquid_tokens_not_contains', 'most_liquid_tokens_not_contains_nocase', 'most_liquid_tokens_', 'tx_count', 'tx_count_not', 'tx_count_gt', 'tx_count_lt', 'tx_count_gte', 'tx_count_lte', 'tx_count_in', 'tx_count_not_in', '_change_block')
-    id = sgqlc.types.Field(ID, graphql_name='id')
-    id_not = sgqlc.types.Field(ID, graphql_name='id_not')
-    id_gt = sgqlc.types.Field(ID, graphql_name='id_gt')
-    id_lt = sgqlc.types.Field(ID, graphql_name='id_lt')
-    id_gte = sgqlc.types.Field(ID, graphql_name='id_gte')
-    id_lte = sgqlc.types.Field(ID, graphql_name='id_lte')
-    id_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(ID)), graphql_name='id_in')
-    id_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(ID)), graphql_name='id_not_in')
-    date = sgqlc.types.Field(Int, graphql_name='date')
-    date_not = sgqlc.types.Field(Int, graphql_name='date_not')
-    date_gt = sgqlc.types.Field(Int, graphql_name='date_gt')
-    date_lt = sgqlc.types.Field(Int, graphql_name='date_lt')
-    date_gte = sgqlc.types.Field(Int, graphql_name='date_gte')
-    date_lte = sgqlc.types.Field(Int, graphql_name='date_lte')
-    date_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='date_in')
-    date_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='date_not_in')
-    daily_volume_eth = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeETH')
-    daily_volume_eth_not = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeETH_not')
-    daily_volume_eth_gt = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeETH_gt')
-    daily_volume_eth_lt = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeETH_lt')
-    daily_volume_eth_gte = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeETH_gte')
-    daily_volume_eth_lte = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeETH_lte')
-    daily_volume_eth_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='dailyVolumeETH_in')
-    daily_volume_eth_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='dailyVolumeETH_not_in')
-    daily_volume_usd = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUSD')
-    daily_volume_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUSD_not')
-    daily_volume_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUSD_gt')
-    daily_volume_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUSD_lt')
-    daily_volume_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUSD_gte')
-    daily_volume_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUSD_lte')
-    daily_volume_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='dailyVolumeUSD_in')
-    daily_volume_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='dailyVolumeUSD_not_in')
-    daily_volume_untracked = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUntracked')
-    daily_volume_untracked_not = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUntracked_not')
-    daily_volume_untracked_gt = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUntracked_gt')
-    daily_volume_untracked_lt = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUntracked_lt')
-    daily_volume_untracked_gte = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUntracked_gte')
-    daily_volume_untracked_lte = sgqlc.types.Field(BigDecimal, graphql_name='dailyVolumeUntracked_lte')
-    daily_volume_untracked_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='dailyVolumeUntracked_in')
-    daily_volume_untracked_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='dailyVolumeUntracked_not_in')
-    total_volume_eth = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeETH')
-    total_volume_eth_not = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeETH_not')
-    total_volume_eth_gt = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeETH_gt')
-    total_volume_eth_lt = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeETH_lt')
-    total_volume_eth_gte = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeETH_gte')
-    total_volume_eth_lte = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeETH_lte')
-    total_volume_eth_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalVolumeETH_in')
-    total_volume_eth_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalVolumeETH_not_in')
-    total_liquidity_eth = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityETH')
-    total_liquidity_eth_not = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityETH_not')
-    total_liquidity_eth_gt = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityETH_gt')
-    total_liquidity_eth_lt = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityETH_lt')
-    total_liquidity_eth_gte = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityETH_gte')
-    total_liquidity_eth_lte = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityETH_lte')
-    total_liquidity_eth_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalLiquidityETH_in')
-    total_liquidity_eth_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalLiquidityETH_not_in')
-    total_volume_usd = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeUSD')
-    total_volume_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeUSD_not')
-    total_volume_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeUSD_gt')
-    total_volume_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeUSD_lt')
-    total_volume_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeUSD_gte')
-    total_volume_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeUSD_lte')
-    total_volume_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalVolumeUSD_in')
-    total_volume_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalVolumeUSD_not_in')
-    total_liquidity_usd = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityUSD')
-    total_liquidity_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityUSD_not')
-    total_liquidity_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityUSD_gt')
-    total_liquidity_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityUSD_lt')
-    total_liquidity_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityUSD_gte')
-    total_liquidity_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityUSD_lte')
-    total_liquidity_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalLiquidityUSD_in')
-    total_liquidity_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalLiquidityUSD_not_in')
-    max_stored = sgqlc.types.Field(Int, graphql_name='maxStored')
-    max_stored_not = sgqlc.types.Field(Int, graphql_name='maxStored_not')
-    max_stored_gt = sgqlc.types.Field(Int, graphql_name='maxStored_gt')
-    max_stored_lt = sgqlc.types.Field(Int, graphql_name='maxStored_lt')
-    max_stored_gte = sgqlc.types.Field(Int, graphql_name='maxStored_gte')
-    max_stored_lte = sgqlc.types.Field(Int, graphql_name='maxStored_lte')
-    max_stored_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='maxStored_in')
-    max_stored_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='maxStored_not_in')
-    most_liquid_tokens = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidTokens')
-    most_liquid_tokens_not = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidTokens_not')
-    most_liquid_tokens_contains = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidTokens_contains')
-    most_liquid_tokens_contains_nocase = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidTokens_contains_nocase')
-    most_liquid_tokens_not_contains = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidTokens_not_contains')
-    most_liquid_tokens_not_contains_nocase = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidTokens_not_contains_nocase')
-    most_liquid_tokens_ = sgqlc.types.Field(TokenDayData_filter, graphql_name='mostLiquidTokens_')
-    tx_count = sgqlc.types.Field(BigInt, graphql_name='txCount')
-    tx_count_not = sgqlc.types.Field(BigInt, graphql_name='txCount_not')
-    tx_count_gt = sgqlc.types.Field(BigInt, graphql_name='txCount_gt')
-    tx_count_lt = sgqlc.types.Field(BigInt, graphql_name='txCount_lt')
-    tx_count_gte = sgqlc.types.Field(BigInt, graphql_name='txCount_gte')
-    tx_count_lte = sgqlc.types.Field(BigInt, graphql_name='txCount_lte')
-    tx_count_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='txCount_in')
-    tx_count_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='txCount_not_in')
-    _change_block = sgqlc.types.Field(BlockChangedFilter, graphql_name='_change_block')
-
-
-class UniswapFactory_filter(sgqlc.types.Input):
-    __schema__ = graphql_schema
-    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'pair_count', 'pair_count_not', 'pair_count_gt', 'pair_count_lt', 'pair_count_gte', 'pair_count_lte', 'pair_count_in', 'pair_count_not_in', 'total_volume_usd', 'total_volume_usd_not', 'total_volume_usd_gt', 'total_volume_usd_lt', 'total_volume_usd_gte', 'total_volume_usd_lte', 'total_volume_usd_in', 'total_volume_usd_not_in', 'total_volume_eth', 'total_volume_eth_not', 'total_volume_eth_gt', 'total_volume_eth_lt', 'total_volume_eth_gte', 'total_volume_eth_lte', 'total_volume_eth_in', 'total_volume_eth_not_in', 'untracked_volume_usd', 'untracked_volume_usd_not', 'untracked_volume_usd_gt', 'untracked_volume_usd_lt', 'untracked_volume_usd_gte', 'untracked_volume_usd_lte', 'untracked_volume_usd_in', 'untracked_volume_usd_not_in', 'total_liquidity_usd', 'total_liquidity_usd_not', 'total_liquidity_usd_gt', 'total_liquidity_usd_lt', 'total_liquidity_usd_gte', 'total_liquidity_usd_lte', 'total_liquidity_usd_in', 'total_liquidity_usd_not_in', 'total_liquidity_eth', 'total_liquidity_eth_not', 'total_liquidity_eth_gt', 'total_liquidity_eth_lt', 'total_liquidity_eth_gte', 'total_liquidity_eth_lte', 'total_liquidity_eth_in', 'total_liquidity_eth_not_in', 'tx_count', 'tx_count_not', 'tx_count_gt', 'tx_count_lt', 'tx_count_gte', 'tx_count_lte', 'tx_count_in', 'tx_count_not_in', 'most_liquid_tokens', 'most_liquid_tokens_not', 'most_liquid_tokens_contains', 'most_liquid_tokens_contains_nocase', 'most_liquid_tokens_not_contains', 'most_liquid_tokens_not_contains_nocase', 'most_liquid_tokens_', '_change_block')
-    id = sgqlc.types.Field(ID, graphql_name='id')
-    id_not = sgqlc.types.Field(ID, graphql_name='id_not')
-    id_gt = sgqlc.types.Field(ID, graphql_name='id_gt')
-    id_lt = sgqlc.types.Field(ID, graphql_name='id_lt')
-    id_gte = sgqlc.types.Field(ID, graphql_name='id_gte')
-    id_lte = sgqlc.types.Field(ID, graphql_name='id_lte')
-    id_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(ID)), graphql_name='id_in')
-    id_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(ID)), graphql_name='id_not_in')
-    pair_count = sgqlc.types.Field(Int, graphql_name='pairCount')
-    pair_count_not = sgqlc.types.Field(Int, graphql_name='pairCount_not')
-    pair_count_gt = sgqlc.types.Field(Int, graphql_name='pairCount_gt')
-    pair_count_lt = sgqlc.types.Field(Int, graphql_name='pairCount_lt')
-    pair_count_gte = sgqlc.types.Field(Int, graphql_name='pairCount_gte')
-    pair_count_lte = sgqlc.types.Field(Int, graphql_name='pairCount_lte')
-    pair_count_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='pairCount_in')
-    pair_count_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(Int)), graphql_name='pairCount_not_in')
-    total_volume_usd = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeUSD')
-    total_volume_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeUSD_not')
-    total_volume_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeUSD_gt')
-    total_volume_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeUSD_lt')
-    total_volume_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeUSD_gte')
-    total_volume_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeUSD_lte')
-    total_volume_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalVolumeUSD_in')
-    total_volume_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalVolumeUSD_not_in')
-    total_volume_eth = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeETH')
-    total_volume_eth_not = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeETH_not')
-    total_volume_eth_gt = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeETH_gt')
-    total_volume_eth_lt = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeETH_lt')
-    total_volume_eth_gte = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeETH_gte')
-    total_volume_eth_lte = sgqlc.types.Field(BigDecimal, graphql_name='totalVolumeETH_lte')
-    total_volume_eth_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalVolumeETH_in')
-    total_volume_eth_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalVolumeETH_not_in')
-    untracked_volume_usd = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolumeUSD')
-    untracked_volume_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolumeUSD_not')
-    untracked_volume_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolumeUSD_gt')
-    untracked_volume_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolumeUSD_lt')
-    untracked_volume_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolumeUSD_gte')
-    untracked_volume_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='untrackedVolumeUSD_lte')
-    untracked_volume_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='untrackedVolumeUSD_in')
-    untracked_volume_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='untrackedVolumeUSD_not_in')
-    total_liquidity_usd = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityUSD')
-    total_liquidity_usd_not = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityUSD_not')
-    total_liquidity_usd_gt = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityUSD_gt')
-    total_liquidity_usd_lt = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityUSD_lt')
-    total_liquidity_usd_gte = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityUSD_gte')
-    total_liquidity_usd_lte = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityUSD_lte')
-    total_liquidity_usd_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalLiquidityUSD_in')
-    total_liquidity_usd_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalLiquidityUSD_not_in')
-    total_liquidity_eth = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityETH')
-    total_liquidity_eth_not = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityETH_not')
-    total_liquidity_eth_gt = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityETH_gt')
-    total_liquidity_eth_lt = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityETH_lt')
-    total_liquidity_eth_gte = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityETH_gte')
-    total_liquidity_eth_lte = sgqlc.types.Field(BigDecimal, graphql_name='totalLiquidityETH_lte')
-    total_liquidity_eth_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalLiquidityETH_in')
-    total_liquidity_eth_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='totalLiquidityETH_not_in')
-    tx_count = sgqlc.types.Field(BigInt, graphql_name='txCount')
-    tx_count_not = sgqlc.types.Field(BigInt, graphql_name='txCount_not')
-    tx_count_gt = sgqlc.types.Field(BigInt, graphql_name='txCount_gt')
-    tx_count_lt = sgqlc.types.Field(BigInt, graphql_name='txCount_lt')
-    tx_count_gte = sgqlc.types.Field(BigInt, graphql_name='txCount_gte')
-    tx_count_lte = sgqlc.types.Field(BigInt, graphql_name='txCount_lte')
-    tx_count_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='txCount_in')
-    tx_count_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigInt)), graphql_name='txCount_not_in')
-    most_liquid_tokens = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidTokens')
-    most_liquid_tokens_not = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidTokens_not')
-    most_liquid_tokens_contains = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidTokens_contains')
-    most_liquid_tokens_contains_nocase = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidTokens_contains_nocase')
-    most_liquid_tokens_not_contains = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidTokens_not_contains')
-    most_liquid_tokens_not_contains_nocase = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(String)), graphql_name='mostLiquidTokens_not_contains_nocase')
-    most_liquid_tokens_ = sgqlc.types.Field(TokenDayData_filter, graphql_name='mostLiquidTokens_')
-    _change_block = sgqlc.types.Field(BlockChangedFilter, graphql_name='_change_block')
+    and_ = sgqlc.types.Field(sgqlc.types.list_of('Transaction_filter'), graphql_name='and')
+    or_ = sgqlc.types.Field(sgqlc.types.list_of('Transaction_filter'), graphql_name='or')
 
 
 class User_filter(sgqlc.types.Input):
     __schema__ = graphql_schema
-    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'liquidity_positions_', 'usd_swapped', 'usd_swapped_not', 'usd_swapped_gt', 'usd_swapped_lt', 'usd_swapped_gte', 'usd_swapped_lte', 'usd_swapped_in', 'usd_swapped_not_in', '_change_block')
+    __field_names__ = ('id', 'id_not', 'id_gt', 'id_lt', 'id_gte', 'id_lte', 'id_in', 'id_not_in', 'liquidity_positions_', '_change_block', 'and_', 'or_')
     id = sgqlc.types.Field(ID, graphql_name='id')
     id_not = sgqlc.types.Field(ID, graphql_name='id_not')
     id_gt = sgqlc.types.Field(ID, graphql_name='id_gt')
@@ -1661,15 +2034,9 @@ class User_filter(sgqlc.types.Input):
     id_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(ID)), graphql_name='id_in')
     id_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(ID)), graphql_name='id_not_in')
     liquidity_positions_ = sgqlc.types.Field(LiquidityPosition_filter, graphql_name='liquidityPositions_')
-    usd_swapped = sgqlc.types.Field(BigDecimal, graphql_name='usdSwapped')
-    usd_swapped_not = sgqlc.types.Field(BigDecimal, graphql_name='usdSwapped_not')
-    usd_swapped_gt = sgqlc.types.Field(BigDecimal, graphql_name='usdSwapped_gt')
-    usd_swapped_lt = sgqlc.types.Field(BigDecimal, graphql_name='usdSwapped_lt')
-    usd_swapped_gte = sgqlc.types.Field(BigDecimal, graphql_name='usdSwapped_gte')
-    usd_swapped_lte = sgqlc.types.Field(BigDecimal, graphql_name='usdSwapped_lte')
-    usd_swapped_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='usdSwapped_in')
-    usd_swapped_not_in = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(BigDecimal)), graphql_name='usdSwapped_not_in')
     _change_block = sgqlc.types.Field(BlockChangedFilter, graphql_name='_change_block')
+    and_ = sgqlc.types.Field(sgqlc.types.list_of('User_filter'), graphql_name='and')
+    or_ = sgqlc.types.Field(sgqlc.types.list_of('User_filter'), graphql_name='or')
 
 
 
@@ -1685,7 +2052,7 @@ class Bundle(sgqlc.types.Type):
 
 class Burn(sgqlc.types.Type):
     __schema__ = graphql_schema
-    __field_names__ = ('id', 'transaction', 'timestamp', 'pair', 'liquidity', 'sender', 'amount0', 'amount1', 'to', 'log_index', 'amount_usd', 'needs_complete', 'fee_to', 'fee_liquidity')
+    __field_names__ = ('id', 'transaction', 'timestamp', 'pair', 'liquidity', 'sender', 'amount0', 'amount1', 'to', 'log_index', 'amount_usd', 'complete', 'fee_to', 'fee_liquidity')
     id = sgqlc.types.Field(sgqlc.types.non_null(ID), graphql_name='id')
     transaction = sgqlc.types.Field(sgqlc.types.non_null('Transaction'), graphql_name='transaction')
     timestamp = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='timestamp')
@@ -1697,18 +2064,103 @@ class Burn(sgqlc.types.Type):
     to = sgqlc.types.Field(Bytes, graphql_name='to')
     log_index = sgqlc.types.Field(BigInt, graphql_name='logIndex')
     amount_usd = sgqlc.types.Field(BigDecimal, graphql_name='amountUSD')
-    needs_complete = sgqlc.types.Field(sgqlc.types.non_null(Boolean), graphql_name='needsComplete')
+    complete = sgqlc.types.Field(sgqlc.types.non_null(Boolean), graphql_name='complete')
     fee_to = sgqlc.types.Field(Bytes, graphql_name='feeTo')
     fee_liquidity = sgqlc.types.Field(BigDecimal, graphql_name='feeLiquidity')
 
 
+class DayData(sgqlc.types.Type):
+    __schema__ = graphql_schema
+    __field_names__ = ('id', 'date', 'factory', 'volume_eth', 'volume_usd', 'untracked_volume', 'liquidity_eth', 'liquidity_usd', 'tx_count')
+    id = sgqlc.types.Field(sgqlc.types.non_null(ID), graphql_name='id')
+    date = sgqlc.types.Field(sgqlc.types.non_null(Int), graphql_name='date')
+    factory = sgqlc.types.Field(sgqlc.types.non_null('Factory'), graphql_name='factory')
+    volume_eth = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='volumeETH')
+    volume_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='volumeUSD')
+    untracked_volume = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='untrackedVolume')
+    liquidity_eth = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='liquidityETH')
+    liquidity_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='liquidityUSD')
+    tx_count = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='txCount')
+
+
+class Factory(sgqlc.types.Type):
+    __schema__ = graphql_schema
+    __field_names__ = ('id', 'pair_count', 'volume_usd', 'volume_eth', 'untracked_volume_usd', 'liquidity_usd', 'liquidity_eth', 'tx_count', 'token_count', 'user_count', 'pairs', 'tokens', 'hour_data', 'day_data')
+    id = sgqlc.types.Field(sgqlc.types.non_null(ID), graphql_name='id')
+    pair_count = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='pairCount')
+    volume_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='volumeUSD')
+    volume_eth = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='volumeETH')
+    untracked_volume_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='untrackedVolumeUSD')
+    liquidity_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='liquidityUSD')
+    liquidity_eth = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='liquidityETH')
+    tx_count = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='txCount')
+    token_count = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='tokenCount')
+    user_count = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='userCount')
+    pairs = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('Pair'))), graphql_name='pairs', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(Pair_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(Pair_filter, graphql_name='where', default=None)),
+))
+    )
+    tokens = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('Token'))), graphql_name='tokens', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(Token_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(Token_filter, graphql_name='where', default=None)),
+))
+    )
+    hour_data = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('HourData'))), graphql_name='hourData', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(HourData_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(HourData_filter, graphql_name='where', default=None)),
+))
+    )
+    day_data = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(DayData))), graphql_name='dayData', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(DayData_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(DayData_filter, graphql_name='where', default=None)),
+))
+    )
+
+
+class HourData(sgqlc.types.Type):
+    __schema__ = graphql_schema
+    __field_names__ = ('id', 'date', 'factory', 'volume_eth', 'volume_usd', 'untracked_volume', 'liquidity_eth', 'liquidity_usd', 'tx_count')
+    id = sgqlc.types.Field(sgqlc.types.non_null(ID), graphql_name='id')
+    date = sgqlc.types.Field(sgqlc.types.non_null(Int), graphql_name='date')
+    factory = sgqlc.types.Field(sgqlc.types.non_null(Factory), graphql_name='factory')
+    volume_eth = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='volumeETH')
+    volume_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='volumeUSD')
+    untracked_volume = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='untrackedVolume')
+    liquidity_eth = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='liquidityETH')
+    liquidity_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='liquidityUSD')
+    tx_count = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='txCount')
+
+
 class LiquidityPosition(sgqlc.types.Type):
     __schema__ = graphql_schema
-    __field_names__ = ('id', 'user', 'pair', 'liquidity_token_balance')
+    __field_names__ = ('id', 'user', 'pair', 'liquidity_token_balance', 'snapshots', 'block', 'timestamp')
     id = sgqlc.types.Field(sgqlc.types.non_null(ID), graphql_name='id')
     user = sgqlc.types.Field(sgqlc.types.non_null('User'), graphql_name='user')
     pair = sgqlc.types.Field(sgqlc.types.non_null('Pair'), graphql_name='pair')
     liquidity_token_balance = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='liquidityTokenBalance')
+    snapshots = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of('LiquidityPositionSnapshot')), graphql_name='snapshots', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(LiquidityPositionSnapshot_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(LiquidityPositionSnapshot_filter, graphql_name='where', default=None)),
+))
+    )
+    block = sgqlc.types.Field(sgqlc.types.non_null(Int), graphql_name='block')
+    timestamp = sgqlc.types.Field(sgqlc.types.non_null(Int), graphql_name='timestamp')
 
 
 class LiquidityPositionSnapshot(sgqlc.types.Type):
@@ -1749,8 +2201,10 @@ class Mint(sgqlc.types.Type):
 
 class Pair(sgqlc.types.Type):
     __schema__ = graphql_schema
-    __field_names__ = ('id', 'token0', 'token1', 'reserve0', 'reserve1', 'total_supply', 'reserve_eth', 'reserve_usd', 'tracked_reserve_eth', 'token0_price', 'token1_price', 'volume_token0', 'volume_token1', 'volume_usd', 'untracked_volume_usd', 'tx_count', 'created_at_timestamp', 'created_at_block_number', 'liquidity_provider_count')
+    __field_names__ = ('id', 'factory', 'name', 'token0', 'token1', 'reserve0', 'reserve1', 'total_supply', 'reserve_eth', 'reserve_usd', 'tracked_reserve_eth', 'token0_price', 'token1_price', 'volume_token0', 'volume_token1', 'volume_usd', 'untracked_volume_usd', 'tx_count', 'liquidity_provider_count', 'liquidity_positions', 'liquidity_position_snapshots', 'day_data', 'hour_data', 'mints', 'burns', 'swaps', 'timestamp', 'block')
     id = sgqlc.types.Field(sgqlc.types.non_null(ID), graphql_name='id')
+    factory = sgqlc.types.Field(sgqlc.types.non_null(Factory), graphql_name='factory')
+    name = sgqlc.types.Field(sgqlc.types.non_null(String), graphql_name='name')
     token0 = sgqlc.types.Field(sgqlc.types.non_null('Token'), graphql_name='token0')
     token1 = sgqlc.types.Field(sgqlc.types.non_null('Token'), graphql_name='token1')
     reserve0 = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='reserve0')
@@ -1766,59 +2220,179 @@ class Pair(sgqlc.types.Type):
     volume_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='volumeUSD')
     untracked_volume_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='untrackedVolumeUSD')
     tx_count = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='txCount')
-    created_at_timestamp = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='createdAtTimestamp')
-    created_at_block_number = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='createdAtBlockNumber')
     liquidity_provider_count = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='liquidityProviderCount')
+    liquidity_positions = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(LiquidityPosition))), graphql_name='liquidityPositions', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(LiquidityPosition_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(LiquidityPosition_filter, graphql_name='where', default=None)),
+))
+    )
+    liquidity_position_snapshots = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(LiquidityPositionSnapshot))), graphql_name='liquidityPositionSnapshots', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(LiquidityPositionSnapshot_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(LiquidityPositionSnapshot_filter, graphql_name='where', default=None)),
+))
+    )
+    day_data = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('PairDayData'))), graphql_name='dayData', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(PairDayData_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(PairDayData_filter, graphql_name='where', default=None)),
+))
+    )
+    hour_data = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('PairHourData'))), graphql_name='hourData', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(PairHourData_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(PairHourData_filter, graphql_name='where', default=None)),
+))
+    )
+    mints = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(Mint))), graphql_name='mints', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(Mint_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(Mint_filter, graphql_name='where', default=None)),
+))
+    )
+    burns = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(Burn))), graphql_name='burns', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(Burn_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(Burn_filter, graphql_name='where', default=None)),
+))
+    )
+    swaps = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('Swap'))), graphql_name='swaps', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(Swap_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(Swap_filter, graphql_name='where', default=None)),
+))
+    )
+    timestamp = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='timestamp')
+    block = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='block')
 
 
 class PairDayData(sgqlc.types.Type):
     __schema__ = graphql_schema
-    __field_names__ = ('id', 'date', 'pair_address', 'token0', 'token1', 'reserve0', 'reserve1', 'total_supply', 'reserve_usd', 'daily_volume_token0', 'daily_volume_token1', 'daily_volume_usd', 'daily_txns')
+    __field_names__ = ('id', 'date', 'pair', 'token0', 'token1', 'reserve0', 'reserve1', 'total_supply', 'reserve_usd', 'volume_token0', 'volume_token1', 'volume_usd', 'tx_count')
     id = sgqlc.types.Field(sgqlc.types.non_null(ID), graphql_name='id')
     date = sgqlc.types.Field(sgqlc.types.non_null(Int), graphql_name='date')
-    pair_address = sgqlc.types.Field(sgqlc.types.non_null(Bytes), graphql_name='pairAddress')
+    pair = sgqlc.types.Field(sgqlc.types.non_null(Pair), graphql_name='pair')
     token0 = sgqlc.types.Field(sgqlc.types.non_null('Token'), graphql_name='token0')
     token1 = sgqlc.types.Field(sgqlc.types.non_null('Token'), graphql_name='token1')
     reserve0 = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='reserve0')
     reserve1 = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='reserve1')
     total_supply = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='totalSupply')
     reserve_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='reserveUSD')
-    daily_volume_token0 = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='dailyVolumeToken0')
-    daily_volume_token1 = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='dailyVolumeToken1')
-    daily_volume_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='dailyVolumeUSD')
-    daily_txns = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='dailyTxns')
+    volume_token0 = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='volumeToken0')
+    volume_token1 = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='volumeToken1')
+    volume_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='volumeUSD')
+    tx_count = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='txCount')
 
 
 class PairHourData(sgqlc.types.Type):
     __schema__ = graphql_schema
-    __field_names__ = ('id', 'hour_start_unix', 'pair', 'reserve0', 'reserve1', 'reserve_usd', 'hourly_volume_token0', 'hourly_volume_token1', 'hourly_volume_usd', 'hourly_txns')
+    __field_names__ = ('id', 'date', 'pair', 'reserve0', 'reserve1', 'reserve_usd', 'volume_token0', 'volume_token1', 'volume_usd', 'tx_count')
     id = sgqlc.types.Field(sgqlc.types.non_null(ID), graphql_name='id')
-    hour_start_unix = sgqlc.types.Field(sgqlc.types.non_null(Int), graphql_name='hourStartUnix')
+    date = sgqlc.types.Field(sgqlc.types.non_null(Int), graphql_name='date')
     pair = sgqlc.types.Field(sgqlc.types.non_null(Pair), graphql_name='pair')
     reserve0 = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='reserve0')
     reserve1 = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='reserve1')
     reserve_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='reserveUSD')
-    hourly_volume_token0 = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='hourlyVolumeToken0')
-    hourly_volume_token1 = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='hourlyVolumeToken1')
-    hourly_volume_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='hourlyVolumeUSD')
-    hourly_txns = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='hourlyTxns')
+    volume_token0 = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='volumeToken0')
+    volume_token1 = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='volumeToken1')
+    volume_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='volumeUSD')
+    tx_count = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='txCount')
 
 
 class Query(sgqlc.types.Type):
     __schema__ = graphql_schema
-    __field_names__ = ('uniswap_factory', 'uniswap_factories', 'token', 'tokens', 'pair', 'pairs', 'user', 'users', 'liquidity_position', 'liquidity_positions', 'liquidity_position_snapshot', 'liquidity_position_snapshots', 'transaction', 'transactions', 'mint', 'mints', 'burn', 'burns', 'swap', 'swaps', 'bundle', 'bundles', 'uniswap_day_data', 'uniswap_day_datas', 'pair_hour_data', 'pair_hour_datas', 'pair_day_data', 'pair_day_datas', 'token_day_data', 'token_day_datas', '_meta')
-    uniswap_factory = sgqlc.types.Field('UniswapFactory', graphql_name='uniswapFactory', args=sgqlc.types.ArgDict((
+    __field_names__ = ('user', 'users', 'bundle', 'bundles', 'factory', 'factories', 'hour_data', 'hour_datas', 'day_data', 'day_datas', 'token', 'tokens', 'token_hour_data', 'token_hour_datas', 'token_day_data', 'token_day_datas', 'pair', 'pairs', 'pair_hour_data', 'pair_hour_datas', 'pair_day_data', 'pair_day_datas', 'liquidity_position', 'liquidity_positions', 'liquidity_position_snapshot', 'liquidity_position_snapshots', 'transaction', 'transactions', 'mint', 'mints', 'burn', 'burns', 'swap', 'swaps', 'token_search', 'pair_search', 'user_search', '_meta')
+    user = sgqlc.types.Field('User', graphql_name='user', args=sgqlc.types.ArgDict((
         ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
         ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
         ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
 ))
     )
-    uniswap_factories = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('UniswapFactory'))), graphql_name='uniswapFactories', args=sgqlc.types.ArgDict((
+    users = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('User'))), graphql_name='users', args=sgqlc.types.ArgDict((
         ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
         ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
-        ('order_by', sgqlc.types.Arg(UniswapFactory_orderBy, graphql_name='orderBy', default=None)),
+        ('order_by', sgqlc.types.Arg(User_orderBy, graphql_name='orderBy', default=None)),
         ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
-        ('where', sgqlc.types.Arg(UniswapFactory_filter, graphql_name='where', default=None)),
+        ('where', sgqlc.types.Arg(User_filter, graphql_name='where', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    bundle = sgqlc.types.Field(Bundle, graphql_name='bundle', args=sgqlc.types.ArgDict((
+        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    bundles = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(Bundle))), graphql_name='bundles', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(Bundle_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(Bundle_filter, graphql_name='where', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    factory = sgqlc.types.Field(Factory, graphql_name='factory', args=sgqlc.types.ArgDict((
+        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    factories = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(Factory))), graphql_name='factories', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(Factory_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(Factory_filter, graphql_name='where', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    hour_data = sgqlc.types.Field(HourData, graphql_name='hourData', args=sgqlc.types.ArgDict((
+        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    hour_datas = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(HourData))), graphql_name='hourDatas', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(HourData_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(HourData_filter, graphql_name='where', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    day_data = sgqlc.types.Field(DayData, graphql_name='dayData', args=sgqlc.types.ArgDict((
+        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    day_datas = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(DayData))), graphql_name='dayDatas', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(DayData_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(DayData_filter, graphql_name='where', default=None)),
         ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
         ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
 ))
@@ -1839,6 +2413,38 @@ class Query(sgqlc.types.Type):
         ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
 ))
     )
+    token_hour_data = sgqlc.types.Field('TokenHourData', graphql_name='tokenHourData', args=sgqlc.types.ArgDict((
+        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    token_hour_datas = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('TokenHourData'))), graphql_name='tokenHourDatas', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(TokenHourData_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(TokenHourData_filter, graphql_name='where', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    token_day_data = sgqlc.types.Field('TokenDayData', graphql_name='tokenDayData', args=sgqlc.types.ArgDict((
+        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    token_day_datas = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('TokenDayData'))), graphql_name='tokenDayDatas', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(TokenDayData_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(TokenDayData_filter, graphql_name='where', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
     pair = sgqlc.types.Field(Pair, graphql_name='pair', args=sgqlc.types.ArgDict((
         ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
         ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
@@ -1855,18 +2461,34 @@ class Query(sgqlc.types.Type):
         ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
 ))
     )
-    user = sgqlc.types.Field('User', graphql_name='user', args=sgqlc.types.ArgDict((
+    pair_hour_data = sgqlc.types.Field(PairHourData, graphql_name='pairHourData', args=sgqlc.types.ArgDict((
         ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
         ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
         ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
 ))
     )
-    users = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('User'))), graphql_name='users', args=sgqlc.types.ArgDict((
+    pair_hour_datas = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(PairHourData))), graphql_name='pairHourDatas', args=sgqlc.types.ArgDict((
         ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
         ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
-        ('order_by', sgqlc.types.Arg(User_orderBy, graphql_name='orderBy', default=None)),
+        ('order_by', sgqlc.types.Arg(PairHourData_orderBy, graphql_name='orderBy', default=None)),
         ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
-        ('where', sgqlc.types.Arg(User_filter, graphql_name='where', default=None)),
+        ('where', sgqlc.types.Arg(PairHourData_filter, graphql_name='where', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    pair_day_data = sgqlc.types.Field(PairDayData, graphql_name='pairDayData', args=sgqlc.types.ArgDict((
+        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    pair_day_datas = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(PairDayData))), graphql_name='pairDayDatas', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(PairDayData_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(PairDayData_filter, graphql_name='where', default=None)),
         ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
         ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
 ))
@@ -1967,83 +2589,30 @@ class Query(sgqlc.types.Type):
         ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
 ))
     )
-    bundle = sgqlc.types.Field(Bundle, graphql_name='bundle', args=sgqlc.types.ArgDict((
-        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
-        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
-        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
-))
-    )
-    bundles = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(Bundle))), graphql_name='bundles', args=sgqlc.types.ArgDict((
-        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+    token_search = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('Token'))), graphql_name='tokenSearch', args=sgqlc.types.ArgDict((
+        ('text', sgqlc.types.Arg(sgqlc.types.non_null(String), graphql_name='text', default=None)),
         ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
-        ('order_by', sgqlc.types.Arg(Bundle_orderBy, graphql_name='orderBy', default=None)),
-        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
-        ('where', sgqlc.types.Arg(Bundle_filter, graphql_name='where', default=None)),
-        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
-        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
-))
-    )
-    uniswap_day_data = sgqlc.types.Field('UniswapDayData', graphql_name='uniswapDayData', args=sgqlc.types.ArgDict((
-        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
-        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
-        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
-))
-    )
-    uniswap_day_datas = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('UniswapDayData'))), graphql_name='uniswapDayDatas', args=sgqlc.types.ArgDict((
         ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('where', sgqlc.types.Arg(Token_filter, graphql_name='where', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    pair_search = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(Pair))), graphql_name='pairSearch', args=sgqlc.types.ArgDict((
+        ('text', sgqlc.types.Arg(sgqlc.types.non_null(String), graphql_name='text', default=None)),
         ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
-        ('order_by', sgqlc.types.Arg(UniswapDayData_orderBy, graphql_name='orderBy', default=None)),
-        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
-        ('where', sgqlc.types.Arg(UniswapDayData_filter, graphql_name='where', default=None)),
-        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
-        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
-))
-    )
-    pair_hour_data = sgqlc.types.Field(PairHourData, graphql_name='pairHourData', args=sgqlc.types.ArgDict((
-        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
-        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
-        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
-))
-    )
-    pair_hour_datas = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(PairHourData))), graphql_name='pairHourDatas', args=sgqlc.types.ArgDict((
         ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('where', sgqlc.types.Arg(Pair_filter, graphql_name='where', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    user_search = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('User'))), graphql_name='userSearch', args=sgqlc.types.ArgDict((
+        ('text', sgqlc.types.Arg(sgqlc.types.non_null(String), graphql_name='text', default=None)),
         ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
-        ('order_by', sgqlc.types.Arg(PairHourData_orderBy, graphql_name='orderBy', default=None)),
-        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
-        ('where', sgqlc.types.Arg(PairHourData_filter, graphql_name='where', default=None)),
-        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
-        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
-))
-    )
-    pair_day_data = sgqlc.types.Field(PairDayData, graphql_name='pairDayData', args=sgqlc.types.ArgDict((
-        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
-        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
-        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
-))
-    )
-    pair_day_datas = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(PairDayData))), graphql_name='pairDayDatas', args=sgqlc.types.ArgDict((
         ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
-        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
-        ('order_by', sgqlc.types.Arg(PairDayData_orderBy, graphql_name='orderBy', default=None)),
-        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
-        ('where', sgqlc.types.Arg(PairDayData_filter, graphql_name='where', default=None)),
         ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
-        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
-))
-    )
-    token_day_data = sgqlc.types.Field('TokenDayData', graphql_name='tokenDayData', args=sgqlc.types.ArgDict((
-        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
-        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
-        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
-))
-    )
-    token_day_datas = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('TokenDayData'))), graphql_name='tokenDayDatas', args=sgqlc.types.ArgDict((
-        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
-        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
-        ('order_by', sgqlc.types.Arg(TokenDayData_orderBy, graphql_name='orderBy', default=None)),
-        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
-        ('where', sgqlc.types.Arg(TokenDayData_filter, graphql_name='where', default=None)),
-        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('where', sgqlc.types.Arg(User_filter, graphql_name='where', default=None)),
         ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
 ))
     )
@@ -2055,19 +2624,83 @@ class Query(sgqlc.types.Type):
 
 class Subscription(sgqlc.types.Type):
     __schema__ = graphql_schema
-    __field_names__ = ('uniswap_factory', 'uniswap_factories', 'token', 'tokens', 'pair', 'pairs', 'user', 'users', 'liquidity_position', 'liquidity_positions', 'liquidity_position_snapshot', 'liquidity_position_snapshots', 'transaction', 'transactions', 'mint', 'mints', 'burn', 'burns', 'swap', 'swaps', 'bundle', 'bundles', 'uniswap_day_data', 'uniswap_day_datas', 'pair_hour_data', 'pair_hour_datas', 'pair_day_data', 'pair_day_datas', 'token_day_data', 'token_day_datas', '_meta')
-    uniswap_factory = sgqlc.types.Field('UniswapFactory', graphql_name='uniswapFactory', args=sgqlc.types.ArgDict((
+    __field_names__ = ('user', 'users', 'bundle', 'bundles', 'factory', 'factories', 'hour_data', 'hour_datas', 'day_data', 'day_datas', 'token', 'tokens', 'token_hour_data', 'token_hour_datas', 'token_day_data', 'token_day_datas', 'pair', 'pairs', 'pair_hour_data', 'pair_hour_datas', 'pair_day_data', 'pair_day_datas', 'liquidity_position', 'liquidity_positions', 'liquidity_position_snapshot', 'liquidity_position_snapshots', 'transaction', 'transactions', 'mint', 'mints', 'burn', 'burns', 'swap', 'swaps', '_meta')
+    user = sgqlc.types.Field('User', graphql_name='user', args=sgqlc.types.ArgDict((
         ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
         ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
         ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
 ))
     )
-    uniswap_factories = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('UniswapFactory'))), graphql_name='uniswapFactories', args=sgqlc.types.ArgDict((
+    users = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('User'))), graphql_name='users', args=sgqlc.types.ArgDict((
         ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
         ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
-        ('order_by', sgqlc.types.Arg(UniswapFactory_orderBy, graphql_name='orderBy', default=None)),
+        ('order_by', sgqlc.types.Arg(User_orderBy, graphql_name='orderBy', default=None)),
         ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
-        ('where', sgqlc.types.Arg(UniswapFactory_filter, graphql_name='where', default=None)),
+        ('where', sgqlc.types.Arg(User_filter, graphql_name='where', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    bundle = sgqlc.types.Field(Bundle, graphql_name='bundle', args=sgqlc.types.ArgDict((
+        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    bundles = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(Bundle))), graphql_name='bundles', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(Bundle_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(Bundle_filter, graphql_name='where', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    factory = sgqlc.types.Field(Factory, graphql_name='factory', args=sgqlc.types.ArgDict((
+        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    factories = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(Factory))), graphql_name='factories', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(Factory_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(Factory_filter, graphql_name='where', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    hour_data = sgqlc.types.Field(HourData, graphql_name='hourData', args=sgqlc.types.ArgDict((
+        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    hour_datas = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(HourData))), graphql_name='hourDatas', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(HourData_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(HourData_filter, graphql_name='where', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    day_data = sgqlc.types.Field(DayData, graphql_name='dayData', args=sgqlc.types.ArgDict((
+        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    day_datas = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(DayData))), graphql_name='dayDatas', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(DayData_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(DayData_filter, graphql_name='where', default=None)),
         ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
         ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
 ))
@@ -2088,6 +2721,38 @@ class Subscription(sgqlc.types.Type):
         ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
 ))
     )
+    token_hour_data = sgqlc.types.Field('TokenHourData', graphql_name='tokenHourData', args=sgqlc.types.ArgDict((
+        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    token_hour_datas = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('TokenHourData'))), graphql_name='tokenHourDatas', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(TokenHourData_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(TokenHourData_filter, graphql_name='where', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    token_day_data = sgqlc.types.Field('TokenDayData', graphql_name='tokenDayData', args=sgqlc.types.ArgDict((
+        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    token_day_datas = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('TokenDayData'))), graphql_name='tokenDayDatas', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(TokenDayData_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(TokenDayData_filter, graphql_name='where', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
     pair = sgqlc.types.Field(Pair, graphql_name='pair', args=sgqlc.types.ArgDict((
         ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
         ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
@@ -2104,18 +2769,34 @@ class Subscription(sgqlc.types.Type):
         ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
 ))
     )
-    user = sgqlc.types.Field('User', graphql_name='user', args=sgqlc.types.ArgDict((
+    pair_hour_data = sgqlc.types.Field(PairHourData, graphql_name='pairHourData', args=sgqlc.types.ArgDict((
         ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
         ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
         ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
 ))
     )
-    users = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('User'))), graphql_name='users', args=sgqlc.types.ArgDict((
+    pair_hour_datas = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(PairHourData))), graphql_name='pairHourDatas', args=sgqlc.types.ArgDict((
         ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
         ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
-        ('order_by', sgqlc.types.Arg(User_orderBy, graphql_name='orderBy', default=None)),
+        ('order_by', sgqlc.types.Arg(PairHourData_orderBy, graphql_name='orderBy', default=None)),
         ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
-        ('where', sgqlc.types.Arg(User_filter, graphql_name='where', default=None)),
+        ('where', sgqlc.types.Arg(PairHourData_filter, graphql_name='where', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    pair_day_data = sgqlc.types.Field(PairDayData, graphql_name='pairDayData', args=sgqlc.types.ArgDict((
+        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
+        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
+        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
+))
+    )
+    pair_day_datas = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(PairDayData))), graphql_name='pairDayDatas', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(PairDayData_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(PairDayData_filter, graphql_name='where', default=None)),
         ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
         ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
 ))
@@ -2212,86 +2893,6 @@ class Subscription(sgqlc.types.Type):
         ('order_by', sgqlc.types.Arg(Swap_orderBy, graphql_name='orderBy', default=None)),
         ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
         ('where', sgqlc.types.Arg(Swap_filter, graphql_name='where', default=None)),
-        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
-        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
-))
-    )
-    bundle = sgqlc.types.Field(Bundle, graphql_name='bundle', args=sgqlc.types.ArgDict((
-        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
-        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
-        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
-))
-    )
-    bundles = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(Bundle))), graphql_name='bundles', args=sgqlc.types.ArgDict((
-        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
-        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
-        ('order_by', sgqlc.types.Arg(Bundle_orderBy, graphql_name='orderBy', default=None)),
-        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
-        ('where', sgqlc.types.Arg(Bundle_filter, graphql_name='where', default=None)),
-        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
-        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
-))
-    )
-    uniswap_day_data = sgqlc.types.Field('UniswapDayData', graphql_name='uniswapDayData', args=sgqlc.types.ArgDict((
-        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
-        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
-        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
-))
-    )
-    uniswap_day_datas = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('UniswapDayData'))), graphql_name='uniswapDayDatas', args=sgqlc.types.ArgDict((
-        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
-        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
-        ('order_by', sgqlc.types.Arg(UniswapDayData_orderBy, graphql_name='orderBy', default=None)),
-        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
-        ('where', sgqlc.types.Arg(UniswapDayData_filter, graphql_name='where', default=None)),
-        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
-        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
-))
-    )
-    pair_hour_data = sgqlc.types.Field(PairHourData, graphql_name='pairHourData', args=sgqlc.types.ArgDict((
-        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
-        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
-        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
-))
-    )
-    pair_hour_datas = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(PairHourData))), graphql_name='pairHourDatas', args=sgqlc.types.ArgDict((
-        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
-        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
-        ('order_by', sgqlc.types.Arg(PairHourData_orderBy, graphql_name='orderBy', default=None)),
-        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
-        ('where', sgqlc.types.Arg(PairHourData_filter, graphql_name='where', default=None)),
-        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
-        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
-))
-    )
-    pair_day_data = sgqlc.types.Field(PairDayData, graphql_name='pairDayData', args=sgqlc.types.ArgDict((
-        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
-        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
-        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
-))
-    )
-    pair_day_datas = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(PairDayData))), graphql_name='pairDayDatas', args=sgqlc.types.ArgDict((
-        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
-        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
-        ('order_by', sgqlc.types.Arg(PairDayData_orderBy, graphql_name='orderBy', default=None)),
-        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
-        ('where', sgqlc.types.Arg(PairDayData_filter, graphql_name='where', default=None)),
-        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
-        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
-))
-    )
-    token_day_data = sgqlc.types.Field('TokenDayData', graphql_name='tokenDayData', args=sgqlc.types.ArgDict((
-        ('id', sgqlc.types.Arg(sgqlc.types.non_null(ID), graphql_name='id', default=None)),
-        ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
-        ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
-))
-    )
-    token_day_datas = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('TokenDayData'))), graphql_name='tokenDayDatas', args=sgqlc.types.ArgDict((
-        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
-        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
-        ('order_by', sgqlc.types.Arg(TokenDayData_orderBy, graphql_name='orderBy', default=None)),
-        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
-        ('where', sgqlc.types.Arg(TokenDayData_filter, graphql_name='where', default=None)),
         ('block', sgqlc.types.Arg(Block_height, graphql_name='block', default=None)),
         ('subgraph_error', sgqlc.types.Arg(sgqlc.types.non_null(_SubgraphErrorPolicy_), graphql_name='subgraphError', default='deny')),
 ))
@@ -2321,19 +2922,60 @@ class Swap(sgqlc.types.Type):
 
 class Token(sgqlc.types.Type):
     __schema__ = graphql_schema
-    __field_names__ = ('id', 'symbol', 'name', 'decimals', 'total_supply', 'trade_volume', 'trade_volume_usd', 'untracked_volume_usd', 'tx_count', 'total_liquidity', 'derived_eth', 'most_liquid_pairs')
+    __field_names__ = ('id', 'factory', 'symbol', 'name', 'decimals', 'total_supply', 'volume', 'volume_usd', 'untracked_volume_usd', 'tx_count', 'liquidity', 'derived_eth', 'hour_data', 'day_data', 'base_pairs', 'quote_pairs', 'base_pairs_day_data', 'quote_pairs_day_data')
     id = sgqlc.types.Field(sgqlc.types.non_null(ID), graphql_name='id')
+    factory = sgqlc.types.Field(sgqlc.types.non_null(Factory), graphql_name='factory')
     symbol = sgqlc.types.Field(sgqlc.types.non_null(String), graphql_name='symbol')
     name = sgqlc.types.Field(sgqlc.types.non_null(String), graphql_name='name')
     decimals = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='decimals')
     total_supply = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='totalSupply')
-    trade_volume = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='tradeVolume')
-    trade_volume_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='tradeVolumeUSD')
+    volume = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='volume')
+    volume_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='volumeUSD')
     untracked_volume_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='untrackedVolumeUSD')
     tx_count = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='txCount')
-    total_liquidity = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='totalLiquidity')
-    derived_eth = sgqlc.types.Field(BigDecimal, graphql_name='derivedETH')
-    most_liquid_pairs = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(PairDayData)), graphql_name='mostLiquidPairs', args=sgqlc.types.ArgDict((
+    liquidity = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='liquidity')
+    derived_eth = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='derivedETH')
+    hour_data = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('TokenHourData'))), graphql_name='hourData', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(TokenHourData_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(TokenHourData_filter, graphql_name='where', default=None)),
+))
+    )
+    day_data = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null('TokenDayData'))), graphql_name='dayData', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(TokenDayData_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(TokenDayData_filter, graphql_name='where', default=None)),
+))
+    )
+    base_pairs = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(Pair))), graphql_name='basePairs', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(Pair_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(Pair_filter, graphql_name='where', default=None)),
+))
+    )
+    quote_pairs = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(Pair))), graphql_name='quotePairs', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(Pair_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(Pair_filter, graphql_name='where', default=None)),
+))
+    )
+    base_pairs_day_data = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(PairDayData))), graphql_name='basePairsDayData', args=sgqlc.types.ArgDict((
+        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
+        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
+        ('order_by', sgqlc.types.Arg(PairDayData_orderBy, graphql_name='orderBy', default=None)),
+        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
+        ('where', sgqlc.types.Arg(PairDayData_filter, graphql_name='where', default=None)),
+))
+    )
+    quote_pairs_day_data = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(PairDayData))), graphql_name='quotePairsDayData', args=sgqlc.types.ArgDict((
         ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
         ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
         ('order_by', sgqlc.types.Arg(PairDayData_orderBy, graphql_name='orderBy', default=None)),
@@ -2345,27 +2987,34 @@ class Token(sgqlc.types.Type):
 
 class TokenDayData(sgqlc.types.Type):
     __schema__ = graphql_schema
-    __field_names__ = ('id', 'date', 'token', 'daily_volume_token', 'daily_volume_eth', 'daily_volume_usd', 'daily_txns', 'total_liquidity_token', 'total_liquidity_eth', 'total_liquidity_usd', 'price_usd', 'max_stored', 'most_liquid_pairs')
+    __field_names__ = ('id', 'date', 'token', 'volume', 'volume_eth', 'volume_usd', 'tx_count', 'liquidity', 'liquidity_eth', 'liquidity_usd', 'price_usd')
     id = sgqlc.types.Field(sgqlc.types.non_null(ID), graphql_name='id')
     date = sgqlc.types.Field(sgqlc.types.non_null(Int), graphql_name='date')
     token = sgqlc.types.Field(sgqlc.types.non_null(Token), graphql_name='token')
-    daily_volume_token = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='dailyVolumeToken')
-    daily_volume_eth = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='dailyVolumeETH')
-    daily_volume_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='dailyVolumeUSD')
-    daily_txns = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='dailyTxns')
-    total_liquidity_token = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='totalLiquidityToken')
-    total_liquidity_eth = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='totalLiquidityETH')
-    total_liquidity_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='totalLiquidityUSD')
+    volume = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='volume')
+    volume_eth = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='volumeETH')
+    volume_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='volumeUSD')
+    tx_count = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='txCount')
+    liquidity = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='liquidity')
+    liquidity_eth = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='liquidityETH')
+    liquidity_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='liquidityUSD')
     price_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='priceUSD')
-    max_stored = sgqlc.types.Field(sgqlc.types.non_null(Int), graphql_name='maxStored')
-    most_liquid_pairs = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(PairDayData))), graphql_name='mostLiquidPairs', args=sgqlc.types.ArgDict((
-        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
-        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
-        ('order_by', sgqlc.types.Arg(PairDayData_orderBy, graphql_name='orderBy', default=None)),
-        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
-        ('where', sgqlc.types.Arg(PairDayData_filter, graphql_name='where', default=None)),
-))
-    )
+
+
+class TokenHourData(sgqlc.types.Type):
+    __schema__ = graphql_schema
+    __field_names__ = ('id', 'date', 'token', 'volume', 'volume_eth', 'volume_usd', 'tx_count', 'liquidity', 'liquidity_eth', 'liquidity_usd', 'price_usd')
+    id = sgqlc.types.Field(sgqlc.types.non_null(ID), graphql_name='id')
+    date = sgqlc.types.Field(sgqlc.types.non_null(Int), graphql_name='date')
+    token = sgqlc.types.Field(sgqlc.types.non_null(Token), graphql_name='token')
+    volume = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='volume')
+    volume_eth = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='volumeETH')
+    volume_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='volumeUSD')
+    tx_count = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='txCount')
+    liquidity = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='liquidity')
+    liquidity_eth = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='liquidityETH')
+    liquidity_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='liquidityUSD')
+    price_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='priceUSD')
 
 
 class Transaction(sgqlc.types.Type):
@@ -2400,56 +3049,11 @@ class Transaction(sgqlc.types.Type):
     )
 
 
-class UniswapDayData(sgqlc.types.Type):
-    __schema__ = graphql_schema
-    __field_names__ = ('id', 'date', 'daily_volume_eth', 'daily_volume_usd', 'daily_volume_untracked', 'total_volume_eth', 'total_liquidity_eth', 'total_volume_usd', 'total_liquidity_usd', 'max_stored', 'most_liquid_tokens', 'tx_count')
-    id = sgqlc.types.Field(sgqlc.types.non_null(ID), graphql_name='id')
-    date = sgqlc.types.Field(sgqlc.types.non_null(Int), graphql_name='date')
-    daily_volume_eth = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='dailyVolumeETH')
-    daily_volume_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='dailyVolumeUSD')
-    daily_volume_untracked = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='dailyVolumeUntracked')
-    total_volume_eth = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='totalVolumeETH')
-    total_liquidity_eth = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='totalLiquidityETH')
-    total_volume_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='totalVolumeUSD')
-    total_liquidity_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='totalLiquidityUSD')
-    max_stored = sgqlc.types.Field(Int, graphql_name='maxStored')
-    most_liquid_tokens = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(TokenDayData))), graphql_name='mostLiquidTokens', args=sgqlc.types.ArgDict((
-        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
-        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
-        ('order_by', sgqlc.types.Arg(TokenDayData_orderBy, graphql_name='orderBy', default=None)),
-        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
-        ('where', sgqlc.types.Arg(TokenDayData_filter, graphql_name='where', default=None)),
-))
-    )
-    tx_count = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='txCount')
-
-
-class UniswapFactory(sgqlc.types.Type):
-    __schema__ = graphql_schema
-    __field_names__ = ('id', 'pair_count', 'total_volume_usd', 'total_volume_eth', 'untracked_volume_usd', 'total_liquidity_usd', 'total_liquidity_eth', 'tx_count', 'most_liquid_tokens')
-    id = sgqlc.types.Field(sgqlc.types.non_null(ID), graphql_name='id')
-    pair_count = sgqlc.types.Field(sgqlc.types.non_null(Int), graphql_name='pairCount')
-    total_volume_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='totalVolumeUSD')
-    total_volume_eth = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='totalVolumeETH')
-    untracked_volume_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='untrackedVolumeUSD')
-    total_liquidity_usd = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='totalLiquidityUSD')
-    total_liquidity_eth = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='totalLiquidityETH')
-    tx_count = sgqlc.types.Field(sgqlc.types.non_null(BigInt), graphql_name='txCount')
-    most_liquid_tokens = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(TokenDayData))), graphql_name='mostLiquidTokens', args=sgqlc.types.ArgDict((
-        ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
-        ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
-        ('order_by', sgqlc.types.Arg(TokenDayData_orderBy, graphql_name='orderBy', default=None)),
-        ('order_direction', sgqlc.types.Arg(OrderDirection, graphql_name='orderDirection', default=None)),
-        ('where', sgqlc.types.Arg(TokenDayData_filter, graphql_name='where', default=None)),
-))
-    )
-
-
 class User(sgqlc.types.Type):
     __schema__ = graphql_schema
-    __field_names__ = ('id', 'liquidity_positions', 'usd_swapped')
+    __field_names__ = ('id', 'liquidity_positions')
     id = sgqlc.types.Field(sgqlc.types.non_null(ID), graphql_name='id')
-    liquidity_positions = sgqlc.types.Field(sgqlc.types.list_of(sgqlc.types.non_null(LiquidityPosition)), graphql_name='liquidityPositions', args=sgqlc.types.ArgDict((
+    liquidity_positions = sgqlc.types.Field(sgqlc.types.non_null(sgqlc.types.list_of(sgqlc.types.non_null(LiquidityPosition))), graphql_name='liquidityPositions', args=sgqlc.types.ArgDict((
         ('skip', sgqlc.types.Arg(Int, graphql_name='skip', default=0)),
         ('first', sgqlc.types.Arg(Int, graphql_name='first', default=100)),
         ('order_by', sgqlc.types.Arg(LiquidityPosition_orderBy, graphql_name='orderBy', default=None)),
@@ -2457,14 +3061,15 @@ class User(sgqlc.types.Type):
         ('where', sgqlc.types.Arg(LiquidityPosition_filter, graphql_name='where', default=None)),
 ))
     )
-    usd_swapped = sgqlc.types.Field(sgqlc.types.non_null(BigDecimal), graphql_name='usdSwapped')
 
 
 class _Block_(sgqlc.types.Type):
     __schema__ = graphql_schema
-    __field_names__ = ('hash', 'number')
+    __field_names__ = ('hash', 'number', 'timestamp', 'parent_hash')
     hash = sgqlc.types.Field(Bytes, graphql_name='hash')
     number = sgqlc.types.Field(sgqlc.types.non_null(Int), graphql_name='number')
+    timestamp = sgqlc.types.Field(Int, graphql_name='timestamp')
+    parent_hash = sgqlc.types.Field(Bytes, graphql_name='parentHash')
 
 
 class _Meta_(sgqlc.types.Type):
