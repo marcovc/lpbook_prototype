@@ -74,7 +74,7 @@ class RecentEventLog:
         if subscriber not in self.subscribers:
             return
         self.subscribers = [s for s in self.subscribers if s != subscriber]
-        
+
     @traced(logger, 'Starting RecentEventLog')
     async def start(
         self,
@@ -91,7 +91,7 @@ class RecentEventLog:
         """
         assert start_block_number is not None
         self.start_block_number = start_block_number
-        self.event_stream.subscribe(
+        await self.event_stream.subscribe(
             self.process_new_events,
             addresses,
             events,
@@ -101,8 +101,8 @@ class RecentEventLog:
         )
         await self.event_stream.poll_for_subscriber(self.process_new_events)
 
-    def stop(self) -> None:
-        self.event_stream.unsubscribe(self.process_new_events)
+    async def stop(self) -> None:
+        await self.event_stream.unsubscribe(self.process_new_events)
         self.start_block_number = None
         logger.debug(f'Stopped {self}')
 

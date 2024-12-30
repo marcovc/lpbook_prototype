@@ -1,4 +1,4 @@
-from abc import abstractproperty
+from abc import abstractmethod
 import asyncio
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -128,19 +128,23 @@ class ExchangeRate:
         
 @dataclass
 class LP:
-    @abstractproperty
+    @property
+    @abstractmethod
     def uid(self) -> str:
         """Returns a unique identifier for the LP (like its address)."""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def kind(self) -> str:
         """Returns the kind of the LP (ConstProd, Concentrated, etc.)."""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def protocol_name(self) -> str:
         """Returns the name of lp protocol (Uniswap, Curve, etc.)."""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def protocol_version(self) -> str:
         """Returns the version of lp protocol."""
 
@@ -149,15 +153,18 @@ class LP:
         """Returns the name and version of the lp protocol."""
         return f'{self.protocol_name}_{self.protocol_version}'
     
-    @abstractproperty
+    @property
+    @abstractmethod
     def tokens(self) -> List[Token]:
         """Returns a list of tokens pooled by this LP."""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def state(self) -> Dict:
         """Returns the internal state of the LP (e.g. the two reserves for uniswapV2)."""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def gas_stats(self) -> Dict:
         """Returns gas stats for swapping using this pool."""
 
@@ -166,7 +173,8 @@ class LP:
         """Returns extra info for executing LPBook onchain."""
         return {}
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def internalizable(self) -> bool:
         """Returns if this pool is allowed to be internalized."""
 

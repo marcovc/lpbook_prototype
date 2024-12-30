@@ -70,7 +70,7 @@ class IdenditySyncProxy(LPSyncProxy):
     async def start(self) -> None:
         pass
 
-    def stop(self) -> None:
+    async def stop(self) -> None:
         pass
 
 

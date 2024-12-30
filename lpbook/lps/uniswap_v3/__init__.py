@@ -171,7 +171,7 @@ class UniV3LikeTheGraphProxy(LPAsyncProxy):
 
     async def latest_block(self) -> BlockId:
         block = await self.client.get_last_block()
-        return BlockId(number=block.number, hash=str(block.hash), timestamp=block.timestamp)
+        return BlockId.from_web3(block)
 
     async def __call__(
         self,

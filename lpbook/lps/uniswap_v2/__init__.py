@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from decimal import MAX_EMAX, MAX_PREC, MIN_EMIN, Context
 from decimal import Decimal as D
 from decimal import setcontext
-from functools import cache
+from async_lru import alru_cache
 from math import ceil, sqrt
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
@@ -163,42 +163,44 @@ class UniV2LikeWeb3AsyncProxy(LPAsyncProxy):
     def __init__(self, lp_ids, web3_client):
         assert len(lp_ids) >= 1
         self.lp_ids = lp_ids
-        self.client = web3_client
+        self.web3_client = web3_client
         self.contracts = {}
 
         with open(Path(__file__).parent / 'artifacts' / 'uniswap_v2.abi', 'r') as f:
             contract_abi = f.read()
             for lp_id in lp_ids:
-                lp_id_chksum = self.client.to_checksum_address(lp_id)
+                lp_id_chksum = self.web3_client.to_checksum_address(lp_id)
                 self.contracts[lp_id] = web3_client.eth.contract(
                     address=lp_id_chksum,
                     abi=contract_abi
                 )
 
     async def latest_block(self) -> BlockId:
-        block = await self.client.eth.get_block()
-        return BlockId(number=block.number, hash=block.hash.hex())
+        block = await self.web3_client.eth.get_block()
+        return BlockId.from_web3(block)
 
-    @cache
-    def get_tokens(self, lp_id) -> Tuple[Token, Token]:
-        token0_address = self.contracts[lp_id].functions.token0().call().lower()
-        token1_address = self.contracts[lp_id].functions.token1().call().lower()
+    @alru_cache
+    async def get_tokens(self, lp_id) -> Tuple[Token, Token]:
+        token0_address = await (self.contracts[lp_id].functions.token0().call()).lower()
+        token1_address = await (self.contracts[lp_id].functions.token1().call()).lower()
 
-        tokens = []
-        for token_address in [token0_address, token1_address]:
-            address_chksum = self.client.to_checksum_address(token_address)
-            tokens.append(create_token_from_web3(address_chksum, self.client))
+        token0_address = self.web3_client.to_checksum_address(token0_address)
+        token1_address = self.web3_client.to_checksum_address(token1_address)
 
-        return tokens
+        return asyncio.gather(
+            create_token_from_web3(token0_address, self.web3_client),
+            create_token_from_web3(token1_address, self.web3_client)
+        )
+        
 
-    def create_from_blockchain(self, lp_id, block: BlockId) -> UniV2Like:
+    async def create_from_blockchain(self, lp_id, block: BlockId) -> UniV2Like:
         block_identifier = block.to_web3()
 
-        token0, token1 = self.get_tokens(lp_id)
-        balance0, balance1, _ = self.contracts[lp_id].functions.getReserves().call(
+        token0, token1 = await self.get_tokens(lp_id)
+        balance0, balance1, _ = await self.contracts[lp_id].functions.getReserves().call(
             block_identifier=block_identifier
         )
-        total_supply = self.contracts[lp_id].functions.totalSupply().call(
+        total_supply = await self.contracts[lp_id].functions.totalSupply().call(
             block_identifier=block_identifier
         )
 
@@ -222,8 +224,7 @@ class UniV2LikeWeb3AsyncProxy(LPAsyncProxy):
 
         async def add_to_state(lp_id):
             try:
-                state[lp_id] = await asyncio.to_thread(
-                    self.create_from_blockchain,
+                state[lp_id] = await self.create_from_blockchain(
                     lp_id,
                     block
                 )
@@ -248,21 +249,21 @@ class UniV2LikeWeb3AsyncProxy(LPAsyncProxy):
 
 
 class UniV2Web3AsyncProxy(UniV2LikeWeb3AsyncProxy):
-    def create_from_blockchain(self, lp_id, block: BlockId) -> UniV2:
-        return super().create_from_blockchain(lp_id, block).as_univ2()
+    async def create_from_blockchain(self, lp_id, block: BlockId) -> UniV2:
+        return await (super().create_from_blockchain(lp_id, block)).as_univ2()
 
 
 class SushiWeb3AsyncProxy(UniV2LikeWeb3AsyncProxy):
-    def create_from_blockchain(self, lp_id, block: BlockId) -> UniV2:
-        return super().create_from_blockchain(lp_id, block).as_sushi()
+    async def create_from_blockchain(self, lp_id, block: BlockId) -> UniV2:
+        return await (super().create_from_blockchain(lp_id, block)).as_sushi()
 
 class PancakeswapV2Web3AsyncProxy(UniV2LikeWeb3AsyncProxy):
-    def create_from_blockchain(self, lp_id, block: BlockId) -> UniV2:
-        return super().create_from_blockchain(lp_id, block).as_pancakeswapv2()
+    async def create_from_blockchain(self, lp_id, block: BlockId) -> UniV2:
+        return await (super().create_from_blockchain(lp_id, block)).as_pancakeswapv2()
 
 class SwaprV2Web3AsyncProxy(UniV2LikeWeb3AsyncProxy):
-    def create_from_blockchain(self, lp_id, block: BlockId) -> UniV2:
-        return super().create_from_blockchain(lp_id, block).swaprv2()
+    async def create_from_blockchain(self, lp_id, block: BlockId) -> UniV2:
+        return await (super().create_from_blockchain(lp_id, block)).swaprv2()
 
 class UniV2LikeTheGraphAsyncProxy(LPAsyncProxy):
     """"Proxies the state of the uniswap v2 LP through TheGraph."""
@@ -299,7 +300,7 @@ class UniV2LikeTheGraphAsyncProxy(LPAsyncProxy):
 
     async def latest_block(self) -> BlockId:
         block = await self.client.get_last_block()
-        return BlockId(number=block.number, hash=str(block.hash), timestamp=block.timestamp)
+        return BlockId.from_web3(block)
 
     async def __call__(
         self,

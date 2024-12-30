@@ -1,15 +1,11 @@
-from abc import abstractproperty
+from abc import abstractmethod
 import asyncio
-import datetime
-import json
 import logging
-from socket import gaierror
 from typing import Optional
-from requests import ReadTimeout
-from web3 import Web3
-
-from websockets import connect
-from websockets.exceptions import ConnectionClosedError
+from web3 import AsyncWeb3
+from web3.providers.persistent import (
+    WebSocketProvider,
+)
 
 from lpbook.util import traced
 from lpbook.web3 import BlockId
@@ -20,7 +16,8 @@ logger = logging.getLogger(__name__)
 class BlockScanning:
     """A set of methods that need to exist on any streams/proxies scanning blocks."""
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def last_block(self) -> Optional[BlockId]:
         """Most recent block scanned, or none if no blocks were scanned.
 
@@ -71,22 +68,20 @@ class BlockStream(BlockScanning):
             ]
         )
 
-    async def run_helper(self, start_block_number: int = None):
+    async def run_helper(self, w3, start_block_number: int = None):
         """Listens for new blocks and calls subscribers on each of them.
 
         If start_block_number is not None, then it will first call subscribers
         on each block in [start_block_number, current_block_number[.
         """
-        self.running = True
         if start_block_number is not None:
-            w3 = Web3(Web3.WebsocketProvider(self.web3_ws))
             while self.running:
-                latest_block_number = w3.eth.get_block_number()
+                latest_block_number = await w3.eth.get_block_number()
                 if start_block_number > latest_block_number:
                     await asyncio.sleep(15)
                     continue
                 assert start_block_number <= latest_block_number
-                start_block = w3.eth.get_block(start_block_number)
+                start_block = await w3.eth.get_block(start_block_number)
                 if self.delay > 0:
                     await asyncio.sleep(self.delay)
                 logger.debug(
@@ -101,35 +96,33 @@ class BlockStream(BlockScanning):
             if not self.running:
                 return
 
-        logger.debug(f'{self} has finished processing past blocks')
-        async with connect(self.web3_ws) as ws:
-            await ws.send(json.dumps({
-                'id': 1,
-                'method': 'eth_subscribe',
-                'params': ['newHeads'],
-                'jsonrpc': '2.0'
-            }))
-            subscription_response = await ws.recv()
+        logger.debug('Finished processing past blocks')
+
+        subscription_id = await w3.eth.subscribe('newHeads')
+        async for message in w3.socket.process_subscriptions():
 
             # TODO: How to validate that subscription was correct?
-            assert 'id' in json.loads(subscription_response).keys()
+            #assert 'id' in json.loads(subscription_response).keys()
             
-            while self.running:
-                message = await ws.recv()
-                message = json.loads(message)
-                block_number = int(message['params']['result']['number'], base=16)
-                assert start_block_number is None or block_number >= start_block_number
-                # this avoids a notifying twice about the same block, which can happen
-                # when "stitching" the processing of past blocks above with this loop.
-                if start_block_number is not None and block_number == start_block_number:
-                    continue
-                block_hash = message['params']['result']['hash']
-                logger.debug(
-                    f'Detected new block {block_number}/{block_hash[:8]}. '
-                    'Telling subscribers about it ...'
-                )
-                timestamp = int(message['params']['result']['timestamp'], 16)
-                await self.trigger(BlockId(number=block_number, hash=block_hash, timestamp=timestamp))
+            if not self.running:
+                break
+
+            message = message["result"]
+            #message = await ws.recv()
+            #message = json.loads(message)
+            block_number = message.number
+            assert start_block_number is None or block_number >= start_block_number
+            # this avoids a notifying twice about the same block, which can happen
+            # when "stitching" the processing of past blocks above with this loop.
+            if start_block_number is not None and block_number == start_block_number:
+                continue
+            block_hash = message.hash
+            logger.debug(
+                f'Detected new block {block_number}/{block_hash.hex()[:8]}. '
+                'Telling subscribers about it ...'
+            )
+            timestamp = message.timestamp
+            await self.trigger(BlockId(number=block_number, hash=block_hash, timestamp=timestamp))
 
     @traced(logger, 'Running BlockStream')
     async def run(self, start_block_number: int = None):
@@ -138,7 +131,11 @@ class BlockStream(BlockScanning):
         If start_block_number is not None, then it will first call subscribers
         on each block in [start_block_number, current_block_number[
         """
-        await self.run_helper(start_block_number)
+        self.running = True
+        async for w3 in AsyncWeb3(WebSocketProvider(self.web3_ws)):
+            await self.run_helper(w3, start_block_number)
+            if not self.running:
+                break
 
     def shutdown(self):
         self.running = False

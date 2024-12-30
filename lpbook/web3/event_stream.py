@@ -26,7 +26,7 @@ class EventStream:
     Subscriber = Callable[[int, str], None]
 
     @abstractmethod
-    def subscribe(
+    async def subscribe(
         self,
         subscriber: Subscriber,
         addresses: List[str],
@@ -45,7 +45,7 @@ class EventStream:
         """
 
     @abstractmethod
-    def unsubscribe(self, subscriber: Subscriber):
+    async def unsubscribe(self, subscriber: Subscriber):
         """Stops calling subscriber."""
 
     @abstractmethod
@@ -92,7 +92,7 @@ class ServerFilteredEventPollingStream(EventStream):
         self.web3_client = web3_client
         self.subscriptions = {}
 
-    def subscribe(
+    async def subscribe(
         self,
         subscriber: EventStream.Subscriber,
         addresses: List[str],
@@ -102,13 +102,13 @@ class ServerFilteredEventPollingStream(EventStream):
         extra_topics: Tuple[str] = tuple()
     ):
         assert len(events) > 0
-        filter = self.install_filter(addresses, events, from_block_number, extra_topics=extra_topics)
+        filter = await self.install_filter(addresses, events, from_block_number, extra_topics=extra_topics)
         subscription = self.Subscription(
             addresses, events, filter, False, on_dropped_subscription_error_fn, extra_topics=extra_topics
         )
         self.subscriptions[subscriber] = subscription
 
-    def change_subscription(
+    async def change_subscription(
         self,
         subscriber: EventStream.Subscriber,
         addresses: List[str],
@@ -117,14 +117,14 @@ class ServerFilteredEventPollingStream(EventStream):
         extra_topics: Tuple[str] = tuple()
     ):
         assert len(events) > 0
-        self.unsubscribe(subscriber)
-        self.subscribe(subscriber, addresses, events, from_block_number, extra_topics=extra_topics)
+        await self.unsubscribe(subscriber)
+        await self.subscribe(subscriber, addresses, events, from_block_number, extra_topics=extra_topics)
 
-    def unsubscribe(self, subscriber: EventStream.Subscriber):
+    async def unsubscribe(self, subscriber: EventStream.Subscriber):
         if subscriber not in self.subscriptions.keys():
             return
         subscription = self.subscriptions[subscriber]
-        self.uninstall_filter(subscription.filter)
+        await self.uninstall_filter(subscription.filter)
         self.subscriptions.pop(subscriber)
 
     # just for debugging/monitoring
@@ -141,9 +141,9 @@ class ServerFilteredEventPollingStream(EventStream):
         filter = subscription.filter
 
         if subscription.updated_once:
-            new_entries = await asyncio.to_thread(filter.get_new_entries)
+            new_entries = await filter.get_new_entries()
         else:
-            new_entries = await asyncio.to_thread(filter.get_all_entries)
+            new_entries = await filter.get_all_entries()
 
         # Apparently node will not always send us the events in the
         # "right" order and sometimes there are even repeated entries!.
@@ -206,7 +206,7 @@ class ServerFilteredEventPollingStream(EventStream):
     def get_event_as_topic(self, event):
         return '0x' + event_abi_to_log_topic(event._get_event_abi()).hex()
 
-    def install_filter(self, addresses, events, from_block_number: Optional[int], extra_topics: Tuple[str]):
+    async def install_filter(self, addresses, events, from_block_number: Optional[int], extra_topics: Tuple[str]):
         event_signature_hashes = [
             self.get_event_as_topic(event) for event in events
         ]
@@ -220,26 +220,26 @@ class ServerFilteredEventPollingStream(EventStream):
         filter_parameters['topics'] = [event_signature_hashes] + list(extra_topics)
 
         if from_block_number is not None:
-            filter_parameters['fromBlock'] = from_block_number
+            filter_parameters['from_block'] = from_block_number
 
-        return self.web3_client.eth.filter(filter_parameters)
+        return await self.web3_client.eth.filter(filter_parameters)
 
     def is_filter_not_found_error(self, error):
         return error.args[0]["code"] == -32000
 
-    def uninstall_filter(self, filter):
+    async def uninstall_filter(self, filter):
         try:
             if sys.meta_path is None:   # In case we are shuting down, below call will fail.
                 return
-            self.web3_client.eth.uninstall_filter(filter.filter_id)
+            await self.web3_client.eth.uninstall_filter(filter.filter_id)
         # sometimes the node just drops the filter without notice :(
         except ValueError as err:
             if not self.is_filter_not_found_error(err):
                 raise err
 
-    def unsubscribe_all(self):
+    async def unsubscribe_all(self):
         for subscription in self.subscriptions.values():
-            self.uninstall_filter(subscription.filter)
+            await self.uninstall_filter(subscription.filter)
         self.subscriptions = {}
 
 
@@ -270,3 +270,4 @@ class ServerFilteredEventStream(ServerFilteredEventPollingStream, BlockScanning)
             logger.error(f"Event stream received an event from future block {max_block}  (current block {self.last_block})")
         """
         pass
+

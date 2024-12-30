@@ -64,11 +64,11 @@ class COWAMMPrivate(COWAMM):
 #    signature = Account.sign_message(eth_signed_message, private_key=proxy_address_private_key)
 #    return signature.signature.hex()
 
-def updated_state_hash(prev_state_hash: str, amounts_in: List[int], amounts_out: List[int], web3):
-    return web3.solidity_keccak(
+def updated_state_hash(prev_state_hash: str, amounts_in: List[int], amounts_out: List[int], web3_client):
+    return web3_client.solidity_keccak(
         ["bytes32", "uint256[]", "uint256[]"],
         [prev_state_hash, amounts_in, amounts_out]
-    ).hex()
+    ).to_0x_hex()
     
 class COWAMMPrivateAsyncProxy(LPAsyncProxy):
     """"Proxies the state of the cow amm private LP through web3."""
@@ -85,7 +85,7 @@ class COWAMMPrivateAsyncProxy(LPAsyncProxy):
         self.lp_tokens = lp_tokens
         self.lp_weights = lp_weights
         self.lp_fees = lp_fees
-        self.client = web3_client
+        self.web3_client = web3_client
         all_tokens = [token for tokens in lp_tokens.values() for token in tokens]
         self.token_contracts = {token.address : get_erc20_contract(token.address, web3_client) for token in all_tokens}
         with open(Path(__file__).parent / 'artifacts' / 'COWAMMPrivate.abi', 'r') as f:
@@ -93,29 +93,30 @@ class COWAMMPrivateAsyncProxy(LPAsyncProxy):
         self.lp_contracts = {lp_id : web3_client.eth.contract(abi=contract_abi, address=web3_client.to_checksum_address(lp_id)) for lp_id in lp_ids}
 
     async def latest_block(self) -> BlockId:
-        block = self.client.eth.get_block("latest")
-        return BlockId(number=block.number, hash=block.hash.hex())
+        block = await self.web3_client.eth.get_block("latest")
+        return BlockId.from_web3(block)
     
-    def get_balances(self, lp_id, reserves_address, block_identifier):
-        address = self.client.to_checksum_address(reserves_address)
-        return [
-            self.token_contracts[token.address].functions.balanceOf(address).call(block_identifier=block_identifier)            
-            for token in self.lp_tokens[lp_id]
-        ]
+    async def get_balances(self, lp_id, reserves_address, block_identifier):
+        address = self.web3_client.to_checksum_address(reserves_address)
+        return await asyncio.gather(
+            *[self.token_contracts[token.address].functions.balanceOf(address).call(block_identifier=block_identifier)            
+            for token in self.lp_tokens[lp_id]]
+        )
 
-    def get_state_hash(self, lp_id, block_identifier):
-        return "0x" + self.lp_contracts[lp_id].functions.stateHash().call(block_identifier=block_identifier).hex()
-    
-    def get_reserves_address(self, lp_id, block_identifier):
+    async def get_state_hash(self, lp_id, block_identifier):
+        return "0x"+ (await self.lp_contracts[lp_id].functions.stateHash().call(block_identifier=block_identifier)).hex()
+        
+    async def get_reserves_address(self, lp_id, block_identifier):
         # Accessing a private field.
-        raw_data = self.client.eth.get_storage_at(self.lp_contracts[lp_id].address, 3, block_identifier=block_identifier)
-        return self.client.to_checksum_address(raw_data[-20:]).lower()
+        raw_data = await self.web3_client.eth.get_storage_at(self.lp_contracts[lp_id].address, 3, block_identifier=block_identifier)
+        return self.web3_client.to_checksum_address(raw_data[-20:]).lower()
     
-    def create_from_blockchain(self, lp_id, block: BlockId) -> COWAMMPrivate:
-        reserves_address = self.get_reserves_address(lp_id, block.to_web3())
-        balances = self.get_balances(lp_id, reserves_address, block.to_web3())
-
-        state_hash = self.get_state_hash(lp_id, block.to_web3())
+    async def create_from_blockchain(self, lp_id, block: BlockId) -> COWAMMPrivate:
+        reserves_address = await self.get_reserves_address(lp_id, block.to_web3())
+        balances, state_hash = await asyncio.gather(
+            self.get_balances(lp_id, reserves_address, block.to_web3()),
+            self.get_state_hash(lp_id, block.to_web3())
+        )
 
         lp = BalancerV2Weighted(
             _id=lp_id, 
@@ -126,7 +127,7 @@ class COWAMMPrivateAsyncProxy(LPAsyncProxy):
             type="Weighted",
             owner="0x"
         )
- 
+
         return COWAMMPrivate(
             lp=lp,
             address=lp_id,
@@ -134,7 +135,7 @@ class COWAMMPrivateAsyncProxy(LPAsyncProxy):
             reserves_address=reserves_address
         )
 
-    @traced(logger, "Retrieving cow amm private like state from blockchain")
+    @traced(logger, "Retrieving cow amm private state from blockchain")
     async def __call__(
         self,
         block: BlockId
@@ -142,9 +143,9 @@ class COWAMMPrivateAsyncProxy(LPAsyncProxy):
 
         state = {}
 
-        def create(lp_id):
+        async def create(lp_id):
             try:
-                state[lp_id] = self.create_from_blockchain(lp_id, block)
+                state[lp_id] = await self.create_from_blockchain(lp_id, block)
             except BlockNotFound as e:
                 raise TemporaryError(str(e))
             except ContractLogicError as e:
@@ -157,7 +158,7 @@ class COWAMMPrivateAsyncProxy(LPAsyncProxy):
                     raise TemporaryError(str(e))
                 raise e
 
-        await asyncio.gather(*[asyncio.to_thread(create, lp_id) for lp_id in self.lp_ids])
+        await asyncio.gather(*[create(lp_id) for lp_id in self.lp_ids])
 
         #logger.debug(state)
         return state
@@ -167,7 +168,7 @@ class COWAMMPrivateSyncProxy(LPFromInitialStatePlusChangesProxy):
 
     def __init__(self, lp_ids: List[str], async_proxy, web3_client, event_stream):
         self.lp_ids = lp_ids
-        self.client = web3_client
+        self.web3_client = web3_client
         with open(Path(__file__).parent / 'artifacts' / 'COWAMMPrivate.abi', 'r') as f:
             contract_abi = f.read()
         COWAMMPrivate = web3_client.eth.contract(abi=contract_abi)
@@ -202,7 +203,7 @@ class COWAMMPrivateSyncProxy(LPFromInitialStatePlusChangesProxy):
             token_index = [t.address == token.lower() for t in lp.tokens].index(True)                
             lp.lp.balances[token_index] -= amount
 
-        lp.state_hash = updated_state_hash(lp.state_hash, amounts_in, amounts_out, self.client)
+        lp.state_hash = updated_state_hash(lp.state_hash, amounts_in, amounts_out, self.web3_client)
 
 
 

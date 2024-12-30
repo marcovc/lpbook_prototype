@@ -11,13 +11,14 @@ from decimal import Decimal as D
 from decimal import setcontext
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from async_lru import alru_cache
 
 import aiohttp
 from lpbook import (LPAsyncProxy, LPDriver, LPFromInitialStatePlusChangesProxy,
                     LPSyncProxy, LPSyncProxyFromAsyncProxy, MultiLPFromInitialStatePlusChangesProxy)
 from lpbook.lps.balancer_v2.common import BalancerV2BalancesWeb3SyncProxy, BalancerV2FeesWeb3SyncProxy
 from lpbook.lps.balancer_v2.subgraph import BalancerV2GraphQLClient
-from lpbook.util import LP, ExchangeRate, Token, Trade
+from lpbook.util import LP, ExchangeRate, Token, Trade, traced
 from lpbook.web3 import BlockId, TokenDB
 from lpbook.web3.block_stream import BlockStream
 from lpbook.web3.event_stream import EventStream
@@ -170,8 +171,9 @@ class BalancerV2TheGraphAsyncProxy(LPAsyncProxy):
 
     async def latest_block(self) -> BlockId:
         block = await self.client.get_last_block()
-        return BlockId(number=block.number, hash=str(block.hash), timestamp=block.timestamp)
+        return BlockId.from_web3(block)
 
+    @alru_cache(maxsize=128)
     async def __call__(
         self,
         block: BlockId
@@ -218,12 +220,12 @@ class BalancerV2Web3AsyncProxy(LPAsyncProxy):
     def __init__(self, lp_ids, web3_client, token_db: TokenDB):
         assert len(lp_ids) >= 1
         self.lp_ids = lp_ids
-        self.client = web3_client
+        self.w3_client = web3_client
         self.token_db = token_db
 
         with open(Path(__file__).parent / 'artifacts' / 'Vault.abi', 'r') as f:
             vault_abi = f.read()
-            vault_address_chksum = self.client.to_checksum_address(self.vault_address)
+            vault_address_chksum = self.w3_client.to_checksum_address(self.vault_address)
             self.Vault = web3_client.eth.contract(
                 address=vault_address_chksum,
                 abi=vault_abi
@@ -234,39 +236,47 @@ class BalancerV2Web3AsyncProxy(LPAsyncProxy):
             weighted_pool_abi = f.read()
             for lp_id in lp_ids:
                 address = lp_id_to_address(lp_id)
-                address_chksum = self.client.to_checksum_address(address)
+                address_chksum = self.w3_client.to_checksum_address(address)
                 self.WeightedPool[lp_id] = web3_client.eth.contract(
                     address=address_chksum,
                     abi=weighted_pool_abi
                 )
 
     async def latest_block(self) -> BlockId:
-        block = self.client.eth.get_block("latest")
-        return BlockId(number=block.number, hash=block.hash.hex())
+        block = await self.w3_client.eth.get_block("latest")
+        return BlockId.from_web3(block)
 
     async def create_from_blockchain(self, lp_id, block: BlockId) -> Optional[BalancerV2]:
         block_identifier = block.to_web3()
 
-        def f():
-            tokens, balances, _ = self.Vault.functions.getPoolTokens(lp_id).call(
-                block_identifier=block_identifier
+        async with asyncio.TaskGroup() as tg:
+            get_pool_tokens = tg.create_task(
+                self.Vault.functions.getPoolTokens(lp_id).call(
+                    block_identifier=block_identifier
+                )
             )
-            weights = self.WeightedPool[lp_id].functions.getNormalizedWeights().call(
-                block_identifier=block_identifier
+            get_normalized_weights = tg.create_task(
+                self.WeightedPool[lp_id].functions.getNormalizedWeights().call(
+                    block_identifier=block_identifier
+                )
             )
-            weights = [str(w * 1e-18) for w in weights]
-
-            fee_e18 = self.WeightedPool[lp_id].functions.getSwapFeePercentage().call(
-                block_identifier=block_identifier
+            get_swap_fee_percentage = tg.create_task(
+                self.WeightedPool[lp_id].functions.getSwapFeePercentage().call(
+                    block_identifier=block_identifier
+                )
             )
-            owner = self.WeightedPool[lp_id].functions.getOwner().call(
-                block_identifier=block_identifier
-            ).lower()
-            return (tokens, balances, weights, fee_e18, owner)
+            get_owner = tg.create_task(
+                self.WeightedPool[lp_id].functions.getOwner().call(
+                    block_identifier=block_identifier
+                )
+            )
+        
+        tokens, balances, _ = get_pool_tokens.result()
+        weights = [str(w * 1e-18) for w in get_normalized_weights.result()]
+        fee_e18 = get_swap_fee_percentage.result()
+        owner = get_owner.result().lower()
 
-        tokens, balances, weights, fee_e18, owner = await asyncio.to_thread(f)
-
-        tokens = [await self.token_db.get(token) for token in tokens]
+        tokens = await asyncio.gather(*[self.token_db.get(token) for token in tokens])
 
         if any(token is None for token in tokens):
             return None
@@ -283,14 +293,12 @@ class BalancerV2Web3AsyncProxy(LPAsyncProxy):
             owner=owner
         )
 
+    @alru_cache(maxsize=128)
+    @traced(logger, "Retrieving balancer v2 state from blockchain")
     async def __call__(
         self,
         block: BlockId
     ) -> Dict[str, LP]:
-
-        logger.debug(
-            f'Retrieving balancer v2 like state from blockchain at block {block} ...'
-        )
 
         state = {}
 

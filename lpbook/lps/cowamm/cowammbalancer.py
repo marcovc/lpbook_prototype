@@ -3,7 +3,7 @@
 import asyncio
 from copy import deepcopy
 from dataclasses import dataclass
-from functools import cache
+from async_lru import alru_cache
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
@@ -63,21 +63,48 @@ class BPoolContractProxy:
                 abi=contract_abi
             )
 
-    @cache
-    def get_tokens(self):
-        return self.contract.functions.getFinalTokens().call()
+    @alru_cache
+    async def get_tokens(self):
+        return await self.contract.functions.getFinalTokens().call()
 
-    @cache
-    def get_balance(self, token_address, block_identifier="latest"):
-        return self.contract.functions.getBalance(self.web3_client.to_checksum_address(token_address)).call(block_identifier=block_identifier)
+    async def get_balance_no_cache(self, token_address, block_identifier="latest"):
+        return await self.contract.functions.getBalance(self.web3_client.to_checksum_address(token_address)).call(block_identifier=block_identifier)
+
+    @alru_cache
+    async def get_balance_cached(self, token_address, block_identifier="latest"):
+        return await self.get_balance_no_cache(token_address, block_identifier=block_identifier)
+
+    async def get_balance(self, token_address, block_identifier="latest"):
+        if block_identifier == "latest":
+            return await self.get_balance_no_cache(token_address, block_identifier=block_identifier)
+        else:
+            return await self.get_balance_cached(token_address, block_identifier=block_identifier)
+
+    async def get_weight_no_cache(self, token_address, block_identifier="latest"):
+        return await self.contract.functions.getNormalizedWeight(self.web3_client.to_checksum_address(token_address)).call(block_identifier=block_identifier)  
+
+    @alru_cache
+    async def get_weight_cached(self, token_address, block_identifier="latest"):
+        return await self.get_weight_no_cache(token_address, block_identifier=block_identifier)
+
+    async def get_weight(self, token_address, block_identifier="latest"):
+        if block_identifier == "latest":
+            return await self.get_weight_no_cache(token_address, block_identifier=block_identifier)
+        else:
+            return await self.get_weight_cached(token_address, block_identifier=block_identifier)
+
+    async def get_app_data_no_cache(self, block_identifier="latest"):
+        return await self.contract.functions.APP_DATA().call(block_identifier=block_identifier)
+
+    @alru_cache
+    async def get_app_data_cached(self, block_identifier="latest"):
+        return await self.get_app_data_no_cache(block_identifier=block_identifier)
     
-    @cache
-    def get_weight(self, token_address, block_identifier="latest"):
-        return self.contract.functions.getNormalizedWeight(self.web3_client.to_checksum_address(token_address)).call(block_identifier=block_identifier)  
-
-    @cache
-    def get_app_data(self, block_identifier="latest"):
-        return self.contract.functions.APP_DATA().call(block_identifier=block_identifier)
+    async def get_app_data(self, block_identifier="latest"):
+        if block_identifier == "latest":
+            return await self.get_app_data_no_cache(block_identifier=block_identifier)
+        else:
+            return await self.get_app_data_cached(block_identifier=block_identifier)
 
 
 class COWAMMBalancerAsyncProxy(LPAsyncProxy):
@@ -86,41 +113,41 @@ class COWAMMBalancerAsyncProxy(LPAsyncProxy):
     def __init__(self, lp_ids, web3_client, token_db: TokenDB):
         assert len(lp_ids) >= 1
         self.lp_ids = lp_ids
-        self.client = web3_client
+        self.web3_client = web3_client
         self.token_db = token_db
         self.contracts = {lp_id: BPoolContractProxy(lp_id, web3_client) for lp_id in lp_ids}
         self.weights = {lp_id: None for lp_id in lp_ids}
         self.app_data = {lp_id: None for lp_id in lp_ids}
  
     async def latest_block(self) -> BlockId:
-        block = self.client.eth.get_block("latest")
-        return BlockId(number=block.number, hash=block.hash.hex())
+        block = await self.web3_client.eth.get_block("latest")
+        return BlockId.from_web3(block)
 
-    @cache
-    def get_lp_tokens(self, lp_id):
-        return self.contracts[lp_id].get_tokens()
+    async def get_lp_tokens(self, lp_id):
+        return await self.contracts[lp_id].get_tokens()
     
     async def get_tokens(self, lp_id) -> list[Tuple]:
+        token_ids = await self.get_lp_tokens(lp_id)
         tokens = [
             await self.token_db.get(t.lower()) 
-            for t in self.get_lp_tokens(lp_id)
+            for t in token_ids
         ]
         return tokens
 
-    def read_lp_data(self, lp_id, tokens, block_identifier):
+    async def read_lp_data(self, lp_id, tokens, block_identifier):
         balances = [
-            self.contracts[lp_id].get_balance(t.address, block_identifier=block_identifier)            
+            await self.contracts[lp_id].get_balance(t.address, block_identifier=block_identifier)            
             for t in tokens
         ]
         # Assume app data will not change to speed up things
         if self.weights[lp_id] is None:
             self.weights[lp_id] = [
-                self.contracts[lp_id].get_weight(t.address, block_identifier=block_identifier)            
+                await self.contracts[lp_id].get_weight(t.address, block_identifier=block_identifier)            
                 for t in tokens
             ]
         # Assume app data will not change to speed up things
         if self.app_data[lp_id] is None:
-            app_data_as_byte_array = self.contracts[lp_id].get_app_data(block_identifier=block_identifier)
+            app_data_as_byte_array = await self.contracts[lp_id].get_app_data(block_identifier=block_identifier)
             self.app_data[lp_id] = "0x" + app_data_as_byte_array.hex()
         return balances, self.weights[lp_id], self.app_data[lp_id]
 
@@ -128,7 +155,7 @@ class COWAMMBalancerAsyncProxy(LPAsyncProxy):
         block_identifier = block.to_web3()
 
         tokens = await self.get_tokens(lp_id)
-        balances, weights, app_data = await asyncio.to_thread(self.read_lp_data, lp_id, tokens, block_identifier)
+        balances, weights, app_data = await self.read_lp_data(lp_id, tokens, block_identifier)
         total_weight = sum(weights)
         weights = [w/total_weight for w in weights ]
 
@@ -244,7 +271,7 @@ class COWAMMBalancerDriver(LPDriver):
         else:
             assert False # No other proxies are currently implemented for balancer.
 
-    def has_significant_liquidity(self, lp_id):
+    async def has_significant_liquidity(self, lp_id):
         weth_address = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
         wsteth_address = "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0"
         weeth_address = "0xcd5fe23c85820f7b72d0926fc9b05b43e359b7ee"
@@ -252,18 +279,18 @@ class COWAMMBalancerDriver(LPDriver):
         usdc_address = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
         usdt_address = "0xdac17f958d2ee523a2206206994597c13d831ec7"
         bpool = BPoolContractProxy(lp_id, self.web3_client)
-        tokens = {t.lower() for t in bpool.get_tokens()}
+        tokens = {t.lower() for t in await bpool.get_tokens()}
         for ethlike_adress in [weth_address, wsteth_address, weeth_address,sfrxeth]:
             if ethlike_adress in tokens:
-                return bpool.get_balance(ethlike_adress) >= 0.5e18
+                return await bpool.get_balance(ethlike_adress) >= 0.5e18
         for usdlike_address in [usdc_address, usdt_address]:
             if usdlike_address in tokens:
-                return bpool.get_balance(usdlike_address) >= 1000
+                return await bpool.get_balance(usdlike_address) >= 1000
 
         logger.debug(f"Don't know if cowammbalancer amm {lp_id} has significant liquidity. Including just in case.")
         return True # Being conservative for other tokens
 
-    def get_lp_ids_from_blockchain(self):
+    async def get_lp_ids_from_blockchain(self):
         lp_ids = [
             '0xf08d4dea369c456d26a3168ff0024b904f2d8b91',  # USDC-WETH 
             '0x6ff0531ee19272675b3c7d30401a5b2b2c7b0c67',  # COW-WETH
@@ -318,19 +345,19 @@ class COWAMMBalancerDriver(LPDriver):
                     address=FACTORY_CONTRACT_ADDRESS,
                     abi=contract_abi
                 )
-            logs = BCowFactory.events.COWAMMPoolCreated().get_logs(fromBlock=FROM_BLOCK)
+            logs = await BCowFactory.events.COWAMMPoolCreated().get_logs(from_block=FROM_BLOCK)
             new_lp_ids = [log_entry.args.bCoWPool.lower() for log_entry in logs]
             lp_ids += new_lp_ids
         except:
             logger.exception("Error while querying cowammbalancerv2 updated list of pool.")
             pass
-        lp_ids = [lp_id for lp_id in lp_ids if self.has_significant_liquidity(lp_id) and lp_id not in blacklisted_ids]
+        lp_ids = [lp_id for lp_id in lp_ids if await self.has_significant_liquidity(lp_id) and lp_id not in blacklisted_ids]
         return lp_ids
 
     async def get_lp_ids(self, token_ids: List[str]) -> List[str]:
         # FIXME: return only pools for tokens, and only those with significant liquidity
         if self.lp_ids is None:
-            self.lp_ids = await asyncio.to_thread(self.get_lp_ids_from_blockchain)
+            self.lp_ids = await self.get_lp_ids_from_blockchain()
 
             self.lp_ids = list(
                 set(self.lp_ids) - 

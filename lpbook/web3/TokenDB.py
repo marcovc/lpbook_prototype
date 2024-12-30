@@ -36,7 +36,7 @@ class TokenDB:
         if token_address in self.bad_tokens:
             return None
         try:
-            token = await asyncio.to_thread(create_token_from_web3, token_address, self.web3_client)
+            token = await create_token_from_web3(token_address, self.web3_client)
         except (ContractLogicError, OverflowError, BadFunctionCallOutput):
             self.bad_tokens.add(token_address)
             return None            

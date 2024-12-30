@@ -7,6 +7,7 @@ import logging
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from async_lru import alru_cache
 
 from lpbook import LPAsyncProxy, LPDriver, LPFromInitialStatePlusChangesProxy, LPSyncProxy, LPSyncProxyFromAsyncProxy, MultiLPFromInitialStatePlusChangesProxy
 from lpbook.error import TemporaryError
@@ -153,12 +154,12 @@ class BalancerV2Web3AsyncProxy(LPAsyncProxy):
     def __init__(self, lp_ids, web3_client, token_db: TokenDB):
         assert len(lp_ids) >= 1
         self.lp_ids = lp_ids
-        self.client = web3_client
+        self.web3_client = web3_client
         self.token_db = token_db
 
         with open(Path(__file__).parent / 'artifacts' / 'Vault.abi', 'r') as f:
             vault_abi = f.read()
-            vault_address_chksum = self.client.to_checksum_address(self.vault_address)
+            vault_address_chksum = self.web3_client.to_checksum_address(self.vault_address)
             self.Vault = web3_client.eth.contract(
                 address=vault_address_chksum,
                 abi=vault_abi
@@ -168,19 +169,19 @@ class BalancerV2Web3AsyncProxy(LPAsyncProxy):
         with open(Path(__file__).parent / 'artifacts' / 'ComposableStablePool.abi', 'r') as f:
             abi = f.read()
             for lp_id in lp_ids:
-                address_chksum = lp_id_to_checksum_address(lp_id, self.client)
+                address_chksum = lp_id_to_checksum_address(lp_id, self.web3_client)
                 self.ComposableStablePool[lp_id] = web3_client.eth.contract(
                     address=address_chksum,
                     abi=abi
                 )
 
     async def latest_block(self) -> BlockId:
-        block = self.client.eth.get_block("latest")
-        return BlockId(number=block.number, hash=block.hash.hex())
+        block = await self.web3_client.eth.get_block("latest")
+        return BlockId.from_web3(block)
 
-    def get_amp_data(self, lp_id, block_identifier):
-        address = lp_id_to_checksum_address(lp_id, self.client)
-        slot_raw_data = self.client.eth.get_storage_at(address, self.AMP_SLOT, block_identifier)
+    async def get_amp_data(self, lp_id, block_identifier):
+        address = lp_id_to_checksum_address(lp_id, self.web3_client)
+        slot_raw_data = await self.web3_client.eth.get_storage_at(address, self.AMP_SLOT, block_identifier)
         packed_data = int.from_bytes(slot_raw_data, byteorder="big")
         # Start value (bits 0-63)
         start_value = packed_data & self.AMP_START_VALUE_MASK
@@ -192,19 +193,19 @@ class BalancerV2Web3AsyncProxy(LPAsyncProxy):
         end_time = (packed_data >> 192) & self.AMP_TIMESTAMP_MASK
         return (start_value, end_value, start_time, end_time)
 
-    def get_amp_factor(self, lp_id, block_identifier):
-        _, _, precision = self.ComposableStablePool[lp_id].functions.getAmplificationParameter().call(
+    async def get_amp_factor(self, lp_id, block_identifier):
+        _, _, precision = await self.ComposableStablePool[lp_id].functions.getAmplificationParameter().call(
             block_identifier=block_identifier
         )
         return precision
     
-    def get_cached_rate_data(self, lp_id, token_addresses, block_identifier):
+    async def get_cached_rate_data(self, lp_id, token_addresses, block_identifier):
         rates = []
         expiries = []
         durations = []
         for token_address in token_addresses:
             try:
-                rate, _, duration, expiry = self.ComposableStablePool[lp_id].functions.getTokenRateCache(token_address).call(
+                rate, _, duration, expiry = await self.ComposableStablePool[lp_id].functions.getTokenRateCache(token_address).call(
                     block_identifier=block_identifier
                 )
             except ContractLogicError:
@@ -219,33 +220,20 @@ class BalancerV2Web3AsyncProxy(LPAsyncProxy):
     async def create_from_blockchain(self, lp_id, block: BlockId) -> Optional[ComposableStableV2]:
         block_identifier = block.to_web3()
 
-        def f():
-            tokens, balances, _ = self.Vault.functions.getPoolTokens(lp_id).call(
-                block_identifier=block_identifier
-            )
-            initial_A, future_A, initial_A_time, future_A_time = self.get_amp_data(lp_id, block_identifier)
-            A_factor = self.get_amp_factor(lp_id, block_identifier)
+        tokens, balances, _ = await self.Vault.functions.getPoolTokens(lp_id).call(
+            block_identifier=block_identifier
+        )
+        initial_A, future_A, initial_A_time, future_A_time = await self.get_amp_data(lp_id, block_identifier)
+        A_factor = await self.get_amp_factor(lp_id, block_identifier)
 
-            fee_e18 = self.ComposableStablePool[lp_id].functions.getSwapFeePercentage().call(
-                block_identifier=block_identifier
-            )
-            owner = self.ComposableStablePool[lp_id].functions.getOwner().call(
-                block_identifier=block_identifier
-            ).lower()
-            stored_rates, stored_rates_expiry, stored_rates_duration = self.get_cached_rate_data(lp_id, tokens, block_identifier)
-            return (
-                tokens, balances, 
-                initial_A, future_A, initial_A_time, future_A_time, A_factor, 
-                fee_e18, owner, 
-                stored_rates, stored_rates_expiry, stored_rates_duration
-            )
-
-        (
-            tokens, balances, 
-            initial_A, future_A, initial_A_time, future_A_time,  A_factor, 
-            fee_e18, owner, 
-            stored_rates, stored_rates_expiry, stored_rates_duration
-        ) = await asyncio.to_thread(f)
+        fee_e18 = await self.ComposableStablePool[lp_id].functions.getSwapFeePercentage().call(
+            block_identifier=block_identifier
+        )
+        owner = await self.ComposableStablePool[lp_id].functions.getOwner().call(
+            block_identifier=block_identifier
+        )
+        owner = owner.lower()
+        stored_rates, stored_rates_expiry, stored_rates_duration = await self.get_cached_rate_data(lp_id, tokens, block_identifier)
 
         tokens = [await self.token_db.get(token) for token in tokens]
 
@@ -270,6 +258,7 @@ class BalancerV2Web3AsyncProxy(LPAsyncProxy):
             owner=owner
         )
 
+    @alru_cache(maxsize=128)
     @traced(logger, 'Retrieving stable balancer v2 state from blockchain')
     async def __call__(
         self,
@@ -378,7 +367,7 @@ class BalancerV2AmpAndStoredRatesWeb3SyncProxy(LPFromInitialStatePlusChangesProx
     # Bypasses cache.
     async def get_rate(self, lp_id, token: Token) -> int:
         token_address = self.web3_client.to_checksum_address(token.address)
-        return self.async_proxy.ComposableStablePool[lp_id].functions.getTokenRate(token_address).call()
+        return await self.async_proxy.ComposableStablePool[lp_id].functions.getTokenRate(token_address).call()
 
     async def on_new_block(self, block: BlockId) -> None:
         if self.checkpoint is None:

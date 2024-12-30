@@ -249,7 +249,7 @@ class Simulator:
         page_size = 10
         cur_block = latest_block
         while cur_block >= latest_block - max_blocks_to_lookback:
-            logs = await event.get_logs(fromBlock=cur_block-page_size, toBlock=cur_block)
+            logs = await event.get_logs(from_block=cur_block-page_size, to_block=cur_block)
             if len(logs)>0:
                 return logs[0]
             cur_block -= page_size

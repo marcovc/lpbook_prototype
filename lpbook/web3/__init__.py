@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional, Union
+from hexbytes import HexBytes
 
 def get_erc20_contract(address: Optional[str], web3_client):
     with open(Path(__file__).parent / 'artifacts' / 'erc20.abi', 'r') as f:
@@ -12,13 +13,13 @@ def get_erc20_contract(address: Optional[str], web3_client):
         ERC20 = web3_client.eth.contract(abi=erc20_contract_abi)
     return ERC20
 
-def create_token_from_web3(address, web3_client):
+async def create_token_from_web3(address, web3_client):
     from ..util import Token
 
     erc20 = get_erc20_contract(address=address, web3_client=web3_client)
 
-    symbol = erc20.functions.symbol().call()
-    decimals = erc20.functions.decimals().call()
+    symbol = await erc20.functions.symbol().call()
+    decimals = await erc20.functions.decimals().call()
 
     return Token(address=address.lower(), symbol=symbol, decimals=decimals)
 
@@ -31,11 +32,11 @@ class BlockId:
     """
 
     number: Optional[int] = None
-    hash: Optional[str] = None
+    hash: Optional[HexBytes] = None
     timestamp: Optional[int] = None
 
     def __hash__(self):
-        return self.hash
+        return int.from_bytes(self.hash, byteorder="big")
 
     @classmethod
     def latest(cls):
@@ -51,9 +52,9 @@ class BlockId:
         if self.number is None and self.hash is None:
             return '<latest>'
         elif self.number is not None and self.hash is not None:
-            return f'{self.number}/{self.hash[:8]}'
+            return f'{self.number}/{self.hash.hex()[:8]}'
         elif self.hash is not None:
-            return self.hash[:8]
+            return self.hash.hex()[:8]
         else:
             return str(self.number)
 
@@ -62,7 +63,7 @@ class BlockId:
     
     @classmethod
     def from_web3(cls, block) -> "BlockId":
-        return BlockId(number=block.number, hash=block.hash.hex(), timestamp=block.timestamp)
+        return BlockId(number=block.number, hash=block.hash, timestamp=block.timestamp)
 
     def to_web3(self) -> str:
         if self.hash is not None:
@@ -75,7 +76,7 @@ class BlockId:
     def to_thegraph_filter(self) -> Dict:
         block = {}
         if self.hash is not None:
-            block.update(hash=self.hash)
+            block.update(hash=self.hash.to_0x_hex())
         elif self.number is not None:
             block.update(number=self.number)
         if len(block) > 0:

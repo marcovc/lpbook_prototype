@@ -1,26 +1,14 @@
 import asyncio
 import datetime
-import json
 import logging
-import os
 from pathlib import Path
-import sys
 import traceback
 from typing import Any, List, Optional
 
-import aiohttp
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Request
-from lpbook.LPCache import LPCache
-from lpbook.LPHistoric import LPHistoric
 from lpbook.execution.LPExecution import LPExecution
-from lpbook.lps.curve_old import CurveDriver
-from lpbook.lps.uniswap_v3 import UniV3Driver
-from lpbook.lps.uniswap_v2 import SushiDriver, UniV2Driver
-from lpbook.lps.maker_psm import MakerPSMDriver
-from lpbook.web3.block_stream import BlockStream
-from lpbook.web3.event_stream import ServerFilteredEventStream
 from pydantic_settings import BaseSettings
 from web3 import Web3
 from contextlib import asynccontextmanager
@@ -157,10 +145,11 @@ async def lps_trading_tokens(token_ids: List[str], slippage_risk: float = 1, blo
         return {
             "lps": marshalled_lps,
             "prev_block_number": block_number,
-            "prev_block_hash": process_servers[0].last_block.hash if wait else block_hash,
+            "prev_block_hash": process_servers[0].last_block.hash.to_0x_hex() if wait else block_hash.to_0x_hex(),
             "prev_block_timestamp": process_servers[0].last_block.timestamp if wait else block_timestamp,
             "expected_average_xrates_in_running_hour": expected_average_xrates_in_running_hour
         } 
+
     except Exception as e:
         logger.error(
             f"Unhandled exception: {str(e)}. Traceback:\n{traceback.format_exc()}\n")
@@ -196,7 +185,7 @@ async def order_lps() -> dict:
         return {
             "order_lps": order_lps,
             "prev_block_number": last_block.number,
-            "prev_block_hash": last_block.hash,
+            "prev_block_hash": last_block.hash.to_0x_hex(),
             "prev_block_timestamp": last_block.timestamp
         } 
     except Exception as e:

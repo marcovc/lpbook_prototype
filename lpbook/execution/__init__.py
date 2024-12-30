@@ -160,7 +160,7 @@ class LPStats:
     async def get_succ_block(self, prev_block_hash: str) -> BlockId:
         prev_block = await self.w3.eth.get_block(block_identifier=prev_block_hash)
         succ_block = await self.w3.eth.get_block(block_identifier=prev_block.number + 1)
-        return BlockId(number=succ_block.number, hash=succ_block.hash, timestamp=succ_block.timestamp)
+        return BlockId.from_web3(succ_block)
 
     def record_simulation(self, lp_execution: LPExecution, simulation: Simulation, block: BlockId):
         lp_id, auction_id = lp_execution.lp_id, lp_execution.auction_id 
@@ -172,7 +172,7 @@ class LPStats:
             if lp_id not in self.gas_stats:
                 self.gas_stats[lp_id] = GasStatsInfo(lp_id, lp_execution.protocol, RunningMeanStddev())
             if lp_execution.simulated_gas is not None:
-                self.gas_stats[lp_id].stats.update(lp_execution.simulated_gas)
+                self.gas_stats[lp_id].stats.update(int(lp_execution.simulated_gas))
             else:
                 self.gas_stats[lp_id].stats.update(simulation.gas_used)
         else:

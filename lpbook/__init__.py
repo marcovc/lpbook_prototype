@@ -112,7 +112,7 @@ class LPSyncProxy(ABC):
         """Starts syncing proxy with proxied data source."""
 
     @abstractmethod
-    def stop(self) -> None:
+    async def stop(self) -> None:
         """Stops syncing proxy with proxied data source."""
 
 
@@ -171,7 +171,7 @@ class LPSyncProxyFromAsyncProxy(LPSyncProxy):
     async def start(self) -> None:
         pass
 
-    def stop(self) -> None:
+    async def stop(self) -> None:
         self.block_stream.unsubscribe(self.query_underlying_lp_async_proxy)
 
 
@@ -193,13 +193,10 @@ class LPFromInitialStatePlusChangesProxy(LPSyncProxy):
     def __del__(self):        
         for task in self.create_extra_updaters_tasks:
             task.cancel()
-        if not self.running:
-            return
-        self.stop()
 
     @traced(logger, 'Resetting LPFromInitialStatePlusChangesProxy')
-    def reset_event_log(self, reason: RuntimeError) -> None:
-        self.stop()
+    async def reset_event_log(self, reason: RuntimeError) -> None:
+        await self.stop()
         self.event_log = RecentEventLog(
             self.web3_client, self.event_stream
         )
@@ -214,8 +211,8 @@ class LPFromInitialStatePlusChangesProxy(LPSyncProxy):
         # it is what defines the start block.
         latest_block = await self.async_proxy.latest_block()
         start_block_number = latest_block.number - START_BLOCK_LAG
-        b = self.web3_client.eth.get_block(start_block_number)
-        start_block_hash = b.hash.hex()
+        b = await self.web3_client.eth.get_block(start_block_number)
+        start_block_hash = b.hash
         start_block = BlockId(number=start_block_number, hash=start_block_hash, timestamp=b.timestamp)
         self.checkpoint = await self.async_proxy(start_block)
 
@@ -233,11 +230,11 @@ class LPFromInitialStatePlusChangesProxy(LPSyncProxy):
         )
 
     @traced(logger, 'Stopping LPFromInitialStatePlusChangesProxy')
-    def stop(self) -> None:
+    async def stop(self) -> None:
         if not self.running:
             return
         self.event_log.unsubscribe(self.on_new_events)
-        self.event_log.stop()
+        await self.event_log.stop()
         self.running = False
 
     def __call__(self, block: BlockId) -> Dict[str, LP]:
@@ -296,10 +293,10 @@ class LPFromInitialStatePlusChangesProxy(LPSyncProxy):
                 extra_updater(state)
         return state
     
-    def create_extra_event_updaters(self, events, create_extra_updater_fn, name):     
+    def create_extra_event_updaters(self, events, create_extra_updater_async_fn, name):     
         @traced(logger, f"Running extra updater for '{name}'")   
         async def helper():
-            updaters = await asyncio.gather(*[asyncio.to_thread(create_extra_updater_fn, event) for event in events])
+            updaters = await asyncio.gather(*[create_extra_updater_async_fn(event) for event in events])
             for updater, event in zip(updaters, events):
                 if updater is not None:
                     self.extra_event_updaters_by_event.setdefault(event, []).append(updater)
@@ -332,9 +329,9 @@ class MultiLPFromInitialStatePlusChangesProxy(LPSyncProxy):
         await asyncio.gather(*[p.start() for p in self.proxies])
 
     @traced(logger, 'Stopping MultiLPFromInitialStatePlusChangesProxy')
-    def stop(self) -> None:
+    async def stop(self) -> None:
         for p in self.proxies:
-            p.stop()
+            await p.stop()
 
     def __call__(self, block: BlockId) -> Dict[str, LP]:
         """Returns a list of lps with state at (the end of) given block.

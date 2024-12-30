@@ -17,7 +17,7 @@ from lpbook import (LPAsyncProxy, LPDriver, LPFromInitialStatePlusChangesProxy, 
 from lpbook.error import CacheMissError, TemporaryError
 from lpbook.lps.util import DynamicInterval
 from lpbook.util import LP, Token, Trade, traced
-from lpbook.web3 import BlockId, TokenDB, create_token_from_web3
+from lpbook.web3 import BlockId
 from lpbook.web3.block_stream import BlockStream
 from web3.constants import ADDRESS_ZERO
 from web3.exceptions import BlockNotFound, ContractLogicError
@@ -183,7 +183,7 @@ class CurveWeb3AsyncProxy(LPAsyncProxy):
     def __init__(self, lp_ids, web3_client):
         assert len(lp_ids) >= 1
         self.lp_ids = lp_ids
-        self.client = web3_client
+        self.web3_client = web3_client
 
         with open(Path(__file__).parent / 'artifacts' / 'MetaRegistry.abi', 'r') as f:
             registry_contract_abi = f.read()
@@ -214,38 +214,38 @@ class CurveWeb3AsyncProxy(LPAsyncProxy):
             )
 
     async def latest_block(self) -> BlockId:
-        block = self.client.eth.get_block("latest")
-        return BlockId(number=block.number, hash=block.hash.hex())
+        block = await self.web3_client.eth.get_block("latest")
+        return BlockId.from_web3(block)
 
-    def get_fee_from_registry(self, lp_id_chksum, block_identifier) -> int:
-        fees = self.MetaRegistry.functions.get_fees(lp_id_chksum).call(
+    async def get_fee_from_registry(self, lp_id_chksum, block_identifier) -> int:
+        fees = await self.MetaRegistry.functions.get_fees(lp_id_chksum).call(
             block_identifier=block_identifier
         )
         return fees[0]
 
-    def get_fee_from_pool(self, pool_contract, block_identifier):
-        return pool_contract.functions.fee().call(
+    async def get_fee_from_pool(self, pool_contract, block_identifier):
+        return await pool_contract.functions.fee().call(
             block_identifier=block_identifier
         )
 
-    def get_dynamic_fee_from_pool(self, lp_id_chksum, Pool, block_identifier, token0_index, token1_index):
+    async def get_dynamic_fee_from_pool(self, lp_id_chksum, Pool, block_identifier, token0_index, token1_index):
         pool_contract = Pool(address=lp_id_chksum)
-        return pool_contract.functions.dynamic_fee(token0_index, token1_index).call(
+        return await pool_contract.functions.dynamic_fee(token0_index, token1_index).call(
             block_identifier=block_identifier
         )
     
-    def get_balances(self, lp_id_chksum, block_identifier) -> List[int]:
-        return self.MetaRegistry.functions.get_balances(lp_id_chksum).call(
+    async def get_balances(self, lp_id_chksum, block_identifier) -> List[int]:
+        return await self.MetaRegistry.functions.get_balances(lp_id_chksum).call(
             block_identifier=block_identifier
         )
     
-    def get_stored_rates(self, pool_contract, block_identifier) -> List[int]:
-        return pool_contract.functions.stored_rates().call(
+    async def get_stored_rates(self, pool_contract, block_identifier) -> List[int]:
+        return await pool_contract.functions.stored_rates().call(
             block_identifier=block_identifier
         )
 
-    def get_offpeg_fee_multiplier(self, pool_contract, block_identifier) -> int:
-        return pool_contract.functions.offpeg_fee_multiplier().call(
+    async def get_offpeg_fee_multiplier(self, pool_contract, block_identifier) -> int:
+        return await pool_contract.functions.offpeg_fee_multiplier().call(
             block_identifier=block_identifier
         )
 
@@ -258,34 +258,34 @@ class CurveWeb3AsyncProxy(LPAsyncProxy):
             return self.StableSwapMetaNG(address=lp_id_chksum)
         raise RuntimeError("Unknown registry")
 
-    def set_fees(self, lp_id_chksum, lp, block_identifier):
+    async def set_fees(self, lp_id_chksum, lp, block_identifier):
         if lp.registry in ["main", "factory"]:
-            lp.fee = self.get_fee_from_registry(lp_id_chksum, block_identifier=block_identifier)
+            lp.fee = await self.get_fee_from_registry(lp_id_chksum, block_identifier=block_identifier)
         else:
             pool_contract = self.get_contract_for_lp(lp_id_chksum, lp)
-            lp.fee = self.get_fee_from_pool(pool_contract, block_identifier)
-            lp.stored_rates = self.get_stored_rates(pool_contract, block_identifier)          
-            lp.offpeg_fee_multiplier = self.get_offpeg_fee_multiplier(pool_contract, block_identifier)
+            lp.fee = await self.get_fee_from_pool(pool_contract, block_identifier)
+            lp.stored_rates = await self.get_stored_rates(pool_contract, block_identifier)          
+            lp.offpeg_fee_multiplier = await self.get_offpeg_fee_multiplier(pool_contract, block_identifier)
 
-    def set_amplification_parameter(self, lp_id_chksum, lp, block_identifier) -> int:
+    async def set_amplification_parameter(self, lp_id_chksum, lp, block_identifier) -> int:
         pool_contract = self.get_contract_for_lp(lp_id_chksum, lp)
-        lp.future_A = F(pool_contract.functions.future_A().call(
+        lp.future_A = F(await pool_contract.functions.future_A().call(
             block_identifier=block_identifier
         ), 100) # Events send the "precise" (i.e. *100) version of A
         try:
-            lp.future_A_time = pool_contract.functions.future_A_time().call(
+            lp.future_A_time = await pool_contract.functions.future_A_time().call(
                 block_identifier=block_identifier
             )
         except ContractLogicError:
             lp.future_A_time = 0
         try:
-            lp.initial_A = F(pool_contract.functions.initial_A().call(
+            lp.initial_A = F(await pool_contract.functions.initial_A().call(
                 block_identifier=block_identifier
             ), 100) # Events send the "precise" (i.e. *100) version of A
         except ContractLogicError:
             lp.initial_A = lp.future_A
         try:
-            lp.initial_A_time = pool_contract.functions.initial_A_time().call(
+            lp.initial_A_time = await pool_contract.functions.initial_A_time().call(
                 block_identifier=block_identifier
             )
         except ContractLogicError:
@@ -295,7 +295,7 @@ class CurveWeb3AsyncProxy(LPAsyncProxy):
         else:
             # try to guess the factor by checking for the existence of a A_precise() function
             try:
-                pool_contract.functions.A_precise().call(
+                await pool_contract.functions.A_precise().call(
                     block_identifier=block_identifier
                 )
                 lp.A_factor = 1
@@ -303,18 +303,19 @@ class CurveWeb3AsyncProxy(LPAsyncProxy):
                 lp.A_factor = 100
 
 
-    def set_balances(self, lp_id_chksum, lp, block_identifier) -> List[int]:
-        lp.balances = self.get_balances(lp_id_chksum, block_identifier=block_identifier)[:len(lp.tokens)]
+    async def set_balances(self, lp_id_chksum, lp, block_identifier) -> List[int]:
+        lp.balances = await self.get_balances(lp_id_chksum, block_identifier=block_identifier)
+        lp.balances = lp.balances[:len(lp.tokens)]
 
     async def create_from_blockchain(self, lp_id, block: BlockId) -> Curve:
         block_identifier = block.to_web3()
-        lp_id_chksum = self.client.to_checksum_address(lp_id)
+        lp_id_chksum = self.web3_client.to_checksum_address(lp_id)
 
         lp = curve_pool_db.pools[lp_id]
         await asyncio.gather(
-            asyncio.to_thread(self.set_balances, lp_id_chksum, lp, block_identifier),
-            asyncio.to_thread(self.set_fees, lp_id_chksum, lp, block_identifier),
-            asyncio.to_thread(self.set_amplification_parameter, lp_id_chksum, lp, block_identifier)
+            self.set_balances(lp_id_chksum, lp, block_identifier),
+            self.set_fees(lp_id_chksum, lp, block_identifier),
+            self.set_amplification_parameter(lp_id_chksum, lp, block_identifier)
         )
         return lp
 
@@ -397,10 +398,10 @@ class CurveWeb3SyncProxy(LPFromInitialStatePlusChangesProxy):
             self.block_stream.subscribe(self.on_new_block)
         await super().start()
     
-    def stop(self) -> None:
+    async def stop(self) -> None:
         if self.block_stream is not None:
             self.block_stream.unsubscribe(self.on_new_block)
-        super().stop()
+        await super().stop()
 
     # As crazy as it sounds it seems the contract does not say which tokens have dynamic rates. This hack checks
     # that by looking for rates that are not powers of 10.
@@ -410,7 +411,6 @@ class CurveWeb3SyncProxy(LPFromInitialStatePlusChangesProxy):
     async def on_new_block(self, block: BlockId) -> None:
         if self.checkpoint is None:
             return
-        logger.debug(f"on_new_block {repr(self)} {block.number}")
         if not self.initialized_lps_with_dynamic_rates:
             # Check if new pools with dynamic rates are available
             for lp_id, lp in self.checkpoint.items():
@@ -435,7 +435,7 @@ class CurveWeb3SyncProxy(LPFromInitialStatePlusChangesProxy):
             lp = self.checkpoint[lp_id]
             lp_id_chksum = self.web3_client.to_checksum_address(lp_id)
             pool_contract = self.async_proxy.get_contract_for_lp(lp_id_chksum, lp)
-            new_stored_rates = self.async_proxy.get_stored_rates(pool_contract, "latest")
+            new_stored_rates = await self.async_proxy.get_stored_rates(pool_contract, "latest")
             new_lp_rates[lp_id] = new_stored_rates
 
         # Update fetch intervals.
@@ -508,11 +508,11 @@ class CurveWeb3SyncProxy(LPFromInitialStatePlusChangesProxy):
             if len(remove_liquidity_one_events) > 0:
                 self.create_extra_event_updaters(remove_liquidity_one_events, self.create_remove_liquidity_one_updater, "curve liquidity one")            
 
-    def create_remove_liquidity_one_updater(self, event):
+    async def create_remove_liquidity_one_updater(self, event):
         lp_id = event.address.lower()
         lp_id_chksum = self.web3_client.to_checksum_address(lp_id)
         block_identifier = event.blockHash
-        new_balances = self.async_proxy.get_balances(lp_id_chksum, block_identifier)
+        new_balances = await self.async_proxy.get_balances(lp_id_chksum, block_identifier)
         def updater(state):
             state[lp_id].balances = new_balances[:len(state[lp_id].tokens)]
         return updater
@@ -674,5 +674,6 @@ class CurveNGDriver(LPDriver):
             lp.address not in DENYLIST
         ]
     
+    @property
     def uid(self) -> str:
         return f"{self.protocol}-{self.kind}-NG"

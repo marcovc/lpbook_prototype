@@ -182,7 +182,7 @@ class LPCache:
                 def __call__(self, _):
                     return {}
 
-                def stop(self):
+                async def stop(self):
                     pass
 
             return (NoOpSyncProxy(), set())
@@ -243,7 +243,7 @@ class LPCache:
 
         # Stop old proxies that we won't keep
         for sync_proxy in proxies_to_stop:
-            sync_proxy.stop()
+            await sync_proxy.stop()
         proxies_to_stop = None
 
         gc.collect()
@@ -262,7 +262,7 @@ class LPCache:
                 self.lp_sync_proxies[driver.uid] = new_proxy
                 self.lp_sync_pool_ids[driver.uid] = new_lp_ids
                 if old_proxy is not None and old_proxy != new_proxy:
-                    old_proxy.stop()            
+                    await old_proxy.stop()            
 
         if len(tokens) > 0:
             for driver in self.lp_drivers:

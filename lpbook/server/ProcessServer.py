@@ -17,14 +17,13 @@ from lpbook.LPHistoric import LPHistoric
 from lpbook.lps.curve import CurveDriver, CurveNGDriver
 from lpbook.lps.uniswap_v3 import SolidlyV3Driver, UniV3Driver, PancakeswapV3Driver
 from lpbook.lps.uniswap_v2 import SushiDriver, SwaprV2Driver, UniV2Driver, PancakeswapV2Driver
-from lpbook.lps.maker_psm import MakerPSMDriver
 from lpbook.lps.piecewise import BebopDriver, NativeDriver, HashflowDriver, ZeroExDriver
 from lpbook.lps.balancer_v2 import BalancerV2WeightedDriver, BalancerV2StableDriver
 from lpbook.web3 import BlockId
 from lpbook.web3.block_stream import BlockStream
 from lpbook.web3.event_stream import ServerFilteredEventStream
 from pydantic_settings import BaseSettings
-from web3 import Web3
+from web3 import AsyncWeb3
 from lpbook.web3.TokenDB import TokenDB
 import aioprocessing
 
@@ -52,7 +51,8 @@ class ProcessServer:
         requests_session = requests.Session()
         requests_session.mount('http://', requests_adapter)
         requests_session.mount('https://', requests_adapter)
-        w3 = Web3(Web3.HTTPProvider(HTTP_WEB3_URL, session=requests_session))
+        #w3 = Web3(Web3.HTTPProvider(HTTP_WEB3_URL, session=requests_session))
+        w3 = AsyncWeb3(AsyncWeb3.AsyncHTTPProvider(HTTP_WEB3_URL))
 
         self.block_stream = BlockStream(WS_WEB3_URL, 0.1)   # pause 0.1 seconds before announcing new blocks to subscribers
         event_stream = ServerFilteredEventStream(self.block_stream, w3)
@@ -82,8 +82,6 @@ class ProcessServer:
             lp_drivers.append(PancakeswapV2Driver(event_stream, self.block_stream, self.aiohttp_session, w3))
         if "swaprv2" in self.protocols:
             lp_drivers.append(SwaprV2Driver(event_stream, self.block_stream, self.aiohttp_session, w3))        
-        if "makerpsm" in self.protocols:
-            lp_drivers.append(MakerPSMDriver())
         if "fixedrate" in self.protocols:
             lp_drivers.append(FixedRateDriver())
         if "native" in self.protocols:

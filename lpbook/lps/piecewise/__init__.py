@@ -692,7 +692,7 @@ class PiecewiseProxy(LPSyncProxy):
                     logger.exception("Piecewise proxy unhandled exception. Resetting ...") 
         self.background_task = asyncio.create_task(run_loop())
 
-    def stop(self) -> None:
+    async def stop(self) -> None:
         """Stops syncing proxy with proxied data source."""
         self.orderbook.running = False
 
