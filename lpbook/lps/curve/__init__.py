@@ -363,12 +363,16 @@ class CurveWeb3SyncProxy(LPFromInitialStatePlusChangesProxy):
             StableSwap = async_proxy.StableSwapPlainNG
         else:
             StableSwap = async_proxy.StableSwap
+
+        # I gave up trying to keep up with balances incrementally, so the balances are re-read each update, via the
+        # extra updater mechanism below.
+        # The only reason we still subsribe to the TokenExchange event is for get_trades().
         events = [
             StableSwap.events.TokenExchange, 
-            StableSwap.events.AddLiquidity, 
-            StableSwap.events.RemoveLiquidity,
-            StableSwap.events.RemoveLiquidityOne,
-            StableSwap.events.RemoveLiquidityImbalance,
+            #StableSwap.events.AddLiquidity, 
+            #StableSwap.events.RemoveLiquidity,
+            #StableSwap.events.RemoveLiquidityOne,
+            #StableSwap.events.RemoveLiquidityImbalance,
             StableSwap.events.RampA,
             StableSwap.events.StopRampA,
         ]
@@ -390,7 +394,6 @@ class CurveWeb3SyncProxy(LPFromInitialStatePlusChangesProxy):
         self.next_fetch_block_by_lp_id = {}
         self.fetch_interval_by_lp_id = {}
         self.initialized_lps_with_dynamic_rates = False
-        self.fetch_dynamic_rates_task = None
         self.latest_dynamic_rates_by_lp_id = {}
 
     async def start(self) -> None:
@@ -426,7 +429,7 @@ class CurveWeb3SyncProxy(LPFromInitialStatePlusChangesProxy):
             if block.number >= next_fetch_block
         ]
         if len(lp_ids_to_fetch) > 0:
-            self.fetch_dynamic_rates_task = asyncio.create_task(self.fetch_dynamic_rates(lp_ids_to_fetch, block))
+            await self.fetch_dynamic_rates(lp_ids_to_fetch, block)
         
     async def fetch_dynamic_rates(self, lp_ids_to_fetch, block: BlockId):
         # Fetch the rates.
@@ -462,22 +465,25 @@ class CurveWeb3SyncProxy(LPFromInitialStatePlusChangesProxy):
             return
         lp = state[lp_id]
 
-        if d.event == 'TokenExchange':
-            lp.balances[d.args.sold_id] += d.args.tokens_sold  # pool bought
-            lp.balances[d.args.bought_id] -= d.args.tokens_bought # pool sold
-        elif d.event == 'AddLiquidity':
-            for i in range(len(d.args.token_amounts)):
-                lp.balances[i] += d.args.token_amounts[i]
-        elif d.event in ['RemoveLiquidity', 'RemoveLiquidityImbalance']:
-            for i in range(len(d.args.token_amounts)):
-                lp.balances[i] -= d.args.token_amounts[i]
-        elif d.event == 'RemoveLiquidityOne':
-            # old pools don't say which token was removed (!), so these are updated via
-            # the extra updater mechanism below.
-            if "token_id" not in d.args:
-                return
-            lp.balances[d.args.token_id] -= d.args.coin_amount
-        elif d.event == 'RampA':
+        # I gave up trying to keep up with balances incrementally, so the balances are re-read each update, via the
+        # extra updater mechanism below.
+
+        #if d.event == 'TokenExchange':
+        #    lp.balances[d.args.sold_id] += d.args.tokens_sold  # pool bought
+        #    lp.balances[d.args.bought_id] -= d.args.tokens_bought # pool sold
+        #elif d.event == 'AddLiquidity':
+        #    for i in range(len(lp.balances)):
+        #        lp.balances[i] += d.args.token_amounts[i]
+        #elif d.event in ['RemoveLiquidity', 'RemoveLiquidityImbalance']:
+        #    for i in range(len(lp.balances)):
+        #        lp.balances[i] -= d.args.token_amounts[i]
+        #elif d.event == 'RemoveLiquidityOne':
+        #    # old pools don't say which token was removed (!), so these are updated via
+        #    # the extra updater mechanism below.
+        #    if "token_id" not in d.args:
+        #        return
+        #    lp.balances[d.args.token_id] -= d.args.coin_amount
+        if d.event == 'RampA':
             lp.initial_A = d.args.old_A
             lp.future_A = d.args.new_A
             lp.initial_A_time = d.args.initial_time
@@ -493,22 +499,19 @@ class CurveWeb3SyncProxy(LPFromInitialStatePlusChangesProxy):
         elif d.event == "NewParameters":    # curve-very-old
             lp.fee = d.args.fee
             lp.initial_A = lp.future_A = d.args.A
-        else:
-            assert False
 
         if lp_id in self.latest_dynamic_rates_by_lp_id.keys():
             lp.stored_rates = self.latest_dynamic_rates_by_lp_id[lp_id]
 
     def on_new_events(self, events) -> None:
-        if self.registry in ["main", "factory"]:            
-            remove_liquidity_one_events = [
-                event for event in events 
-                if event.event == 'RemoveLiquidityOne' and "token_id" not in event.args
-            ]
-            if len(remove_liquidity_one_events) > 0:
-                self.create_extra_event_updaters(remove_liquidity_one_events, self.create_remove_liquidity_one_updater, "curve liquidity one")            
+        events = [
+            event for event in events 
+            if event.event in {'RemoveLiquidityOne', 'TokenExchange', 'AddLiquidity', 'RemoveLiquidity', 'RemoveLiquidityImbalance'}
+        ]
+        if len(events) > 0:
+            self.create_extra_event_updaters(events, self.create_balances_updater, "balance updater")            
 
-    async def create_remove_liquidity_one_updater(self, event):
+    async def create_balances_updater(self, event):
         lp_id = event.address.lower()
         lp_id_chksum = self.web3_client.to_checksum_address(lp_id)
         block_identifier = event.blockHash

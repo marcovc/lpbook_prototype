@@ -13,7 +13,7 @@ import os
 load_dotenv()
 
 USE_LP_MONITORS = os.getenv('USE_LP_MONITORS', 'true').lower() == 'true'
-LP_MONITOR_WINDOW_SIZE = int(os.getenv('LP_MONITOR_WINDOW_SIZE', 100))
+LP_MONITOR_WINDOW_SIZE = int(os.getenv('LP_MONITOR_WINDOW_SIZE', 300))
 SLIPPAGE_QUANTIZATION = int(os.getenv('SLIPPAGE_QUANTIZATION', 4))
 
 logger = logging.getLogger(__name__)

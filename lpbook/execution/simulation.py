@@ -263,7 +263,7 @@ class Simulator:
         # Any two addresses would do, but from_ needs to have enough eth for the simulation
         from_ = WALLET_WITH_SOME_ETH
         to = token_address
-        calldata = token_contract.encodeABI(fn_name="balanceOf", args=[
+        calldata = token_contract.encode_abi("balanceOf", args=[
             self.web3_client.to_checksum_address(self.settlement_address)
         ])
         simulation = await self.web3_client.eth.create_access_list({
@@ -293,7 +293,7 @@ class Simulator:
         from_ = WALLET_WITH_SOME_ETH
         to = token_address
         dummy_spender = "0xe592427a0aece92de3edee1f18e0157c05861564"
-        calldata = token_contract.encodeABI(fn_name="allowance", args=[
+        calldata = token_contract.encode_abi("allowance", args=[
             self.web3_client.to_checksum_address(self.settlement_address), 
             self.web3_client.to_checksum_address(dummy_spender)
         ])

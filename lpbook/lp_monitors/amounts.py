@@ -2,9 +2,15 @@
 
 import datetime
 from itertools import permutations
+import logging
 import math
 from typing import Callable, Iterable, Optional, Tuple
 from lpbook.util import LP, Token, Trade
+
+logger = logging.getLogger(__name__)
+
+# How many blocks to consider as the training set when regressing the average price for the remaining of an hour.
+REGRESSION_WINDOW_SIZE = 100
 
 class LinearRegression:
     def __init__(self, x_train: Iterable[int], y_train: Iterable[float]):
@@ -105,7 +111,7 @@ class TradedAmountsCollector:
         if self.abs_amounts1[block - self.last_block - 1] != 0 and self.abs_amounts2[block - self.last_block - 1] != 0:
             self.last_xrates12[block - self.last_block - 1] = self.abs_amounts2[block - self.last_block - 1] / self.abs_amounts1[block - self.last_block - 1]
         for x in [self.abs_amounts1, self.abs_amounts2, self.last_xrates12]:
-            if len(x) > 2*self.window_size:
+            if len(x) > self.window_size:
                 x = x[-self.window_size:]
 
     # p(t1) / p(t2)
@@ -138,40 +144,45 @@ class TradedAmountsCollector:
             return None
         return make_regression_with_uncertainty(LogLinearRegression)(x, y)
 
-    def estimate_average_xrate12_in_running_hour(self, block: int, block_time: datetime.datetime) -> Tuple[Optional[float], Optional[float]]:
-        self.record_trade(block, 0, 0)
-        if  len(self.last_xrates12) < self.window_size:
+    def estimate_average_xrate12_in_running_hour(self, cur_block: int, block_time: datetime.datetime) -> Tuple[Optional[float], Optional[float]]:
+        self.record_trade(cur_block, 0, 0)
+        if  len(self.last_xrates12) < REGRESSION_WINDOW_SIZE:
             return None, None
 
+        # Note: it may be possible that this function is called before we have seen self.window_size blocks. That is why 
+        # we have the concept of "observed" below.
+
         start_of_hour = block_time.replace(minute=0, second=0, microsecond=0)
-        nr_observations_since_start_of_hour = math.floor((block_time - start_of_hour).total_seconds() / 12)
-        nr_observations_in_time_window = sum(self.xrate12(block - i) is not None for i in range(self.window_size))
-        nr_observations = min(nr_observations_since_start_of_hour, nr_observations_in_time_window)
+        nr_blocks_since_start_of_hour = math.floor((block_time - start_of_hour).total_seconds() / 12)
 
-        first_block_observed = block - nr_observations + 1
-        observed_avg_xrate12 = self.average_xrate12(first_block_observed, block)
+        nr_blocks_observed_since_start_of_hour = min(
+            nr_blocks_since_start_of_hour, 
+            len(self.last_xrates12)
+        )
 
-        nr_estimates = 3600//12 - nr_observations_since_start_of_hour
-        if nr_estimates == 0:
+        first_block_observed_after_start_of_hour = cur_block - nr_blocks_observed_since_start_of_hour + 1
+        observed_avg_xrate12 = self.average_xrate12(first_block_observed_after_start_of_hour, cur_block)
+
+        nr_blocks_to_predict = 3600//12 - nr_blocks_since_start_of_hour
+        if nr_blocks_to_predict == 0:
             return observed_avg_xrate12, 0
 
-        first_block_for_training = block - self.window_size + 1
-        xrate_predictor = self.regress_xrate12(first_block_for_training, block)
+        first_block_for_training = cur_block - REGRESSION_WINDOW_SIZE + 1
+        xrate_predictor = self.regress_xrate12(first_block_for_training, cur_block)
         if xrate_predictor is None:
             return None, None
            
-        last_block_of_hour = block + nr_estimates
-        predicted_avg_xrate12 = xrate_predictor.estimate_of_average(block + 1, last_block_of_hour) 
+        last_block_of_hour = cur_block + nr_blocks_to_predict
+        predicted_avg_xrate12 = xrate_predictor.estimate_of_average(cur_block + 1, last_block_of_hour) 
         
         assert predicted_avg_xrate12 is not None
         
         if observed_avg_xrate12 is None:
-            assert nr_observations == 0
             observed_avg_xrate12 = 0  # since it cancels out in the weighted average below
 
         estimate = (
-            (observed_avg_xrate12 * nr_observations + predicted_avg_xrate12 * nr_estimates) / 
-            (nr_observations + nr_estimates)
+            (observed_avg_xrate12 * nr_blocks_observed_since_start_of_hour + predicted_avg_xrate12 * nr_blocks_to_predict) / 
+            (nr_blocks_observed_since_start_of_hour + nr_blocks_to_predict)
         )
 
         stddev_of_estimate_of_average = xrate_predictor.stddev_of_estimate_of_average(self.last_block + 1, last_block_of_hour)
@@ -179,29 +190,33 @@ class TradedAmountsCollector:
             return estimate, None
 
         stddev = (
-            (0 * nr_observations + stddev_of_estimate_of_average * nr_estimates)  / 
-            (nr_observations + nr_estimates)
+            (0 * nr_blocks_observed_since_start_of_hour + stddev_of_estimate_of_average * nr_blocks_to_predict)  / 
+            (nr_blocks_observed_since_start_of_hour + nr_blocks_to_predict)
         )
 
-        #print("tokens: ", self.token1.symbol, self.token2.symbol)
-        #print("observations: ", [x for x in self.xrates12(first_block_observed, block) if x is not None])
-        #print("training:", [x for x in self.xrates12(first_block_for_training, block) if x is not None])
-        #print(f"nr_observations_since_start_of_hour: {nr_observations_since_start_of_hour}")
-        #print(f"nr_observations: {nr_observations}")
-        #print(f"nr_estimates: {nr_estimates}")
-        #print(f"observed_avg_xrate12: {observed_avg_xrate12}")
-        #print(f"predicted_avg_xrate12: {predicted_avg_xrate12}")
-        #print(f"slope: {xrate_predictor.slope}")
-        #print(f"intercept: {xrate_predictor.intercept}")
-        #print(f"estimate: {estimate}")
-        #print(f"stddev_of_estimate_of_average: {stddev_of_estimate_of_average}")
-        #print(f"stddev: {stddev}")
+        if False: #self.token1.address == "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2" and self.token2.address == "0xdac17f958d2ee523a2206206994597c13d831ec7":
+            print("tokens: ", self.token1.symbol, self.token2.symbol)
+            print("observed since start of hour: ", [x for x in self.xrates12(first_block_observed_after_start_of_hour, cur_block)])
+            print("training:", [x for x in self.xrates12(first_block_for_training, cur_block)])
+            print(f"nr_blocks_observed_since_start_of_hour: {nr_blocks_observed_since_start_of_hour}")
+            print(f"nr_blocks_to_predict: {nr_blocks_to_predict}")
+            print(f"observed_avg_xrate12: {observed_avg_xrate12}")
+            print(f"predicted_avg_xrate12: {predicted_avg_xrate12}")
+            print(f"slope: {xrate_predictor.slope}")
+            print(f"intercept: {xrate_predictor.intercept}")
+            print(f"estimate: {estimate}")
+            print(f"stddev_of_estimate_of_average: {stddev_of_estimate_of_average}")
+            print(f"stddev: {stddev}")
+            print((estimate / math.exp(stddev) * 1e12, estimate * math.exp(stddev) * 1e12))
+            print(estimate * 1e12, "+-", (estimate * math.exp(stddev) - estimate / math.exp(stddev)) / 2 * 1e12)
 
         return estimate, stddev
 
 
 class TradedAmountsCollectors:
     def __init__(self, window_size: int):
+        # Window must be wide enough to hold all blocks in one hour.
+        assert window_size >= 3600//12
         self.window_size = window_size
         self.collectors = {}
 

@@ -1,20 +1,20 @@
 import asyncio
-import datetime
 import logging
 from pathlib import Path
-import traceback
-from typing import Any, List, Optional
+from typing import  List, Optional, Set
 
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, Request
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from lpbook.execution.LPExecution import LPExecution
 from pydantic_settings import BaseSettings
-from web3 import Web3
 from contextlib import asynccontextmanager
 import argparse
+
+from lpbook.server.WebsocketDriver import WebsocketDriver
+from lpbook.server.util import create_lps_response, create_order_lps_response
+from lpbook.web3 import BlockId
 from .ProcessServer import ProcessServer
-from lpbook.util.rpc import create_in_another_process
 from lpbook import execution
 import lpbook.util.prometheus
 import prometheus_async.aio
@@ -23,8 +23,9 @@ from prometheus_client import start_http_server
 
 logger = logging.getLogger(__name__)
 
-process_servers = None
+process_server = None
 lp_stats = None
+websocket_driver = None
 
 # ++++ Interface definition ++++
 
@@ -67,9 +68,9 @@ async def lifespan(app: FastAPI):
     logger.info("Starting Prometheus")
     prometheus_server = asyncio.create_task(asyncio.to_thread(start_http_server,9090))
     logger.info("Starting LPBook ...")
-    for process_server in process_servers:
-        process_server.start()
-    
+    process_server.start()
+    websocket_driver_task = asyncio.create_task(websocket_driver.run())
+
     if lp_stats is not None:
         await lp_stats.async_init()
 
@@ -102,64 +103,45 @@ def health():
     return True
 
 
-async def lps_trading_tokens(token_ids: List[str], slippage_risk: float = 1, block_number: Optional[int] = None) -> dict:
+async def lps_trading_tokens_helper(token_ids: List[str], block_number: Optional[int] = None) -> dict:
+    token_ids = {token_id.lower() for token_id in token_ids}
+    if block_number is not None:
+        wait = True
+        block_hash = None
+        block_timestamp = None
+    else:
+        wait = False
+        block_number = process_server.last_block.number
+        block_hash = process_server.last_block.hash
+        block_timestamp = process_server.last_block.timestamp
+
+    lps = []
+    for lp in await async_wrapper(process_server.get_lps_trading_tokens, token_ids, block_number=block_number, wait=wait):
+        if lp_stats.blacklisted(lp.uid):
+            continue
+        lps.append(lp)
+
+    return create_lps_response(lps, block_number, block_hash, block_timestamp, wait, lp_stats, process_server)
+
+    
+async def lps_trading_tokens(token_ids: List[str], block_number: Optional[int] = None) -> dict:
     """Return LPs that trade at least two tokens in the given token list."""
-    if len(process_servers) == 0:
+    if process_server is None:
         return {}
     # This can happen if we are still initializing and didn't yet get any block.
-    if block_number is None and process_servers[0].last_block.number is None:
+    if block_number is None and process_server.last_block.number is None:
         return {}
     try:
-        token_ids = {token_id.lower() for token_id in token_ids}
-        if block_number is not None:
-            wait = True
-        else:
-            wait = False
-            block_number = process_servers[0].last_block.number
-            block_hash = process_servers[0].last_block.hash
-            block_timestamp = process_servers[0].last_block.timestamp
-
-        lps = []
-        for process_server in process_servers:
-            for lp in await async_wrapper(process_server.get_lps_trading_tokens, token_ids, slippage_risk=slippage_risk, block_number=block_number, wait=wait):
-                if lp_stats.blacklisted(lp.uid):
-                    continue
-                lps.append(lp)
-
-        marshalled_lps = []
-        for lp in lps:
-                marshalled = lp.marshall()
-                gas_mean_and_stddev = lp_stats.gas_mean_and_stddev(lp.uid)
-                if gas_mean_and_stddev is not None:
-                    marshalled["gas_stats"]["mean"], marshalled["gas_stats"]["stddev"] = gas_mean_and_stddev
-                marshalled_lps.append(marshalled)
-
-        if process_servers[0].last_block is not None:
-            block_time = process_servers[0].last_block.datetime() if wait else datetime.datetime.fromtimestamp(block_timestamp)
-            expected_average_xrates_in_running_hour = process_servers[0].estimate_average_xrate_in_running_hour_for_all_token_pairs(
-                lps, block_number=block_number, block_time=block_time
-            )
-        else:
-            expected_average_xrates_in_running_hour = {}
-
-        return {
-            "lps": marshalled_lps,
-            "prev_block_number": block_number,
-            "prev_block_hash": process_servers[0].last_block.hash.to_0x_hex() if wait else block_hash.to_0x_hex(),
-            "prev_block_timestamp": process_servers[0].last_block.timestamp if wait else block_timestamp,
-            "expected_average_xrates_in_running_hour": expected_average_xrates_in_running_hour
-        } 
-
+        return await lps_trading_tokens_helper(token_ids=token_ids, block_number=block_number)
     except Exception as e:
-        logger.error(
-            f"Unhandled exception: {str(e)}. Traceback:\n{traceback.format_exc()}\n")
+        logger.exception(f"Unhandled exception when processing /lps_trading_tokens request.")
         lpbook.util.prometheus.error.labels(error_type=str(e)).inc(1)
         return {}
     
 @app.post("/lps_trading_tokens")
 @prometheus_async.aio.time(lpbook.util.prometheus.lps_trading_tokens_time)
-async def lps_trading_tokens_at_current_block(token_ids: List[str], slippage_risk: float = 1) -> dict:
-    return await lps_trading_tokens(token_ids=token_ids, slippage_risk=slippage_risk)    
+async def lps_trading_tokens_at_current_block(token_ids: List[str]) -> dict:
+    return await lps_trading_tokens(token_ids=token_ids)    
 
 @app.post("/lps_trading_tokens_at_block")
 async def lps_trading_tokens_at_block(token_ids: List[str], block_number: int) -> dict:
@@ -170,29 +152,63 @@ async def lps_trading_tokens_at_block(token_ids: List[str], block_number: int) -
 @prometheus_async.aio.time(lpbook.util.prometheus.order_lps_time)
 async def order_lps() -> dict:
     """Return LPs that trade at least two tokens in the given token list."""
-    if len(process_servers) == 0:
+    if process_server is None:
         return {}
     # This can happen if we are still initializing and didn't yet get any block.
-    if process_servers[0].last_block.number is None:
+    if process_server.last_block.number is None:
         return {}
     try:
-        last_block = process_servers[0].last_block
-        order_lps = []
-        for process_server in process_servers:
-            for lp in await async_wrapper(process_server.get_order_lps, block_number=last_block.number):
-                marshalled = lp.marshall()
-                order_lps.append(marshalled)
-        return {
-            "order_lps": order_lps,
-            "prev_block_number": last_block.number,
-            "prev_block_hash": last_block.hash.to_0x_hex(),
-            "prev_block_timestamp": last_block.timestamp
-        } 
+        last_block = process_server.last_block
+        order_lps = [
+            lp
+            for lp in await async_wrapper(process_server.get_order_lps, block_number=last_block.number)
+        ]
+        return create_order_lps_response(order_lps, last_block) 
+    
     except Exception as e:
-        logger.error(
-            f"Unhandled exception: {str(e)}. Traceback:\n{traceback.format_exc()}\n")
+        logger.exception("Unhandled exception when processing /order_lps request.")
         lpbook.util.prometheus.prometheus.error.labels(error_type=str(e)).inc(1)
         return {}
+
+async def lps_helper(lp_ids: Set[str], block_number: Optional[int] = None) -> dict:
+    if block_number is not None:
+        wait = True
+        block_hash = None
+        block_timestamp = None
+    else:
+        wait = False
+        block_number = process_server.last_block.number
+        block_hash = process_server.last_block.hash
+        block_timestamp = process_server.last_block.timestamp
+
+    lps = []
+    for lp in await async_wrapper(process_server.get_lps, lp_ids, block_number=block_number, wait=wait):
+        lps.append(lp)
+
+    return create_lps_response(lps, block_number, block_hash, block_timestamp, wait)
+
+async def lps(lp_ids: Set[str], block_number: Optional[int] = None) -> dict:
+    """Return LPs with given ids."""
+    if process_server is None:
+        return {}
+    # This can happen if we are still initializing and didn't yet get any block.
+    if block_number is None and process_server.last_block.number is None:
+        return {}
+    try:
+        return await lps_helper(lp_ids=lp_ids, block_number=block_number)
+    except Exception as e:
+        logger.exception(f"Unhandled exception when processing /lps request.")
+        lpbook.util.prometheus.error.labels(error_type=str(e)).inc(1)
+        return {}
+    
+@app.post("/lps")
+@prometheus_async.aio.time(lpbook.util.prometheus.lps_time)
+async def lps_at_current_block(lp_ids: Set[str]) -> dict:
+    return await lps(lp_ids=lp_ids)    
+
+@app.post("/lps_at_block")
+async def lps_at_block(lp_ids: Set[str], block_number: int) -> dict:
+    return await lps(lp_ids=lp_ids, block_number=block_number) 
 
 background_tasks = set()
 
@@ -204,8 +220,7 @@ async def on_reverted_solution(lp_executions: list[LPExecution]) -> None:
             if nr_successes is not None and nr_successes == len(lp_executions):
                 logger.warning(f"All executions passed to /on_reverted_solution simulated successfully:\n{lp_executions}")
         except Exception as e:
-            logger.error(
-                f"Unhandled exception: {str(e)}. Traceback:\n{traceback.format_exc()}\n")
+            logger.exception("Unhandled exception when processing /on_reverted_solution request.")
     task = asyncio.create_task(run_on_background())
     background_tasks.add(task)
     task.add_done_callback(background_tasks.discard)
@@ -213,16 +228,32 @@ async def on_reverted_solution(lp_executions: list[LPExecution]) -> None:
 
 @app.post("/on_submitted_solution")
 async def on_submitted_solution(lp_executions: list[LPExecution]) -> None:
+    logger.debug(f"Received {len(lp_executions)} LP executions: {lp_executions}")
     async def run_on_background():
         try:
             await lp_stats.update(lp_executions)
         except Exception as e:
-            logger.error(
-                f"Unhandled exception: {str(e)}. Traceback:\n{traceback.format_exc()}\n")
+            logger.exception("Unhandled exception when processing /on_submitted_solution request.")
     task = asyncio.create_task(run_on_background())
     background_tasks.add(task)
     task.add_done_callback(background_tasks.discard)
     return True
+
+@app.websocket("/ws_latest")
+async def websocket_endpoint(websocket: WebSocket):
+    logger.debug(f"New websocket connection.")
+    await websocket_driver.connect(websocket)
+    try:
+        while True:
+            token_ids = await websocket.receive_json()
+            websocket_driver.update_token_ids(token_ids)
+    except WebSocketDisconnect:
+        logger.debug(f"Websocket client disconnected. Removing connection.")
+        websocket_driver.disconnect(websocket)
+        logger.debug(f"Removed connection.")
+    except Exception:
+        logger.exception(f"Unhandled exception in websocket endpoint. Dropping connection.")
+        websocket_driver.disconnect(websocket)
 
 # ++++ Server setup: ++++
 
@@ -290,11 +321,10 @@ if __name__ == '__main__':
     
     lp_stats = execution.LPStats(args.state_directory)
 
-    p = ProcessServer(protocols, mandatory_amms, args.state_directory, profiling)
+    process_server = ProcessServer(protocols, mandatory_amms, args.state_directory, profiling)
     #p = create_in_another_process(ProcessServer, args.protocols, args.profile)
-    process_servers = [p]
     
-    #start_http_server(port=server_settings.port, addr=server_settings.host)
+    websocket_driver = WebsocketDriver(lp_stats, process_server)
 
     uvicorn.run(
         "__main__:app",

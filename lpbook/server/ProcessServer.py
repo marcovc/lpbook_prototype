@@ -4,7 +4,7 @@ import logging
 import os
 import sys
 import traceback
-from typing import List, Optional, Tuple
+from typing import List, Optional, Set, Tuple
 
 import aiohttp
 from lpbook.lps.cowamm import COWAMMBalancerDriver, COWAMMPrivateDriver
@@ -148,27 +148,45 @@ class ProcessServer:
         await self.token_db.async_del()
 
     # If wait=true and block_number is > self.last_block.number, then wait for it
-    async def get_lps_trading_tokens(self, token_ids: set, slippage_risk=1, block_number=None, wait=False) -> List[LP]:
+    async def get_lps_trading_tokens(self, token_ids: set, block_number=None, wait=False) -> List[LP]:
         if block_number is None or block_number <= self.last_block.number or not wait:
-            return self.lp_cache.get_lps_trading_tokens(token_ids, slippage_risk, block_number)
+            return self.lp_cache.get_lps_trading_tokens(token_ids, block_number)
 
-        event = asyncio.Event() 
-        async def waiter(block: BlockId):
-            if block.number >= block_number:
-                event.set()
-        self.block_stream.subscribe(waiter)
-        await event.wait()
-        self.block_stream.unsubscribe(waiter)
-        if self.last_block.number != block_number:
-            raise RuntimeError("Waited for a block that never happened, or was lost. Aborting ...")
+        await self.wait_for_block(block_number)
+        
         # Should not be necessary to wait a bit since the subscriptions are executed in FIFO order.
-        return self.lp_cache.get_lps_trading_tokens(token_ids, slippage_risk, block_number)
+        return self.lp_cache.get_lps_trading_tokens(token_ids, block_number)
 
     def get_order_lps(self, block_number=None) -> List[LP]:
         return self.lp_cache.get_order_lps(block_number)
             
+    # If wait=true and block_number is > self.last_block.number, then wait for it
+    async def get_lps(self, lp_ids: Set[str], block_number=None, wait=False) -> List[LP]:
+        if block_number is None or block_number <= self.last_block.number or not wait:
+            return self.lp_cache.get_lps(lp_ids, block_number)
+
+        await self.wait_for_block(block_number)
+
+        # Should not be necessary to wait a bit since the subscriptions are executed in FIFO order.
+        return self.lp_cache.get_lps(lp_ids, block_number)
+                
     def estimate_average_xrate_in_running_hour_for_all_token_pairs(self, lps: List[LP], block_number: int, block_time: datetime.datetime) -> list[Tuple[str, str, float, Optional[float]]]:
         r = self.lp_cache.estimate_average_xrate_in_running_hour_for_all_token_pairs(lps, block_number=block_number, block_time=block_time)
         return [
             (t1t2[0].address, t1t2[1].address, *v) for (t1t2, v) in r.items()
         ]
+
+    async def wait_for_block(self, block_number: Optional[int] = None) -> BlockId:
+        event = asyncio.Event() 
+        async def waiter(block: BlockId):
+            if block_number is None:
+                event.set()
+            elif block.number >= block_number:
+                event.set()
+        self.block_stream.subscribe(waiter)
+        await event.wait()
+        self.block_stream.unsubscribe(waiter)
+        if block_number is not None and self.last_block.number != block_number:
+            raise RuntimeError("Waited for a block that never happened, or was lost. Aborting ...")
+        return self.last_block
+        

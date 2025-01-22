@@ -271,25 +271,43 @@ class COWAMMBalancerDriver(LPDriver):
         else:
             assert False # No other proxies are currently implemented for balancer.
 
-    async def has_significant_liquidity(self, lp_id):
+    async def has_significant_liquidity(self, lp_id, bpool, tokens):
         weth_address = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
         wsteth_address = "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0"
         weeth_address = "0xcd5fe23c85820f7b72d0926fc9b05b43e359b7ee"
         sfrxeth = "0xac3e018457b222d93114458476f3e3416abbe38f"
         usdc_address = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
         usdt_address = "0xdac17f958d2ee523a2206206994597c13d831ec7"
-        bpool = BPoolContractProxy(lp_id, self.web3_client)
-        tokens = {t.lower() for t in await bpool.get_tokens()}
+        sdai_address = "0x83f20f44975d03b1b09e64809b757c47f942beea"
         for ethlike_adress in [weth_address, wsteth_address, weeth_address,sfrxeth]:
             if ethlike_adress in tokens:
                 return await bpool.get_balance(ethlike_adress) >= 0.5e18
-        for usdlike_address in [usdc_address, usdt_address]:
+        for usdlike_address in [usdc_address, usdt_address, sdai_address]:
             if usdlike_address in tokens:
                 return await bpool.get_balance(usdlike_address) >= 1000
 
         logger.debug(f"Don't know if cowammbalancer amm {lp_id} has significant liquidity. Including just in case.")
         return True # Being conservative for other tokens
 
+    async def has_bad_tokens(self, bpool, tokens):
+        bad_tokens = {
+            "0xedb171c18ce90b633db442f2a6f72874093b49ef",
+            "0x2e135a0c0d43dde20193416139dbdc2f5e8f2359",
+            "0xf25a3b5a965c59f88873da93fc2a244b00616be4",
+            "0x7f4b66ff703336cfc35b901144614496ae0b0d27",
+            "0xd9fcd98c322942075a5c3860693e9f4f03aae07b"
+        }
+        return len(bad_tokens & set(tokens)) > 0
+    
+    async def should_include_lp(self, lp_id):
+        blacklisted_ids = {
+            #"0x9b8b93fc2a454f4f0f240aaf6644dbd77a528246",
+            #"0x477a8982515e3a3d3aa6447b019b7c647e4162f8"
+        }
+        bpool = BPoolContractProxy(lp_id, self.web3_client)
+        tokens = {t.lower() for t in await bpool.get_tokens()}
+        return lp_id not in blacklisted_ids and await self.has_significant_liquidity(lp_id, bpool, tokens) and not await self.has_bad_tokens(bpool, tokens)
+    
     async def get_lp_ids_from_blockchain(self):
         lp_ids = [
             '0xf08d4dea369c456d26a3168ff0024b904f2d8b91',  # USDC-WETH 
@@ -329,16 +347,23 @@ class COWAMMBalancerDriver(LPDriver):
             '0x547bfddb2ab8d83f24a9747980a7e00c221e0220', 
             '0xeda4581b03442ea84307844c2337e008cb057454', 
             '0x0ce69a796abe0c0451585aa88f6f45ebac9e12dc', 
-            '0xa81b22966f1841e383e69393175e2cc65f0a8854'
+            '0xa81b22966f1841e383e69393175e2cc65f0a8854',
+            '0x503cf7250888f4422d0bfbe5c30e7a6b4716fecf', 
+            '0x891a539d008f69e62f22902877cce54a58644cae', 
+            '0x9a2a304a036d9da289656e95b58c72692b515e95', 
+            '0x9dff17c7b47c4cea638e37fd94ee85798ccbc6c2', 
+            '0x7e31ae101acaad809e377a9f88dbc4c486ab0191', 
+            '0xc368c0106f5a41c262e476494623cadae4e11f80', 
+            '0x40c1551d93e51f3278d2471465fe4017f54e290a', 
+            '0x03a0cc954c800920ceb6f4c67f6b1ef5df42dcca', 
+            '0x777a11c830ce8a7c3d325b0be020f7ba7edf2b58', 
+            '0x3544e78c40b209a94f2ce7b89078b2d147f4b1c8'
             ]
-        blacklisted_ids = {
-            #"0x9b8b93fc2a454f4f0f240aaf6644dbd77a528246",
-            #"0x477a8982515e3a3d3aa6447b019b7c647e4162f8"
-        }
+
         try:
             FACTORY_CONTRACT_ADDRESS = "0xf76c421bAb7df8548604E60deCCcE50477C10462"
             #FACTORY_CONTRACT_DEPLOYMENT_BLOCK = 20432455
-            FROM_BLOCK = 21127803 + 1
+            FROM_BLOCK = 21565617 + 1
             with open(Path(__file__).parent / 'artifacts' / 'BCowFactory.abi', 'r') as f:
                 contract_abi = f.read()
                 BCowFactory = self.web3_client.eth.contract(
@@ -351,7 +376,7 @@ class COWAMMBalancerDriver(LPDriver):
         except:
             logger.exception("Error while querying cowammbalancerv2 updated list of pool.")
             pass
-        lp_ids = [lp_id for lp_id in lp_ids if await self.has_significant_liquidity(lp_id) and lp_id not in blacklisted_ids]
+        lp_ids = [lp_id for lp_id in lp_ids if await self.should_include_lp(lp_id)]
         return lp_ids
 
     async def get_lp_ids(self, token_ids: List[str]) -> List[str]:

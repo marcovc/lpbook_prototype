@@ -61,11 +61,11 @@ class RecentEventLog:
                 )
                 assert False
 
-    def process_new_events(self, events):
+    def process_new_events(self, events, block: BlockId):
         for event in events:
             self.process_new_event(event)
         for subscriber in self.subscribers:
-            subscriber(events)
+            subscriber(events, block)
 
     def subscribe(self, subscriber):
         self.subscribers.append(subscriber)
@@ -99,7 +99,7 @@ class RecentEventLog:
             on_dropped_subscription_error_fn,
             extra_topics=extra_topics
         )
-        await self.event_stream.poll_for_subscriber(self.process_new_events)
+        await self.event_stream.poll_for_subscriber(self.process_new_events, self.event_stream.last_block)
 
     async def stop(self) -> None:
         await self.event_stream.unsubscribe(self.process_new_events)

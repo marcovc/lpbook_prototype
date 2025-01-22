@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 class EventStream:
     """Defines a pub/sub interface for a web3 stream of events."""
-    Subscriber = Callable[[int, str], None]
+    Subscriber = Callable[[List, BlockId], None]
 
     @abstractmethod
     async def subscribe(
@@ -102,6 +102,7 @@ class ServerFilteredEventPollingStream(EventStream):
         extra_topics: Tuple[str] = tuple()
     ):
         assert len(events) > 0
+        logger.debug(f"Subscribing to {events} from block {from_block_number} ...")
         filter = await self.install_filter(addresses, events, from_block_number, extra_topics=extra_topics)
         subscription = self.Subscription(
             addresses, events, filter, False, on_dropped_subscription_error_fn, extra_topics=extra_topics
@@ -123,9 +124,9 @@ class ServerFilteredEventPollingStream(EventStream):
     async def unsubscribe(self, subscriber: EventStream.Subscriber):
         if subscriber not in self.subscriptions.keys():
             return
-        subscription = self.subscriptions[subscriber]
+        subscription = self.subscriptions.pop(subscriber)
         await self.uninstall_filter(subscription.filter)
-        self.subscriptions.pop(subscriber)
+        
 
     # just for debugging/monitoring
     @abstractmethod
@@ -134,7 +135,8 @@ class ServerFilteredEventPollingStream(EventStream):
 
     async def poll_for_subscriber_helper(
         self,
-        subscriber: EventStream.Subscriber
+        subscriber: EventStream.Subscriber,
+        block: BlockId
     ):
         subscription = self.subscriptions[subscriber]
 
@@ -176,16 +178,20 @@ class ServerFilteredEventPollingStream(EventStream):
             key=lambda e: (not e.removed, e.blockNumber, e.logIndex)
         )
 
+        # Calling subscriber even when there are no events, so it can know
+        # that it has been called for the block.
+        subscriber(decoded_events, block)
+
         if len(decoded_events) > 0:
-            subscriber(decoded_events)
             self.on_processed_events(decoded_events)
 
     async def poll_for_subscriber(
         self,
-        subscriber: EventStream.Subscriber
+        subscriber: EventStream.Subscriber,
+        block: BlockId
     ):
         try:
-            return await self.poll_for_subscriber_helper(subscriber)
+            return await self.poll_for_subscriber_helper(subscriber, block)
 
         # sometimes the node just drops the filter without notice :(
         except ValueError as err:
@@ -197,9 +203,9 @@ class ServerFilteredEventPollingStream(EventStream):
                 raise err
 
     @traced(logger, 'Polling blockchain for new events')
-    async def poll(self, *args, **kwargs):
+    async def poll(self, block: BlockId):
         await asyncio.gather(*[
-            self.poll_for_subscriber(subscriber)
+            self.poll_for_subscriber(subscriber, block)
             for subscriber in self.subscriptions.keys()
         ])
 
@@ -220,7 +226,7 @@ class ServerFilteredEventPollingStream(EventStream):
         filter_parameters['topics'] = [event_signature_hashes] + list(extra_topics)
 
         if from_block_number is not None:
-            filter_parameters['from_block'] = from_block_number
+            filter_parameters['fromBlock'] = from_block_number  # This is really camelCase!
 
         return await self.web3_client.eth.filter(filter_parameters)
 

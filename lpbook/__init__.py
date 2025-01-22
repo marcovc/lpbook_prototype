@@ -134,9 +134,16 @@ class LPSyncProxyFromAsyncProxy(LPSyncProxy):
         self.underlying_lp_async_proxy = underlying_lp_async_proxy
         self.block_stream = block_stream
         self.block_stream.subscribe(self.query_underlying_lp_async_proxy)
+        self.on_sync_subscribers = []
 
     async def __del__(self):
         self.block_stream.unsubscribe(self.query_underlying_lp_async_proxy)
+
+    def subscribe_on_sync(self, subscriber):
+        self.on_sync_subscribers.append(subscriber)
+
+    def unsubscribe_on_sync(self, subscriber):
+        self.on_sync_subscribers = [s for s in self.on_sync_subscribers if s != subscriber]
 
     async def query_underlying_lp_async_proxy(
         self,
@@ -163,6 +170,8 @@ class LPSyncProxyFromAsyncProxy(LPSyncProxy):
                 raise
 
         self.recent_state_cache.add(block=block, state=state)
+        for subscriber in self.on_sync_subscribers:
+            subscriber(block, self)
 
     def __call__(self, block: BlockId) -> Dict[str, LP]:
         """Returns the required state if cached, or raise a CacheMissError otherwise."""
@@ -189,10 +198,17 @@ class LPFromInitialStatePlusChangesProxy(LPSyncProxy):
         self.extra_event_updaters_by_event = {}
         self.create_extra_updaters_tasks = set()
         self.running = False
+        self.on_sync_subscribers = []
 
     def __del__(self):        
         for task in self.create_extra_updaters_tasks:
             task.cancel()
+
+    def subscribe_on_sync(self, subscriber):
+        self.on_sync_subscribers.append(subscriber)
+
+    def unsubscribe_on_sync(self, subscriber):
+        self.on_sync_subscribers = [s for s in self.on_sync_subscribers if s != subscriber]
 
     @traced(logger, 'Resetting LPFromInitialStatePlusChangesProxy')
     async def reset_event_log(self, reason: RuntimeError) -> None:
@@ -206,7 +222,7 @@ class LPFromInitialStatePlusChangesProxy(LPSyncProxy):
     @traced(logger, 'Starting LPFromInitialStatePlusChangesProxy')
     async def start(self) -> None:
         self.running = True
-        self.event_log.subscribe(self.on_new_events)
+        self.event_log.subscribe(self.on_new_events_base)
         # since async_proxy might not be up to date,
         # it is what defines the start block.
         latest_block = await self.async_proxy.latest_block()
@@ -273,7 +289,7 @@ class LPFromInitialStatePlusChangesProxy(LPSyncProxy):
         # future calls.
         if self.event_log.block_count <= MAX_NR_BLOCKS_TO_CHECKPOINT:
             return
-        logger.debug('Updating checkpoint.')
+        #logger.debug('Updating checkpoint.')
         nr_blocks_to_free = self.event_log.block_count - \
             MAX_NR_BLOCKS_TO_CHECKPOINT
         min_start_block_number = self.event_log.start_block_number + nr_blocks_to_free
@@ -312,6 +328,11 @@ class LPFromInitialStatePlusChangesProxy(LPSyncProxy):
         """Assembles trades from checkpoint and delta."""
         return []
 
+    def on_new_events_base(self, events, block: BlockId) -> None:
+        self.on_new_events(events)
+        for subscriber in self.on_sync_subscribers:
+            subscriber(block, self)
+
     def on_new_events(self, events) -> None:
         """Callback for new events."""
 
@@ -323,6 +344,19 @@ class MultiLPFromInitialStatePlusChangesProxy(LPSyncProxy):
     def __init__(self, proxies: List[LPFromInitialStatePlusChangesProxy]):
         self.proxies = proxies
         self.checkpoint = None
+        self.on_sync_subscribers = []
+        for proxy in self.proxies:
+            proxy.subscribe_on_sync(self.on_sync)
+
+    def subscribe_on_sync(self, subscriber):
+        self.on_sync_subscribers.append(subscriber)
+
+    def unsubscribe_on_sync(self, subscriber):
+        self.on_sync_subscribers = [s for s in self.on_sync_subscribers if s != subscriber]
+
+    def on_sync(self, block: BlockId, proxy: LPFromInitialStatePlusChangesProxy):
+        for subscriber in self.on_sync_subscribers:
+            subscriber(block, self)
 
     @traced(logger, 'Starting MultiLPFromInitialStatePlusChangesProxy')
     async def start(self) -> None:
@@ -374,7 +408,7 @@ class MultiLPFromInitialStatePlusChangesProxy(LPSyncProxy):
         max_block_count = max(proxy.event_log.block_count for proxy in self.proxies)
         if max_block_count <= MAX_NR_BLOCKS_TO_CHECKPOINT:
             return
-        logger.debug('Updating checkpoint.')
+        #logger.debug('Updating checkpoint.')
         nr_blocks_to_free = max_block_count - MAX_NR_BLOCKS_TO_CHECKPOINT
         min_start_block_number = min(proxy.event_log.start_block_number for proxy in self.proxies) + nr_blocks_to_free
         min_start_block = BlockId(number=min_start_block_number - 1)
@@ -438,3 +472,4 @@ class LPDriver(ABC):
     @abstractmethod
     async def get_lp_ids(self, token_ids: List[str]) -> List[str]:
         """Collects addresses of lps involving given tokens."""
+

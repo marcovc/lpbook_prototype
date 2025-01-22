@@ -13,6 +13,7 @@ from lpbook import LPAsyncProxy, LPDriver, LPFromInitialStatePlusChangesProxy, L
 from lpbook.error import TemporaryError
 from lpbook.lps.balancer_v2.common import BalancerV2BalancesWeb3SyncProxy, BalancerV2FeesWeb3SyncProxy
 from lpbook.lps.balancer_v2.subgraph import BalancerV2GraphQLClient
+from lpbook.lps.util import DynamicInterval
 from lpbook.util import LP, Token, traced
 from fractions import Fraction as F
 
@@ -324,9 +325,9 @@ class BalancerV2AmpAndStoredRatesWeb3SyncProxy(LPFromInitialStatePlusChangesProx
             web3_client
         )
         self.updated_stored_rates = {}
-        self.updated_stored_rate_expiries = {}
+        self.fetch_interval_by_lp_id_and_token_index = {}
+        self.next_fetch_block_by_lp_id_and_token_index = {}
         self.block_stream.subscribe(self.on_new_block)
-        self.update_rate_task = None
 
     def __del__(self):
         self.block_stream.unsubscribe(self.on_new_block)
@@ -337,10 +338,7 @@ class BalancerV2AmpAndStoredRatesWeb3SyncProxy(LPFromInitialStatePlusChangesProx
         # if there are any pending updated rates, apply them now, irrespective of the event.
         for lp_id, updated_rates in self.updated_stored_rates.items():
             state[lp_id].stored_rates = updated_rates
-        for lp_id, updated_rate_expiries in self.updated_stored_rate_expiries.items():
-            state[lp_id].stored_rates_expiry = updated_rate_expiries
         self.updated_stored_rates.clear()
-        self.updated_stored_rate_expiries.clear()
 
         # Now process the event as usual.
         lp_id = d.address.lower()
@@ -375,34 +373,47 @@ class BalancerV2AmpAndStoredRatesWeb3SyncProxy(LPFromInitialStatePlusChangesProx
 
         now = datetime.datetime.now()
 
-        # Only bother updating rates of pools whose rate has changed in the last 15 days.
+        def stored_rates_have_likely_changed(lp, token_index):
+            if (lp.uid, token_index) not in self.next_fetch_block_by_lp_id_and_token_index:
+                return True
+            return block.number >= self.next_fetch_block_by_lp_id_and_token_index[lp.uid, token_index]
+            
+        # Only update rates of pools whose rate has changed in the last 15 days,
+        # that will not default to the cached rate if used in this block,
+        # and that whose rate has likely changed.
         MAX_POOL_AGE_TO_UPDATE = (now - datetime.timedelta(days=15)).timestamp()
         lp_tokens_index_to_update = [
             (lp, i)
             for lp in self.checkpoint.values()
             for i in range(len(lp.all_tokens))
-            if MAX_POOL_AGE_TO_UPDATE < self.updated_stored_rate_expiries.get(lp.uid, lp.stored_rates_expiry)[i] < now.timestamp()
+            if MAX_POOL_AGE_TO_UPDATE < lp.stored_rates_expiry[i] < now.timestamp() and
+            stored_rates_have_likely_changed(lp, i)
         ]
 
         if len(lp_tokens_index_to_update) == 0:
             return
 
         async def update_lp_token_rate(lp, token_index):
+            old_rate = self.updated_stored_rates.get(lp.uid, lp.stored_rates)[token_index]
             new_rate = await self.get_rate(lp.uid, lp.all_tokens[token_index])
-            self.updated_stored_rates[lp.uid] = self.updated_stored_rates.get(lp.uid, self.checkpoint[lp.uid].stored_rates[:])
+            self.updated_stored_rates[lp.uid] = self.updated_stored_rates.get(lp.uid, lp.stored_rates[:])
             self.updated_stored_rates[lp.uid][token_index] = new_rate
-            # Note: Technically, we would need to keep updating expired rates at each block, since the smart contract will fetch
-            # a new rate on the first swap after the rate is expired. However, this would cause a lot of overhead for maintaining
-            # the state, so we change the expiry here, to force a delay until the next update corresponding to the pool configured duration.
-            self.updated_stored_rate_expiries[lp.uid] = self.updated_stored_rate_expiries.get(lp.uid, self.checkpoint[lp.uid].stored_rates_expiry[:])
-            self.updated_stored_rate_expiries[lp.uid][token_index] = now.timestamp() + max(lp.stored_rates_duration[token_index], 5*60)
 
-        async def update_rates():
-            self.update_rate_task = None
-            await asyncio.gather(
-                *[update_lp_token_rate(lp, token_index) for lp, token_index in lp_tokens_index_to_update]
-            )
-        self.update_rate_task = asyncio.create_task(update_rates())
+            if (lp.uid, token_index) not in self.fetch_interval_by_lp_id_and_token_index:
+                self.fetch_interval_by_lp_id_and_token_index[(lp.uid, token_index)] = DynamicInterval(1, 60, increase_factor=1.1, decrease_factor=float("inf"))
+            
+            if old_rate == new_rate:
+                self.fetch_interval_by_lp_id_and_token_index[(lp.uid, token_index)].increase()
+            else:
+                self.fetch_interval_by_lp_id_and_token_index[(lp.uid, token_index)].decrease()
+
+            self.next_fetch_block_by_lp_id_and_token_index[lp.uid, token_index] = block.number + self.fetch_interval_by_lp_id_and_token_index[(lp.uid, token_index)].cur_interval
+
+            #print(f"Updated rate for {lp.uid} token {token_index} to {new_rate} at block {block.number}. Next fetch at {self.next_fetch_block_by_lp_id_and_token_index[lp.uid, token_index]}")
+
+        await asyncio.gather(
+            *[update_lp_token_rate(lp, token_index) for lp, token_index in lp_tokens_index_to_update]
+        )
 
 
 class BalancerV2Driver(LPDriver)    :
