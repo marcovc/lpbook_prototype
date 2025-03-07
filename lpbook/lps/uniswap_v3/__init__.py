@@ -445,7 +445,6 @@ class PancakeswapV3Driver(UniV3LikeDriver):
 
 class SolidlyV3Driver(UniV3LikeDriver):
     def __init__(self, *args, **kwargs):
-        #self.thegraph_url = 'https://api.thegraph.com/subgraphs/name/pancakeswap/exchange-v3-eth'
         self.thegraph_url = f'https://gateway-arbitrum.network.thegraph.com/api/{THEGRAPH_API_KEY}/subgraphs/id/7StqFFqbxi3jcN5C9YxhRiTxQM8HA8XEHopsynqqxw3t'
         self.UniV3Like = SolidlyV3
         self.UniV3LikeTheGraphProxy = SolidlyV3TheGraphProxy

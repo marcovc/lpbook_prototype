@@ -6,9 +6,9 @@ from itertools import groupby
 import logging
 from abc import ABC, abstractmethod
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Set
 
-from lpbook.util import LP, Trade, traced
+from lpbook.util import LP, Trade, prometheus, traced
 from lpbook.web3 import BlockId
 from lpbook.web3.block_stream import BlockStream
 from lpbook.web3.RecentEventLog import RecentEventLog
@@ -130,11 +130,11 @@ class LPSyncProxyFromAsyncProxy(LPSyncProxy):
         underlying_lp_async_proxy: LPAsyncProxy,
         block_stream: BlockStream
     ):
+        self.on_sync_subscribers = []
         self.recent_state_cache = RecentStateCache(self.CACHE_SIZE)
         self.underlying_lp_async_proxy = underlying_lp_async_proxy
         self.block_stream = block_stream
         self.block_stream.subscribe(self.query_underlying_lp_async_proxy)
-        self.on_sync_subscribers = []
 
     async def __del__(self):
         self.block_stream.unsubscribe(self.query_underlying_lp_async_proxy)
@@ -222,7 +222,7 @@ class LPFromInitialStatePlusChangesProxy(LPSyncProxy):
     @traced(logger, 'Starting LPFromInitialStatePlusChangesProxy')
     async def start(self) -> None:
         self.running = True
-        self.event_log.subscribe(self.on_new_events_base)
+        self.event_log.subscribe(self.on_sync_base)
         # since async_proxy might not be up to date,
         # it is what defines the start block.
         latest_block = await self.async_proxy.latest_block()
@@ -249,7 +249,7 @@ class LPFromInitialStatePlusChangesProxy(LPSyncProxy):
     async def stop(self) -> None:
         if not self.running:
             return
-        self.event_log.unsubscribe(self.on_new_events)
+        self.event_log.unsubscribe(self.on_sync_base)
         await self.event_log.stop()
         self.running = False
 
@@ -259,8 +259,6 @@ class LPFromInitialStatePlusChangesProxy(LPSyncProxy):
         If block is specified, then return lps state at that block if possible,
         otherwise will raise a CacheMissError.
         """
-
-        logger.debug(f'Querying {self} (block={block}) ...')
 
         events_since_checkpoint = self.event_log(block)
 
@@ -279,8 +277,6 @@ class LPFromInitialStatePlusChangesProxy(LPSyncProxy):
 
         for lp in state.values():
             lp.block = block 
-
-        logger.debug(f'Querying {self} (block={block}) ... done')
 
         return state
 
@@ -309,16 +305,8 @@ class LPFromInitialStatePlusChangesProxy(LPSyncProxy):
                 extra_updater(state)
         return state
     
-    def create_extra_event_updaters(self, events, create_extra_updater_async_fn, name):     
-        @traced(logger, f"Running extra updater for '{name}'")   
-        async def helper():
-            updaters = await asyncio.gather(*[create_extra_updater_async_fn(event) for event in events])
-            for updater, event in zip(updaters, events):
-                if updater is not None:
-                    self.extra_event_updaters_by_event.setdefault(event, []).append(updater)
-        create_extra_updaters_task = asyncio.create_task(helper())
-        create_extra_updaters_task.add_done_callback(lambda _: self.create_extra_updaters_tasks.remove(create_extra_updaters_task))
-        self.create_extra_updaters_tasks.add(create_extra_updaters_task)
+    def add_event_updater(self, event,updater):     
+        self.extra_event_updaters_by_event.setdefault(event, []).append(updater)
 
     @abstractmethod
     def update_state(self, state, event) -> None:
@@ -328,14 +316,13 @@ class LPFromInitialStatePlusChangesProxy(LPSyncProxy):
         """Assembles trades from checkpoint and delta."""
         return []
 
-    def on_new_events_base(self, events, block: BlockId) -> None:
-        self.on_new_events(events)
+    async def on_sync_base(self, events, block: BlockId) -> None:
+        await self.on_sync(events, block)
         for subscriber in self.on_sync_subscribers:
             subscriber(block, self)
 
-    def on_new_events(self, events) -> None:
-        """Callback for new events."""
-
+    async def on_sync(self, events, block: BlockId) -> None:
+        """Callback for new events. Subclasses can override this to add custom behavior, and/or to wait for other async processing of block."""
 
 # Creates an LPSyncProxy from an aggregation of LPFromInitialStatePlusChangesProxy,
 # interpolating events as necessary. This allows to create async proxies to LPs whose
@@ -347,6 +334,11 @@ class MultiLPFromInitialStatePlusChangesProxy(LPSyncProxy):
         self.on_sync_subscribers = []
         for proxy in self.proxies:
             proxy.subscribe_on_sync(self.on_sync)
+        self.latest_block_by_proxy = {}
+
+    def __del__(self):
+        for proxy in self.proxies:
+            proxy.unsubscribe_on_sync(self.on_sync)
 
     def subscribe_on_sync(self, subscriber):
         self.on_sync_subscribers.append(subscriber)
@@ -354,9 +346,12 @@ class MultiLPFromInitialStatePlusChangesProxy(LPSyncProxy):
     def unsubscribe_on_sync(self, subscriber):
         self.on_sync_subscribers = [s for s in self.on_sync_subscribers if s != subscriber]
 
-    def on_sync(self, block: BlockId, proxy: LPFromInitialStatePlusChangesProxy):
-        for subscriber in self.on_sync_subscribers:
-            subscriber(block, self)
+    def on_sync(self, block: BlockId, subscriber: LPFromInitialStatePlusChangesProxy):
+        self.latest_block_by_proxy[subscriber] = block
+        if set(self.proxies) == set(self.latest_block_by_proxy.keys()) and \
+          all(block == self.latest_block_by_proxy[proxy] for proxy in self.proxies):
+            for subscriber in self.on_sync_subscribers:
+                subscriber(block, self)
 
     @traced(logger, 'Starting MultiLPFromInitialStatePlusChangesProxy')
     async def start(self) -> None:
@@ -374,8 +369,6 @@ class MultiLPFromInitialStatePlusChangesProxy(LPSyncProxy):
         otherwise will raise a CacheMissError.
         """
 
-        logger.debug(f'Querying {self} (block={block}) ...')
-
         if self.checkpoint is None:
             # All proxies must have the same checkpoint.
             for i in range(1, len(self.proxies)):
@@ -391,8 +384,6 @@ class MultiLPFromInitialStatePlusChangesProxy(LPSyncProxy):
 
         for lp in state.values():
             lp.block = block 
-
-        logger.debug(f'Querying {self} (block={block}) ... done')
 
         return state
     
@@ -425,7 +416,7 @@ class MultiLPFromInitialStatePlusChangesProxy(LPSyncProxy):
             state = proxy.get_state(state, events)
         return state
 
-class LPDriver(ABC):
+class LPDriver:
     class LPSyncProxyDataSource(Enum):
         Default = 0
         TheGraph = 1
@@ -439,6 +430,10 @@ class LPDriver(ABC):
 
     def __init__(self, lp_cls):
         self.lp_cls = lp_cls
+        self.sync_proxy: Optional[LPSyncProxy] = None
+        self.lp_ids: Set[str] = set()
+        self.latest_sync_block: Optional[BlockId] = None
+        self.on_sync_subscribers = []
 
     @property
     def protocol_name(self) -> str:
@@ -473,3 +468,91 @@ class LPDriver(ABC):
     async def get_lp_ids(self, token_ids: List[str]) -> List[str]:
         """Collects addresses of lps involving given tokens."""
 
+    def subscribe_on_sync(self, subscriber):
+        self.on_sync_subscribers.append(subscriber)
+    
+    def unsubscribe_on_sync(self, subscriber):
+        self.on_sync_subscribers = [s for s in self.on_sync_subscribers if s != subscriber]
+
+    async def refresh_helper(self, token_ids: List[str], mandatory_lp_ids: Set[str]):
+        cur_lp_sync_proxy = self.sync_proxy
+        cur_lp_ids = self.lp_ids
+
+        try:
+            new_lp_ids = set(await self.get_lp_ids(token_ids)) | mandatory_lp_ids
+        except Exception:
+            logger.exception(f"Error querying lps for {self.uid}.")
+            prometheus.refresh_driver_error.labels(protocol=self.uid).inc(1)
+            # Keep current proxy in case of error
+            return (cur_lp_sync_proxy, cur_lp_ids)
+
+        if len(new_lp_ids) == 0:
+            return (None, set())
+
+        # optimization: no need to reset if we are tracking
+        # the same set of pools as last time.
+        if new_lp_ids == cur_lp_ids:
+            return (cur_lp_sync_proxy, cur_lp_ids)
+
+        new_lp_sync_proxy = await self.create_lp_sync_proxy(
+            new_lp_ids,
+            LPDriver.LPSyncProxyDataSource.Default
+        )
+
+        try:
+            logger.debug(f"Starting sync proxy for {self.uid} because {len(new_lp_ids - cur_lp_ids)} lp_ids were added and {len(cur_lp_ids - new_lp_ids)} were deleted")
+            await new_lp_sync_proxy.start()
+        except Exception:
+            logger.exception(f"Error starting lp sync proxy for {self.uid}")
+            prometheus.refresh_driver_error.labels(protocol=self.uid).inc(1)
+            return (cur_lp_sync_proxy, cur_lp_ids)
+
+        return (new_lp_sync_proxy, new_lp_ids)
+    
+
+    async def refresh(self, token_ids: List[str], mandatory_lp_ids: Set[str]):
+            (new_proxy, new_lp_ids) = \
+                await self.refresh_helper(token_ids, mandatory_lp_ids)
+            old_proxy = self.sync_proxy
+            
+            if new_proxy is None or old_proxy == new_proxy:
+                return
+            
+            new_proxy.subscribe_on_sync(self.on_sync)
+            self.sync_proxy = new_proxy
+            self.lp_ids = new_lp_ids
+            
+            if old_proxy is not None:
+                old_proxy.unsubscribe_on_sync(self.on_sync)
+                await old_proxy.stop()            
+
+
+    def on_sync(self, block: BlockId, _: LPSyncProxy):
+        self.latest_sync_block = block
+        for subscriber in self.on_sync_subscribers:
+            subscriber(block, self)
+
+    
+    def all_lps(self, block: BlockId) -> List[LP]:
+        if self.sync_proxy is None:
+            raise CacheMissError(f"Sync proxy for {self.uid} is not available.")
+        return list(self.sync_proxy(block).values())
+
+    def is_synced_to(self, block: BlockId) -> bool:
+        return self.sync_proxy is None or self.latest_sync_block == block
+    
+# Utility class to asynchronously wait for a block to be processed.
+class ProcessedBlockCondition:
+    def __init__(self):
+        self.processed_blocks = set()
+        self.cond = asyncio.Condition()
+    async def on_block_processed(self, block: BlockId):
+        async with self.cond:
+            self.processed_blocks.add(block)
+            self.cond.notify_all()
+    async def wait_for_block(self, block: BlockId, exclusive=True):
+        assert block is not None
+        async with self.cond:
+            await self.cond.wait_for(lambda: block in self.processed_blocks)
+            if exclusive:
+                self.processed_blocks.remove(block)

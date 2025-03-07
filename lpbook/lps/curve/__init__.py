@@ -13,7 +13,7 @@ from itertools import permutations
 
 import aiohttp
 from lpbook import (LPAsyncProxy, LPDriver, LPFromInitialStatePlusChangesProxy, LPSyncProxy,
-                    LPSyncProxyFromAsyncProxy)
+                    LPSyncProxyFromAsyncProxy, ProcessedBlockCondition)
 from lpbook.error import CacheMissError, TemporaryError
 from lpbook.lps.util import DynamicInterval
 from lpbook.util import LP, Token, Trade, traced
@@ -103,6 +103,8 @@ class Curve(LP):
         num = self.fee * self.offpeg_fee_multiplier
         den_1_num = (self.offpeg_fee_multiplier - fee_denom) * 4 * xp1 * xp2
         den_1_den = (xp1 + xp2)**2
+        if den_1_den == 0:
+            return 0
         return int(num / ((den_1_num / den_1_den) + fee_denom))
        
     @property
@@ -118,7 +120,7 @@ class Curve(LP):
         }
         if len(self.stored_rates) > 0:
             r['directional_fees'] = [F(f, int(1e10)) for f in self.dynamic_fees]
-            r['scaling_rates'] = [F(int(1e18), s) for s in self.stored_rates]
+            r['scaling_rates'] = [F(int(1e18), s) for s in self.stored_rates]   # FIXME: should be 1e36/s
         return r
     
 class CurvePoolDB:
@@ -249,12 +251,13 @@ class CurveWeb3AsyncProxy(LPAsyncProxy):
             block_identifier=block_identifier
         )
 
-    def get_contract_for_lp(self, lp_id_chksum, lp):
-        if lp.registry in ["main", "factory"]:
+    @cache
+    def get_contract_for_lp(self, lp_id_chksum, lp_registry, lp_base_pool_id):
+        if lp_registry in ["main", "factory"]:
             return self.StableSwap(address=lp_id_chksum)
-        elif lp.registry == "factory-stable-ng" and lp.base_pool_id is None:
+        elif lp_registry == "factory-stable-ng" and lp_base_pool_id is None:
             return self.StableSwapPlainNG(address=lp_id_chksum)
-        elif lp.registry == "factory-stable-ng" and lp.base_pool_id is not None:
+        elif lp_registry == "factory-stable-ng" and lp_base_pool_id is not None:
             return self.StableSwapMetaNG(address=lp_id_chksum)
         raise RuntimeError("Unknown registry")
 
@@ -262,13 +265,13 @@ class CurveWeb3AsyncProxy(LPAsyncProxy):
         if lp.registry in ["main", "factory"]:
             lp.fee = await self.get_fee_from_registry(lp_id_chksum, block_identifier=block_identifier)
         else:
-            pool_contract = self.get_contract_for_lp(lp_id_chksum, lp)
+            pool_contract = self.get_contract_for_lp(lp_id_chksum, lp.registry, lp.base_pool_id)
             lp.fee = await self.get_fee_from_pool(pool_contract, block_identifier)
             lp.stored_rates = await self.get_stored_rates(pool_contract, block_identifier)          
             lp.offpeg_fee_multiplier = await self.get_offpeg_fee_multiplier(pool_contract, block_identifier)
 
     async def set_amplification_parameter(self, lp_id_chksum, lp, block_identifier) -> int:
-        pool_contract = self.get_contract_for_lp(lp_id_chksum, lp)
+        pool_contract = self.get_contract_for_lp(lp_id_chksum, lp.registry, lp.base_pool_id)
         lp.future_A = F(await pool_contract.functions.future_A().call(
             block_identifier=block_identifier
         ), 100) # Events send the "precise" (i.e. *100) version of A
@@ -395,7 +398,8 @@ class CurveWeb3SyncProxy(LPFromInitialStatePlusChangesProxy):
         self.fetch_interval_by_lp_id = {}
         self.initialized_lps_with_dynamic_rates = False
         self.latest_dynamic_rates_by_lp_id = {}
-
+        self.processed_block_cond = None
+        
     async def start(self) -> None:
         if self.block_stream is not None:
             self.block_stream.subscribe(self.on_new_block)
@@ -414,6 +418,8 @@ class CurveWeb3SyncProxy(LPFromInitialStatePlusChangesProxy):
     async def on_new_block(self, block: BlockId) -> None:
         if self.checkpoint is None:
             return
+        if self.processed_block_cond is None:
+            self.processed_block_cond = ProcessedBlockCondition()
         if not self.initialized_lps_with_dynamic_rates:
             # Check if new pools with dynamic rates are available
             for lp_id, lp in self.checkpoint.items():
@@ -429,33 +435,31 @@ class CurveWeb3SyncProxy(LPFromInitialStatePlusChangesProxy):
             if block.number >= next_fetch_block
         ]
         if len(lp_ids_to_fetch) > 0:
-            await self.fetch_dynamic_rates(lp_ids_to_fetch, block)
-        
-    async def fetch_dynamic_rates(self, lp_ids_to_fetch, block: BlockId):
+            await asyncio.gather(*[self.fetch_dynamic_rate(lp_id, block) for lp_id in lp_ids_to_fetch])
+
+        await self.processed_block_cond.on_block_processed(block)
+
+    async def fetch_dynamic_rate(self, lp_id: str, block: BlockId):
         # Fetch the rates.
-        new_lp_rates = {}
-        for lp_id in lp_ids_to_fetch:
-            lp = self.checkpoint[lp_id]
-            lp_id_chksum = self.web3_client.to_checksum_address(lp_id)
-            pool_contract = self.async_proxy.get_contract_for_lp(lp_id_chksum, lp)
-            new_stored_rates = await self.async_proxy.get_stored_rates(pool_contract, "latest")
-            new_lp_rates[lp_id] = new_stored_rates
+        lp = self.checkpoint[lp_id]
+        lp_id_chksum = self.web3_client.to_checksum_address(lp_id)
+        pool_contract = self.async_proxy.get_contract_for_lp(lp_id_chksum, lp.registry, lp.base_pool_id)
+        new_stored_rates = await self.async_proxy.get_stored_rates(pool_contract, "latest")
+        new_rates = new_stored_rates
 
         # Update fetch intervals.
-        for lp_id, new_rates in new_lp_rates.items():
-            if lp_id in self.latest_dynamic_rates_by_lp_id.keys():
-                if new_rates != self.latest_dynamic_rates_by_lp_id[lp_id]:
-                    self.fetch_interval_by_lp_id[lp_id].decrease()
-                else:
-                    self.fetch_interval_by_lp_id[lp_id].increase()
-            self.next_fetch_block_by_lp_id[lp_id] = block.number + self.fetch_interval_by_lp_id[lp_id].cur_interval
+        if lp_id in self.latest_dynamic_rates_by_lp_id.keys():
+            if new_rates != self.latest_dynamic_rates_by_lp_id[lp_id]:
+                self.fetch_interval_by_lp_id[lp_id].decrease()
+            else:
+                self.fetch_interval_by_lp_id[lp_id].increase()
+        self.next_fetch_block_by_lp_id[lp_id] = block.number + self.fetch_interval_by_lp_id[lp_id].cur_interval
 
         # Update the rates. 
-        for lp_id, new_rates in new_lp_rates.items():   
-            if lp_id in self.latest_dynamic_rates_by_lp_id and new_rates != self.latest_dynamic_rates_by_lp_id[lp_id]:
-                logger.debug(f"New curveng rates for lp {lp_id}: {new_rates}. Refetching in {self.fetch_interval_by_lp_id[lp_id].cur_interval} blocks.")
-            self.latest_dynamic_rates_by_lp_id[lp_id] = new_rates
+        if lp_id in self.latest_dynamic_rates_by_lp_id and new_rates != self.latest_dynamic_rates_by_lp_id[lp_id]:
+            logger.debug(f"New curveng rates for lp {lp_id}: {new_rates}. Refetching in {self.fetch_interval_by_lp_id[lp_id].cur_interval} blocks.")
 
+        self.latest_dynamic_rates_by_lp_id[lp_id] = new_rates
 
     def update_state(self, state: Dict[str, LP], d: Any) -> None:
         """Assembles state from previous state and updates."""
@@ -503,13 +507,21 @@ class CurveWeb3SyncProxy(LPFromInitialStatePlusChangesProxy):
         if lp_id in self.latest_dynamic_rates_by_lp_id.keys():
             lp.stored_rates = self.latest_dynamic_rates_by_lp_id[lp_id]
 
-    def on_new_events(self, events) -> None:
+    async def on_sync(self, events, block: BlockId) -> None:
+        if self.checkpoint is None:
+            return
         events = [
             event for event in events 
             if event.event in {'RemoveLiquidityOne', 'TokenExchange', 'AddLiquidity', 'RemoveLiquidity', 'RemoveLiquidityImbalance'}
         ]
         if len(events) > 0:
-            self.create_extra_event_updaters(events, self.create_balances_updater, "balance updater")            
+            updaters = await asyncio.gather(*[self.create_balances_updater(event) for event in events])
+            for updater, event in zip(updaters, events):
+                if updater is not None:
+                    self.add_event_updater(event, updater)
+
+        if self.processed_block_cond is not None:
+            await self.processed_block_cond.wait_for_block(block)
 
     async def create_balances_updater(self, event):
         lp_id = event.address.lower()

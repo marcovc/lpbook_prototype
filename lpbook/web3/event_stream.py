@@ -180,7 +180,7 @@ class ServerFilteredEventPollingStream(EventStream):
 
         # Calling subscriber even when there are no events, so it can know
         # that it has been called for the block.
-        subscriber(decoded_events, block)
+        await subscriber(decoded_events, block)
 
         if len(decoded_events) > 0:
             self.on_processed_events(decoded_events)

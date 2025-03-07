@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 from async_lru import alru_cache
 
-from lpbook import LPAsyncProxy, LPDriver, LPFromInitialStatePlusChangesProxy, LPSyncProxy, LPSyncProxyFromAsyncProxy, MultiLPFromInitialStatePlusChangesProxy
+from lpbook import LPAsyncProxy, LPDriver, LPFromInitialStatePlusChangesProxy, LPSyncProxy, LPSyncProxyFromAsyncProxy, MultiLPFromInitialStatePlusChangesProxy, ProcessedBlockCondition
 from lpbook.error import TemporaryError
 from lpbook.lps.balancer_v2.common import BalancerV2BalancesWeb3SyncProxy, BalancerV2FeesWeb3SyncProxy
 from lpbook.lps.balancer_v2.subgraph import BalancerV2GraphQLClient
@@ -303,6 +303,7 @@ class BalancerV2AmpAndStoredRatesWeb3SyncProxy(LPFromInitialStatePlusChangesProx
         self.web3_client = web3_client
         self.async_proxy = async_proxy
         self.block_stream = block_stream
+        self.processed_block_cond = None
         with open(Path(__file__).parent / 'artifacts' / 'ComposableStablePool.abi', 'r') as f:
             abi = f.read()
             self.ComposableStablePool = web3_client.eth.contract(
@@ -371,6 +372,9 @@ class BalancerV2AmpAndStoredRatesWeb3SyncProxy(LPFromInitialStatePlusChangesProx
         if self.checkpoint is None:
             return
 
+        if self.processed_block_cond is None:
+            self.processed_block_cond = ProcessedBlockCondition()
+
         now = datetime.datetime.now()
 
         def stored_rates_have_likely_changed(lp, token_index):
@@ -391,6 +395,7 @@ class BalancerV2AmpAndStoredRatesWeb3SyncProxy(LPFromInitialStatePlusChangesProx
         ]
 
         if len(lp_tokens_index_to_update) == 0:
+            await self.processed_block_cond.on_block_processed(block)
             return
 
         async def update_lp_token_rate(lp, token_index):
@@ -414,6 +419,12 @@ class BalancerV2AmpAndStoredRatesWeb3SyncProxy(LPFromInitialStatePlusChangesProx
         await asyncio.gather(
             *[update_lp_token_rate(lp, token_index) for lp, token_index in lp_tokens_index_to_update]
         )
+
+        await self.processed_block_cond.on_block_processed(block)
+
+    async def on_sync(self, events, block: BlockId) -> None:
+        if self.processed_block_cond is not None:
+            await self.processed_block_cond.wait_for_block(block)
 
 
 class BalancerV2Driver(LPDriver)    :

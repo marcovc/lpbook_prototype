@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Any, Callable, List, Tuple
 
@@ -56,23 +57,26 @@ class RecentEventLog:
             # This could happen if all events are removed. To avoid it, pass an old enough
             # from_block to the "start" method.
             if self.start_block_number is not None and event.blockNumber < self.start_block_number:
-                logger.critical(
-                    f'{self} found in an possibly inconsistent state. Exiting ...'
+                logger.warning(
+                    f'Node sent an event for block {event.blockNumber} which is before initial block {self.start_block_number}. '
+                    'Ignoring it since it is likely a node error...'
                 )
-                assert False
+                #raise RuntimeError(f'{self} found in an possibly inconsistent state.')
 
-    def process_new_events(self, events, block: BlockId):
+    async def process_new_events(self, events, block: BlockId):
         for event in events:
             self.process_new_event(event)
-        for subscriber in self.subscribers:
-            subscriber(events, block)
+        await asyncio.gather(
+            *[
+                subscriber(events, block)
+                for subscriber in self.subscribers
+            ]
+        )
 
     def subscribe(self, subscriber):
         self.subscribers.append(subscriber)
 
     def unsubscribe(self, subscriber):
-        if subscriber not in self.subscribers:
-            return
         self.subscribers = [s for s in self.subscribers if s != subscriber]
 
     @traced(logger, 'Starting RecentEventLog')
@@ -91,6 +95,7 @@ class RecentEventLog:
         """
         assert start_block_number is not None
         self.start_block_number = start_block_number
+        #await self.event_stream.block_stream.on_first_block.wait()  # wait for the first block
         await self.event_stream.subscribe(
             self.process_new_events,
             addresses,
@@ -99,7 +104,7 @@ class RecentEventLog:
             on_dropped_subscription_error_fn,
             extra_topics=extra_topics
         )
-        await self.event_stream.poll_for_subscriber(self.process_new_events, self.event_stream.last_block)
+        #await self.event_stream.poll_for_subscriber(self.process_new_events, self.event_stream.last_block)
 
     async def stop(self) -> None:
         await self.event_stream.unsubscribe(self.process_new_events)

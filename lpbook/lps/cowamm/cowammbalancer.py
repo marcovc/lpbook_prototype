@@ -248,7 +248,7 @@ class COWAMMBalancerDriver(LPDriver):
         self.block_stream = block_stream
         self.token_db = token_db
         self.web3_client = web3_client
-        self.lp_ids = None
+        self.initialized = False
  
     async def create_lp_sync_proxy(
         self,
@@ -380,14 +380,14 @@ class COWAMMBalancerDriver(LPDriver):
         return lp_ids
 
     async def get_lp_ids(self, token_ids: List[str]) -> List[str]:
-        # FIXME: return only pools for tokens, and only those with significant liquidity
-        if self.lp_ids is None:
-            self.lp_ids = await self.get_lp_ids_from_blockchain()
-
-            self.lp_ids = list(
-                set(self.lp_ids) - 
-                {
-                    "0x9fb7106c879fa48347796171982125a268ff0630"  # MKR token is odd
-                }
-            )
-        return self.lp_ids
+        if self.initialized:
+            return self.lp_ids
+        lp_ids = await self.get_lp_ids_from_blockchain()
+        lp_ids = list(
+            set(lp_ids) - 
+            {
+                "0x9fb7106c879fa48347796171982125a268ff0630"  # MKR token is odd
+            }
+        )
+        self.initialized = True
+        return lp_ids

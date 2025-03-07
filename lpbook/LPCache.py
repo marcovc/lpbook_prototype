@@ -5,6 +5,7 @@ from itertools import permutations
 import logging
 import traceback
 from typing import Iterable, List, Optional, Set, Tuple
+
 from lpbook import LPDriver, LPSyncProxy
 from lpbook.error import CacheMissError
 
@@ -14,6 +15,7 @@ import lpbook.util.prometheus as prometheus
 import jsonpickle
 import time
 from lpbook.lp_monitors import lp_monitors
+from lpbook.web3.block_stream import BlockStream
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +26,9 @@ class LPCache:
     POOL_MAX_CACHED_AGE = datetime.timedelta(days=1)
     POOL_MAX_CACHE_SIZE = 1000
 
-    def __init__(self, lp_drivers, order_drivers, state_directory: str, always_include_amms_by_protocol: dict[str, set[str]]={}):
-        self.lp_drivers = lp_drivers
-        self.order_drivers = order_drivers
+    def __init__(self, lp_drivers, order_drivers, block_stream: BlockStream, state_directory: str, always_include_amms_by_protocol: dict[str, set[str]]={}):
+        self.lp_drivers = {driver.uid: driver for driver in lp_drivers}
+        self.order_lp_drivers = {driver.uid: driver for driver in order_drivers}
         self.state_directory = state_directory
         self.always_include_amms_by_protocol = always_include_amms_by_protocol
         self.always_include_amms = set()
@@ -35,19 +37,40 @@ class LPCache:
         self.cached_tokens = set()
         self.token_last_request_datetime = {}
         self.last_refresh_datetime = None
-        self.lp_sync_proxies = {}
-        self.lp_sync_pool_ids = {}
-        self.order_sync_proxies = []
+        
         self.load_state()
         self.background_tasks = set()
-        self.driver_latest_block = {}
+        for driver in self.lp_drivers.values():
+            driver.subscribe_on_sync(self.on_sync)
+        for driver in self.order_lp_drivers.values():
+            driver.subscribe_on_sync(self.on_sync)
+        
+        # This is required since drivers only call sync when they have a proxy, and they only have a proxy
+        # when the request tokens can be served by the proxy. By doing this, we will keep a block "heartbeat"
+        # even when there is no data to be served.
+        async def f(block):
+            self.on_sync(block, None)
+        block_stream.subscribe(f)
+
+        self.nr_cache_hits = 0
+        self.nr_cache_misses = 0
+
+        self.on_sync_subscribers = []
 
     def __del__(self):
-        for proxy in self.lp_sync_proxies.values():
-            proxy.unsubscribe_on_sync(self.on_sync)
+        for driver in self.lp_drivers.values():
+            driver.unsubscribe_on_sync(self.on_sync)
+        for driver in self.order_lp_drivers.values():
+            driver.unsubscribe_on_sync(self.on_sync)
         for task in self.background_tasks:
             task.cancel()
-            
+
+    def subscribe_on_sync(self, subscriber):
+        self.on_sync_subscribers.append(subscriber)
+
+    def unsubscribe_on_sync(self, subscriber):
+        self.on_sync_subscribers = [s for s in self.on_sync_subscribers if s != subscriber]            
+
     def load_state(self):
         try:
             with open(self.state_directory / "last_cached_tokens.json", "r") as f:
@@ -64,6 +87,15 @@ class LPCache:
         with open(self.state_directory / "last_cached_tokens.json", "w+") as f:
             f.write(jsonpickle.encode(ct))
         
+    def update_token_ids(self, token_ids: set):
+        now = datetime.datetime.now()
+        for t in token_ids:
+            if t in self.cached_tokens:
+                self.nr_cache_hits += 1
+            else:
+                self.nr_cache_misses += 1
+            self.token_last_request_datetime[t] = now
+
     def get_lps_trading_tokens(self, token_ids: set, block_number=None) -> List[LP]:
         """Return all LPs that trade at least two tokens in token_ids.
 
@@ -77,11 +109,11 @@ class LPCache:
         # Always return immediately whatever is cached.
         all_lps = []
         block = BlockId(number=block_number)
-        for lp_sync_proxy in self.lp_sync_proxies.values():
+        for driver in self.lp_drivers.values():
             try:
-                lps = list(lp_sync_proxy(block).values())
+                lps = driver.all_lps(block)
             except CacheMissError:
-                logger.debug(f'LPProxy {lp_sync_proxy} still initializing. Skipping ...')
+                logger.debug(f'Driver {driver.uid} still initializing. Skipping ...')
                 continue
             for lp in lps:
                 lp_token_ids = {t.address for t in lp.tokens}
@@ -89,58 +121,64 @@ class LPCache:
                     all_lps.append(lp)
 
         if len(all_lps) == 0:
-            logger.debug(f'No LPs for token_ids {token_ids}.')
+            logger.debug(f'Returning no LPs for {len(token_ids)} requested tokens.')
         else:
             logger.debug(f'Returning {len(all_lps)} LPs.')
+
+        self.nr_cache_hits += len(self.cached_tokens & token_ids)
+        self.nr_cache_misses += len(token_ids - self.cached_tokens)
+
         return all_lps
 
-    def get_order_lps(self, block_number=None) -> List[LP]:
-        # Always return immediately whatever is cached.
-        all_lps = []
-        block = BlockId(number=block_number)
-        for order_sync_proxy in self.order_sync_proxies:
-            try:
-                lps = list(order_sync_proxy(block).values())
-            except CacheMissError:
-                logger.debug(f'LPProxy {order_sync_proxy} still initializing. Skipping ...')
-                continue
-            all_lps += lps
-
-        if len(all_lps) == 0:
-            logger.debug(f'No orders LPs.')
-        else:
-            logger.debug(f'Returning {len(all_lps)} order LPs.')
-        return all_lps
-
-    def get_lps(self, lp_ids: Set[str], block_number=None) -> List[LP]:
-        """Return the set of LPs with the given ids. Raise CacheMissError if not found.
+    def get_all_lps(self, block_number=None) -> List[LP]:
+        """Return all cached LPs.
 
         If block is given, then the lp's state will reflect that block if that block is
         in cache, otherwise it will raise a CacheMissError.
         """
+        now = datetime.datetime.now()
+
         # Always return immediately whatever is cached.
         all_lps = []
         block = BlockId(number=block_number)
-        for lp_sync_proxy in self.lp_sync_proxies.values():
+        for driver in self.lp_drivers.values():
             try:
-                lps = list(lp_sync_proxy(block).values())
+                all_lps += driver.all_lps(block)
             except CacheMissError:
-                logger.debug(f'LPProxy {lp_sync_proxy} still initializing. Skipping ...')
+                logger.debug(f'Driver {driver.uid} still initializing. Skipping ...')
                 continue
-            all_lps += [lp for lp in lps if lp.uid in lp_ids]
 
-        if len(all_lps) < len(lp_ids):
-            raise CacheMissError(f'Could not find LPs {lp_ids - set([lp.uid for lp in all_lps])} in cache.')
+        if len(all_lps) == 0:
+            logger.debug(f'Returning no LPs.')
         else:
-            logger.debug(f'Returning all {len(all_lps)} requested LPs.')
+            logger.debug(f'Returning all {len(all_lps)} cached LPs.')
+
+        return all_lps
+    
+    def get_order_lps(self, block_number=None) -> List[LP]:
+        # Always return immediately whatever is cached.
+        all_lps = []
+        block = BlockId(number=block_number)
+        for driver in self.order_lp_drivers.values():
+            try:
+                lps = driver.all_lps(block)
+            except CacheMissError:
+                logger.debug(f'Driver {driver.uid} still initializing. Skipping ...')
+                continue
+            all_lps += lps
+
+        if len(all_lps) == 0:
+            logger.debug(f'Returning no orders LPs.')
+        else:
+            logger.debug(f'Returning {len(all_lps)} order LPs.')
         return all_lps
     
     @traced(logger, 'Running LP cache')
     async def run(self):
         self.running = True
 
-        for driver in self.order_drivers:
-            self.order_sync_proxies.append(await self.create_order_lp_sync_proxy(driver))
+        for driver in self.order_lp_drivers.values():
+            await driver.refresh([], set())
 
         while self.running:
             now = datetime.datetime.now()
@@ -177,85 +215,16 @@ class LPCache:
     def shutdown(self):
         self.running = False
 
-    async def create_order_lp_sync_proxy(self, driver):
-        lp_ids = await driver.get_lp_ids([])
-        new_order_lp_sync_proxy = await driver.create_lp_sync_proxy(
-            lp_ids,
-            LPDriver.LPSyncProxyDataSource.Default
-        )
-
-        try:
-            await new_order_lp_sync_proxy.start()
-        except Exception as err:
-            logger.error(
-                f"Error starting order lp sync proxy for {driver.uid}: {err}. "
-                f"Traceback:\n{traceback.format_exc()}"
-            )
-            prometheus.refresh_driver_error.labels(protocol=driver.uid).inc(1)
-
-        return new_order_lp_sync_proxy
-
-    async def refresh_driver(self, driver, tokens):
-        cur_lp_sync_proxy = self.lp_sync_proxies.get(driver.uid, None)
-        cur_lp_ids = self.lp_sync_pool_ids.get(driver.uid, set())
-
-        try:
-            new_lp_ids = set(await driver.get_lp_ids(tokens)) | self.always_include_amms_by_protocol.get(driver.protocol, set())
-        except Exception:
-            logger.exception(f"Error querying lps for {driver.uid}.")
-            prometheus.refresh_driver_error.labels(protocol=driver.uid).inc(1)
-            # Keep current proxy in case of error
-            return (cur_lp_sync_proxy, cur_lp_ids)
-
-        if len(new_lp_ids) == 0:
-            class NoOpSyncProxy:
-                def __call__(self, _):
-                    return {}
-
-                async def stop(self):
-                    pass
-
-            return (NoOpSyncProxy(), set())
-
-        # optimization: no need to reset proxies that return
-        # the same set of pools as last time.
-        if new_lp_ids == cur_lp_ids:
-            return (cur_lp_sync_proxy, cur_lp_ids)
-
-        new_lp_sync_proxy = await driver.create_lp_sync_proxy(
-                new_lp_ids,
-                LPDriver.LPSyncProxyDataSource.Default
-            )
-
-        try:
-            logger.debug(f"Starting sync proxy for {driver.uid} because {len(new_lp_ids - cur_lp_ids)} lp_ids were added and {len(cur_lp_ids - new_lp_ids)} were deleted")
-            await new_lp_sync_proxy.start()
-        except Exception:
-            logger.exception(f"Error starting lp sync proxy for {driver.uid}")
-            prometheus.refresh_driver_error.labels(protocol=driver.uid).inc(1)
-            return (cur_lp_sync_proxy, cur_lp_ids)
-
-        return (new_lp_sync_proxy, new_lp_ids)
-
     @traced(logger, 'Refreshing LP cache')
     async def refresh(self, tokens):
         logger.debug(f'Refreshing LP cache for {len(tokens)} tokens ...')
-        now = datetime.datetime.now()
-
-        async def update(driver):
-            (new_proxy, new_lp_ids) = \
-                await self.refresh_driver(driver, tokens)
-            old_proxy = self.lp_sync_proxies.get(driver.uid, None)
-            if new_proxy is not None and old_proxy != new_proxy:
-                new_proxy.subscribe_on_sync(self.on_sync)
-                self.lp_sync_proxies[driver.uid] = new_proxy
-                self.lp_sync_pool_ids[driver.uid] = new_lp_ids
-                if old_proxy is not None:
-                    old_proxy.unsubscribe_on_sync(self.on_sync)
-                    await old_proxy.stop()            
+        now = datetime.datetime.now()         
 
         if len(tokens) > 0:
-            await asyncio.gather(*[update(driver) for driver in self.lp_drivers])
+            await asyncio.gather(*[
+                driver.refresh(tokens, self.always_include_amms_by_protocol.get(driver.protocol, set())) 
+                for driver in self.lp_drivers.values()
+            ])
 
         self.cached_tokens = tokens
         self.last_refresh_datetime = now
@@ -271,16 +240,36 @@ class LPCache:
                 token_pairs.add(token_pair)
         return lp_monitors.traded_amount_collectors.estimate_average_xrates_in_running_hour(token_pairs, block_number, block_time)
     
-    def on_sync(self, block: BlockId, proxy: LPSyncProxy):
-        logger.debug(f'Proxy {proxy} synced to block {block.number}.')
-        for uid, p in self.lp_sync_proxies.items():
-            if p == proxy:
-                self.driver_latest_block[uid] = block
-                break
-        if all(block == b for b in self.driver_latest_block.values()):
+    def on_sync(self, block: BlockId, driver: Optional[LPDriver]):
+        if driver is not None:
+            logger.debug(f'Driver {driver.uid} synced to block {block.number}.')
+        if all(d.is_synced_to(block) for d in self.lp_drivers.values()) and \
+            all(d.is_synced_to(block) for d in self.order_lp_drivers.values()):
             async def f():
                 await asyncio.sleep(0.01)  # yield current task
                 logger.debug(f'Synced to new block {block.number}.')
+                for subscriber in self.on_sync_subscribers:
+                    await subscriber(block)
+
             task = asyncio.create_task(f())
             self.background_tasks.add(task)
             task.add_done_callback(lambda _: self.background_tasks.remove(task))
+        else:
+            max_block_number = max([d.latest_sync_block.number for d in self.lp_drivers.values() if d.sync_proxy is not None and d.latest_sync_block is not None], default=None) 
+            if max_block_number is None:
+                return
+            protocols_behind = {
+                d.protocol: max_block_number - d.latest_sync_block.number
+                for d in self.lp_drivers.values() 
+                if d.sync_proxy is not None and d.latest_sync_block is not None and d.latest_sync_block.number <= max_block_number - 2
+            }
+            if len(protocols_behind) == 0:
+                return
+            logger.warning(f'Protocols {list(protocols_behind.keys())} are running behind by {list(protocols_behind.values())} blocks respectively.')
+
+    def stats(self):
+        return {
+            "Tokens": len(self.cached_tokens),
+            "Hit rate": self.nr_cache_hits / (self.nr_cache_hits + self.nr_cache_misses) * 100 
+                if self.nr_cache_hits + self.nr_cache_misses > 0 else 0,
+        }

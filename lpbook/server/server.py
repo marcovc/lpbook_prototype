@@ -63,14 +63,22 @@ async def async_wrapper(fn, *args, **kwargs):
     else:
         return fn(*args, **kwargs)
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting Prometheus")
     prometheus_server = asyncio.create_task(asyncio.to_thread(start_http_server,9090))
+
+    #websocket_driver_task = asyncio.create_task(websocket_driver.run())
+    process_server.subscribe_on_sync(websocket_driver.run_once)
+
+    # To be on the safe side, we kick out all websocket connections whenever we need to reset process_server,
+    # which should happen only if there an unhandled exception.
+    process_server.subscribe_on_reset(websocket_driver.disconnect_all)
+
     logger.info("Starting LPBook ...")
     process_server.start()
-    websocket_driver_task = asyncio.create_task(websocket_driver.run())
-
+    
     if lp_stats is not None:
         await lp_stats.async_init()
 
@@ -86,10 +94,11 @@ async def lifespan(app: FastAPI):
     except:
         pass
 
+    prometheus_server.cancel()
     await async_wrapper(process_server.shutdown)
     if lp_stats is not None:
         await lp_stats.async_del()
-    logger.info("Exiting LPBook ...")
+    logger.info("Exited LPBook ...")
 
 app = FastAPI(
     title="LPBook service",
@@ -105,7 +114,7 @@ def health():
 
 async def lps_trading_tokens_helper(token_ids: List[str], block_number: Optional[int] = None) -> dict:
     token_ids = {token_id.lower() for token_id in token_ids}
-    if block_number is not None:
+    if block_number is not None and block_number > process_server.last_block.number:
         wait = True
         block_hash = None
         block_timestamp = None
@@ -121,7 +130,11 @@ async def lps_trading_tokens_helper(token_ids: List[str], block_number: Optional
             continue
         lps.append(lp)
 
-    return create_lps_response(lps, block_number, block_hash, block_timestamp, wait, lp_stats, process_server)
+    if wait == True:
+        block_hash = process_server.last_block.hash
+        block_timestamp = process_server.last_block.timestamp
+
+    return create_lps_response(lps, block_number, block_hash, block_timestamp, lp_stats, process_server.lp_cache)
 
     
 async def lps_trading_tokens(token_ids: List[str], block_number: Optional[int] = None) -> dict:
@@ -170,46 +183,6 @@ async def order_lps() -> dict:
         lpbook.util.prometheus.prometheus.error.labels(error_type=str(e)).inc(1)
         return {}
 
-async def lps_helper(lp_ids: Set[str], block_number: Optional[int] = None) -> dict:
-    if block_number is not None:
-        wait = True
-        block_hash = None
-        block_timestamp = None
-    else:
-        wait = False
-        block_number = process_server.last_block.number
-        block_hash = process_server.last_block.hash
-        block_timestamp = process_server.last_block.timestamp
-
-    lps = []
-    for lp in await async_wrapper(process_server.get_lps, lp_ids, block_number=block_number, wait=wait):
-        lps.append(lp)
-
-    return create_lps_response(lps, block_number, block_hash, block_timestamp, wait)
-
-async def lps(lp_ids: Set[str], block_number: Optional[int] = None) -> dict:
-    """Return LPs with given ids."""
-    if process_server is None:
-        return {}
-    # This can happen if we are still initializing and didn't yet get any block.
-    if block_number is None and process_server.last_block.number is None:
-        return {}
-    try:
-        return await lps_helper(lp_ids=lp_ids, block_number=block_number)
-    except Exception as e:
-        logger.exception(f"Unhandled exception when processing /lps request.")
-        lpbook.util.prometheus.error.labels(error_type=str(e)).inc(1)
-        return {}
-    
-@app.post("/lps")
-@prometheus_async.aio.time(lpbook.util.prometheus.lps_time)
-async def lps_at_current_block(lp_ids: Set[str]) -> dict:
-    return await lps(lp_ids=lp_ids)    
-
-@app.post("/lps_at_block")
-async def lps_at_block(lp_ids: Set[str], block_number: int) -> dict:
-    return await lps(lp_ids=lp_ids, block_number=block_number) 
-
 background_tasks = set()
 
 @app.post("/on_reverted_solution")
@@ -246,7 +219,7 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             token_ids = await websocket.receive_json()
-            websocket_driver.update_token_ids(token_ids)
+            process_server.update_token_ids(token_ids)
     except WebSocketDisconnect:
         logger.debug(f"Websocket client disconnected. Removing connection.")
         websocket_driver.disconnect(websocket)
@@ -256,7 +229,6 @@ async def websocket_endpoint(websocket: WebSocket):
         websocket_driver.disconnect(websocket)
 
 # ++++ Server setup: ++++
-
 
 if __name__ == '__main__':
     # Load local environment variables from .env file.

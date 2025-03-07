@@ -42,6 +42,7 @@ class BlockStream(BlockScanning):
         self._last_block_timestamp = None
         self.running = False
         self.delay = delay
+        self.on_first_block = asyncio.Event()
 
     @property
     def last_block(self) -> Optional[BlockId]:
@@ -58,9 +59,12 @@ class BlockStream(BlockScanning):
 
     async def trigger(self, block: BlockId):
         assert block.is_fully_qualified()
+        prev_last_block_number = self._last_block_number
         self._last_block_number = block.number
         self._last_block_hash = block.hash
         self._last_block_timestamp = block.timestamp
+        if prev_last_block_number is None:
+            self.on_first_block.set()
         await asyncio.gather(
             *[
                 subscriber(block)
