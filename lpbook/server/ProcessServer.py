@@ -8,6 +8,7 @@ from typing import List, Optional, Set, Tuple
 
 import aiohttp
 import psutil
+from lpbook.lps.balancer_v3 import BalancerV3StableDriver, BalancerV3WeightedDriver
 from lpbook.lps.cowamm import COWAMMBalancerDriver, COWAMMPrivateDriver
 from lpbook.lps.fixedrate import StaticFixedRateDriver
 import uvicorn
@@ -18,10 +19,11 @@ from lpbook.LPHistoric import LPHistoric
 from lpbook.lps.curve import CurveDriver, CurveNGDriver
 from lpbook.lps.fixedrate.susds import SUDSDDriver
 from lpbook.lps.fluid import FluidDriver
-from lpbook.lps.uniswap_v3 import SolidlyV3Driver, UniV3Driver, PancakeswapV3Driver
+from lpbook.lps.uniswap_v3 import SolidlyV3Driver, UniV3Driver, PancakeswapV3Driver, MaverickV2Driver
 from lpbook.lps.uniswap_v2 import SushiDriver, SwaprV2Driver, UniV2Driver, PancakeswapV2Driver
 from lpbook.lps.piecewise import BebopDriver, NativeDriver, HashflowDriver, ZeroExDriver
 from lpbook.lps.balancer_v2 import BalancerV2WeightedDriver, BalancerV2StableDriver
+from lpbook.lps.uniswap_v4.uniswap import UniV4Driver
 from lpbook.web3 import BlockId
 from lpbook.web3.block_stream import BlockStream
 from lpbook.web3.event_stream import ServerFilteredEventStream
@@ -108,6 +110,14 @@ class ProcessServer:
             lp_drivers.append(BebopDriver(self.token_db))
         if "fluid" in self.protocols:
             lp_drivers.append(FluidDriver(self.block_stream, self.token_db, w3))
+        if "maverickv2" in self.protocols:
+            lp_drivers.append(MaverickV2Driver(self.block_stream, event_stream, self.aiohttp_session, self.token_db, w3))
+        if "univ4" in self.protocols:
+            lp_drivers.append(UniV4Driver(event_stream, self.block_stream, self.aiohttp_session, w3))
+        if "balancerv3weighted" in self.protocols:
+            lp_drivers.append(BalancerV3WeightedDriver(self.token_db, event_stream, self.block_stream, self.aiohttp_session, w3))
+        if "balancerv3stable" in self.protocols:
+            lp_drivers.append(BalancerV3StableDriver(self.token_db, event_stream, self.block_stream, self.aiohttp_session, w3))
         if "cowammbalancer" in self.protocols:
             order_drivers.append(COWAMMBalancerDriver(event_stream, self.block_stream, self.token_db, w3))
         if "cowammprivate" in self.protocols:

@@ -10,6 +10,7 @@ from lpbook.util import LP, Token, Trade
 logger = logging.getLogger(__name__)
 
 # How many blocks to consider as the training set when regressing the average price for the remaining of an hour.
+# Needs to be at least one hour to make sure we have enough data points to compute the mean xrate on the running hour.
 REGRESSION_WINDOW_SIZE = 100
 
 class LinearRegression:
@@ -98,7 +99,7 @@ class TradedAmountsCollector:
         self.abs_amounts1 = [0] # abs_amounts1 is the traded amount of token1 (absolute value)
         self.abs_amounts2 = [0]
         self.last_xrates12 = [last_xrate12]
-
+            
     def record_trade(self, block: int, buy_amount1: int, buy_amount2: int):
         if block > self.last_block:
             for x in [self.abs_amounts1, self.abs_amounts2]:
@@ -106,6 +107,9 @@ class TradedAmountsCollector:
             self.last_xrates12 += [self.last_xrates12[-1]] * (block - self.last_block)
             self.last_block = block
         assert block <= self.last_block
+        if len(self.abs_amounts1) + (block - self.last_block - 1) < 0:
+            logger.debug(f"Attempting to record a trade for a block that is too far in the past: {block} < {self.last_block - len(self.abs_amounts1) + 1}. Ignoring ...")
+            return
         self.abs_amounts1[block - self.last_block - 1] += abs(buy_amount1)
         self.abs_amounts2[block - self.last_block - 1] += abs(buy_amount2)
         if self.abs_amounts1[block - self.last_block - 1] != 0 and self.abs_amounts2[block - self.last_block - 1] != 0:
@@ -117,7 +121,7 @@ class TradedAmountsCollector:
     # p(t1) / p(t2)
     def xrate12(self, block) -> Optional[float]:
         n_observations = len(self.last_xrates12)
-        assert self.last_block - n_observations + 1 <= block <= self.last_block
+        assert self.last_block - n_observations + 1 <= block <= self.last_block # not sure about +1
         return self.last_xrates12[block - self.last_block - 1]
 
     def xrates12(self, from_block: int, to_block: int) -> list[Optional[float]]:
@@ -194,7 +198,8 @@ class TradedAmountsCollector:
             (nr_blocks_observed_since_start_of_hour + nr_blocks_to_predict)
         )
 
-        if False: #self.token1.address == "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2" and self.token2.address == "0xdac17f958d2ee523a2206206994597c13d831ec7":
+        """
+        if self.token1.address == "0xdef1ca1fb7fbcdc777520aa7f396b4e015f497ab" and self.token2.address == "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2":
             print("tokens: ", self.token1.symbol, self.token2.symbol)
             print("observed since start of hour: ", [x for x in self.xrates12(first_block_observed_after_start_of_hour, cur_block)])
             print("training:", [x for x in self.xrates12(first_block_for_training, cur_block)])
@@ -207,12 +212,23 @@ class TradedAmountsCollector:
             print(f"estimate: {estimate}")
             print(f"stddev_of_estimate_of_average: {stddev_of_estimate_of_average}")
             print(f"stddev: {stddev}")
-            print((estimate / math.exp(stddev) * 1e12, estimate * math.exp(stddev) * 1e12))
-            print(estimate * 1e12, "+-", (estimate * math.exp(stddev) - estimate / math.exp(stddev)) / 2 * 1e12)
+            print((estimate / math.exp(stddev), estimate * math.exp(stddev)))
+            print(estimate, "+-", (estimate * math.exp(stddev) - estimate / math.exp(stddev)) / 2)
+        """
 
         return estimate, stddev
 
-
+    def debug(self):
+        print("Token1: ", self.token1.symbol)
+        print("Token2: ", self.token2.symbol)
+        print("window_size: ", self.window_size)
+        print("last_block: ", self.last_block)
+        print("abs_amounts1: ", self.abs_amounts1)
+        print("abs_amounts2: ", self.abs_amounts2)
+        print("last_xrates12: ", self.last_xrates12)
+        
+# For convenience we maintain two collectors for each token pair, one for each direction. This allows any directional
+# xrate estimates (mean and stddev) to be obtained without further math.
 class TradedAmountsCollectors:
     def __init__(self, window_size: int):
         # Window must be wide enough to hold all blocks in one hour.
@@ -220,6 +236,10 @@ class TradedAmountsCollectors:
         self.window_size = window_size
         self.collectors = {}
 
+    @property
+    def token_pairs(self) -> Iterable[Tuple[Token, Token]]:
+        return self.collectors.keys()
+    
     def record_buy_amount(self, block: int, token1: Token, token2: Token, buy_amount1: int, buy_amount2: int):
         if (token1, token2) not in self.collectors:
             self.collectors[token1, token2] = TradedAmountsCollector(token1, token2, self.window_size, block)
@@ -243,6 +263,12 @@ class TradedAmountsCollectors:
                 continue
             xrate, stderr = self.collectors[token1, token2].estimate_average_xrate12_in_running_hour(block_number, block_time)
             if xrate is not None:
-                r[token1, token2] = xrate, stderr
+                r[token1, token2] = xrate, stderr        
         return r
     
+    def debug(self, token1_address: str, token2_address: str):
+        for collector in self.collectors.values():
+            if collector.token1.address == token1_address and collector.token2.address == token2_address:
+                collector.debug();
+                break
+        print("No collector found for pair ", token1_address, token2_address)

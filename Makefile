@@ -1,4 +1,5 @@
-all: update-uniswap-v3-graphql-schema fetch-curve-contract_abis update-uniswap-v2-graphql-schema update-balancer-v2-graphql-schema
+all: update-uniswap-v3-graphql-schema fetch-curve-contract_abis update-uniswap-v2-graphql-schema \
+	update-balancer-v2-graphql-schema update-uniswap-v4-graphql-schema update-balancer-v3-graphql-schema
 
 update-uniswap-v3-graphql-schema:
 	python -m sgqlc.introspection --exclude-deprecated --exclude-description https://gateway-arbitrum.network.thegraph.com/api/${THEGRAPH_API_KEY}/subgraphs/id/5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV uniswap_v3_graphql_schema.json
@@ -46,3 +47,18 @@ update-balancer-v2-graphql-schema:
 	python -m sgqlc.introspection --exclude-deprecated --exclude-description https://gateway-arbitrum.network.thegraph.com/api/${THEGRAPH_API_KEY}/subgraphs/id/C4ayEZP2yTXRAB8vSaTrgN4m9anTe9Mdm2ViyiAuV9TV balancer_v2_graphql_schema.json
 	sgqlc-codegen schema balancer_v2_graphql_schema.json lpbook/lps/balancer_v2/artifacts/graphql_schema.py
 	rm balancer_v2_graphql_schema.json
+
+update-uniswap-v4-graphql-schema:
+	python -m sgqlc.introspection --exclude-deprecated --exclude-description https://gateway-arbitrum.network.thegraph.com/api/${THEGRAPH_API_KEY}/subgraphs/id/DiYPVdygkfjDWhbxGSqAQxwBKmfKnkWQojqeM2rkLb3G uniswap_v4_graphql_schema.json
+	sgqlc-codegen schema uniswap_v4_graphql_schema.json lpbook/lps/uniswap_v4/artifacts/graphql_schema.py
+	rm uniswap_v4_graphql_schema.json
+
+# FIXME: this works in the command line but not in the makefile
+update-balancer-v3-graphql-schema:
+	curl -X POST https://api-v3.balancer.fi \
+  		-H "Content-Type: application/json" \
+  		-H "User-Agent: sgqlc/1.14 introspection" \
+  		-d '{"query": "'"$(cat introspection_query.graphql | tr -d '\n')"'"}' \
+  		-o balancer_v3_graphql_schema.json
+	sgqlc-codegen schema balancer_v3_graphql_schema.json lpbook/lps/balancer_v3/artifacts/graphql_schema.py
+	rm balancer_v3_graphql_schema.json

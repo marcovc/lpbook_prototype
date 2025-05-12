@@ -76,10 +76,6 @@ class UniV2Like(LP):
         }
 
     @property
-    def may_have_slippage(self) -> bool:
-        return True
-
-    @property
     def spot_xrates(self) -> dict[Tuple[Token, Token], ExchangeRate]:
         r = {}
         for i, j in permutations(range(len(self.tokens)), 2):

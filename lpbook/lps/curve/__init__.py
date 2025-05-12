@@ -63,11 +63,6 @@ class Curve(LP):
     def protocol_name(self) -> str:
         return 'Curve'
 
-    @classmethod
-    @property
-    def protocol_version(self) -> str:
-        return ''
-
     @property
     def gas_stats(self) -> Dict:
         # See https://dune.com/queries/1044860 .
@@ -122,6 +117,22 @@ class Curve(LP):
             r['directional_fees'] = [F(f, int(1e10)) for f in self.dynamic_fees]
             r['scaling_rates'] = [F(int(1e18), s) for s in self.stored_rates]   # FIXME: should be 1e36/s
         return r
+
+    @property
+    def execution_info(self):
+        return {"registry": self.registry}
+    
+class CurveClassic(Curve):
+    @classmethod
+    @property
+    def protocol_version(self) -> str:
+        return "Classic"
+
+class CurveNG(Curve):
+    @classmethod
+    @property
+    def protocol_version(self) -> str:
+        return "NG"
     
 class CurvePoolDB:
     def __init__(self, session: aiohttp.ClientSession):
@@ -153,7 +164,8 @@ class CurvePoolDB:
         tokens = [self.parse_token(coin) for coin in pool["coins"]]
         balances = [int(coin["poolBalance"]) for coin in pool["coins"]]
         amplification_parameter = int(pool["amplificationCoefficient"])
-        return Curve(
+        CurveVariant = CurveNG if pool["registryId"] == "factory-stable-ng" else CurveClassic
+        return CurveVariant(
             address=pool["address"].lower(), 
             _tokens=tokens, 
             initial_A=amplification_parameter,
@@ -571,7 +583,7 @@ class CurveDriver(LPDriver):
         session: aiohttp.ClientSession,
         web3_client=None
     ):
-        super().__init__(Curve)
+        super().__init__(CurveClassic)
         self.event_stream = event_stream
         self.web3_client = web3_client
         self.session = session
@@ -628,10 +640,6 @@ class CurveDriver(LPDriver):
             #lp.base_pool_id is None and
             lp.address not in DENYLIST
         ]
-
-    @property
-    def uid(self) -> str:
-        return f"{self.protocol}-{self.kind}-main"
     
 # This driver supports the new curve pools. It uses an sync web3 proxy to query the state of the pools.
 class CurveNGDriver(LPDriver):
@@ -642,7 +650,7 @@ class CurveNGDriver(LPDriver):
         session: aiohttp.ClientSession,
         web3_client=None
     ):
-        super().__init__(Curve)
+        super().__init__(CurveNG)
         self.event_stream = event_stream
         self.block_stream = block_stream
         self.web3_client = web3_client
@@ -689,6 +697,3 @@ class CurveNGDriver(LPDriver):
             lp.address not in DENYLIST
         ]
     
-    @property
-    def uid(self) -> str:
-        return f"{self.protocol}-{self.kind}-NG"

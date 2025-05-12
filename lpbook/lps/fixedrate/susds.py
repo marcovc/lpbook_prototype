@@ -24,6 +24,19 @@ address_USDS = "0xdc035d45d973e3ec169d2276ddab16f1e407384f"
 address_proxy_contract = address_sUSDS
 address_implementation_contract = "0x4e7991e5c547ce825bdeb665ee14a3274f9f61e0"
 
+class USDS2sUSDS(FixedRate):
+    @classmethod
+    @property
+    def protocol_name(self) -> str:
+        """Returns the name of lp protocol (Uniswap, Curve, etc.)."""
+        return "USDS2sUSDS"
+
+    @classmethod
+    @property
+    def protocol_version(self) -> str:
+        """Returns the version of lp protocol."""
+        return 1
+
 def balances_from_drip(chi: int) -> Tuple[int, int]:
     # USDS -> sUSDS (deposit)
     # sUSDS = USDS * 10^27 / chi
@@ -71,14 +84,14 @@ class SUSDSAsyncProxy(LPAsyncProxy):
         )
         
 
-    async def create_from_blockchain(self, block: BlockId) -> FixedRate:
+    async def create_from_blockchain(self, block: BlockId) -> USDS2sUSDS:
         block_identifier = block.to_web3()
 
         token1, token2 = await self.get_tokens()
         drip = await self.SUDSD.functions.drip().call(block_identifier=block_identifier)
         max_sell_amount1, max_sell_amount2 = balances_from_drip(drip)
 
-        return FixedRate(
+        return USDS2sUSDS(
             address=self.lp_id,
             token1=token1,
             token2=token2,
@@ -152,7 +165,7 @@ class SUDSDDriver(LPDriver):
         event_stream: EventStream,
         web3_client
     ):
-        super().__init__(FixedRate)
+        super().__init__(USDS2sUSDS)
         self.event_stream = event_stream
         self.web3_client = web3_client
 
@@ -178,4 +191,4 @@ class SUDSDDriver(LPDriver):
     
     @property
     def uid(self) -> str:
-        return f"{self.protocol}-{self.kind}-susds"
+        return f"{self.protocol}-{self.kind}"

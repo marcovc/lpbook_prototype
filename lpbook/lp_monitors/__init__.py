@@ -32,6 +32,8 @@ class LPMonitors:
         #self.slippage_estimators.initialize(lp_uid=lpuid, block=block, tokens=tokens)
         self.traded_amount_collectors.initialize(lp, block)
 
+    def debug(self, token1_address: str, token2_address: str):
+        self.traded_amount_collectors.debug(token1_address, token2_address)
 
 # TODO: load/save state
 lp_monitors = LPMonitors() if USE_LP_MONITORS else None

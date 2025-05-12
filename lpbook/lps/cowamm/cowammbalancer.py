@@ -357,13 +357,16 @@ class COWAMMBalancerDriver(LPDriver):
             '0x40c1551d93e51f3278d2471465fe4017f54e290a', 
             '0x03a0cc954c800920ceb6f4c67f6b1ef5df42dcca', 
             '0x777a11c830ce8a7c3d325b0be020f7ba7edf2b58', 
-            '0x3544e78c40b209a94f2ce7b89078b2d147f4b1c8'
+            '0x3544e78c40b209a94f2ce7b89078b2d147f4b1c8',
+            '0x269e42f06c7977e91644bb30bff627d483b6e73c',
+            '0x7529d8ac08d4dddc159bc8809a971a7605c34f80',
+            '0xebb8eec34ff7f10771c929e572b2906f2f405439'
             ]
 
         try:
             FACTORY_CONTRACT_ADDRESS = "0xf76c421bAb7df8548604E60deCCcE50477C10462"
             #FACTORY_CONTRACT_DEPLOYMENT_BLOCK = 20432455
-            FROM_BLOCK = 21565617 + 1
+            FROM_BLOCK = 22150571 + 1
             with open(Path(__file__).parent / 'artifacts' / 'BCowFactory.abi', 'r') as f:
                 contract_abi = f.read()
                 BCowFactory = self.web3_client.eth.contract(

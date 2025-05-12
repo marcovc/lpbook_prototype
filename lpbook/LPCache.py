@@ -117,7 +117,7 @@ class LPCache:
                 continue
             for lp in lps:
                 lp_token_ids = {t.address for t in lp.tokens}
-                if len(lp_token_ids | token_ids) >= 2 or lp.uid in self.always_include_amms:
+                if len(lp_token_ids & token_ids) >= 2 or lp.uid in self.always_include_amms:
                     all_lps.append(lp)
 
         if len(all_lps) == 0:

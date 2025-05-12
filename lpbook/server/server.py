@@ -11,7 +11,8 @@ from pydantic_settings import BaseSettings
 from contextlib import asynccontextmanager
 import argparse
 
-from lpbook.server.WebsocketDriver import WebsocketDriver
+from lpbook.server.LPWebsocketDriver import LPWebsocketDriver
+from lpbook.server.PriceWebsocketDriver import PriceWebsocketDriver
 from lpbook.server.util import create_lps_response, create_order_lps_response
 from lpbook.web3 import BlockId
 from .ProcessServer import ProcessServer
@@ -25,7 +26,8 @@ logger = logging.getLogger(__name__)
 
 process_server = None
 lp_stats = None
-websocket_driver = None
+lp_websocket_driver = None
+price_websocket_driver = None
 
 # ++++ Interface definition ++++
 
@@ -69,12 +71,15 @@ async def lifespan(app: FastAPI):
     logger.info("Starting Prometheus")
     prometheus_server = asyncio.create_task(asyncio.to_thread(start_http_server,9090))
 
-    #websocket_driver_task = asyncio.create_task(websocket_driver.run())
-    process_server.subscribe_on_sync(websocket_driver.run_once)
+    #websocket_driver_task = asyncio.create_task(lp_websocket_driver.run())
+    process_server.subscribe_on_sync(lp_websocket_driver.run_once)
 
     # To be on the safe side, we kick out all websocket connections whenever we need to reset process_server,
     # which should happen only if there an unhandled exception.
-    process_server.subscribe_on_reset(websocket_driver.disconnect_all)
+    process_server.subscribe_on_reset(lp_websocket_driver.disconnect_all)
+
+    process_server.subscribe_on_reset(price_websocket_driver.disconnect_all)
+    price_websocket_server_task = asyncio.create_task(price_websocket_driver.run())
 
     logger.info("Starting LPBook ...")
     process_server.start()
@@ -214,19 +219,39 @@ async def on_submitted_solution(lp_executions: list[LPExecution]) -> None:
 
 @app.websocket("/ws_latest")
 async def websocket_endpoint(websocket: WebSocket):
-    logger.debug(f"New websocket connection.")
-    await websocket_driver.connect(websocket)
+    logger.debug(f"New websocket client to '/ws_latest'.")
+    await lp_websocket_driver.connect(websocket)
     try:
         while True:
             token_ids = await websocket.receive_json()
             process_server.update_token_ids(token_ids)
     except WebSocketDisconnect:
-        logger.debug(f"Websocket client disconnected. Removing connection.")
-        websocket_driver.disconnect(websocket)
+        logger.debug(f"Websocket client for '/ws_latest' disconnected. Removing connection.")
+        lp_websocket_driver.disconnect(websocket)
         logger.debug(f"Removed connection.")
     except Exception:
-        logger.exception(f"Unhandled exception in websocket endpoint. Dropping connection.")
-        websocket_driver.disconnect(websocket)
+        logger.exception(f"Unhandled exception in websocket '/ws_latest' endpoint. Dropping connection.")
+        lp_websocket_driver.disconnect(websocket)
+
+@app.websocket("/ws_prices")
+async def websocket_prices_endpoint(websocket: WebSocket):
+    logger.debug(f"New websocket client to '/ws_prices'.")
+    await price_websocket_driver.connect(websocket)
+    try:
+        while True:
+            await websocket.receive_json()  # Just to keep the connection alive.         
+    except WebSocketDisconnect:
+        price_websocket_driver.disconnect(websocket)
+        logger.debug(f"Websocket client for '/ws_prices' disconnected. Removing connection.")
+    except Exception:
+        logger.exception(f"Unhandled exception in websocket '/ws_prices' endpoint. Dropping connection.")
+        await price_websocket_driver.disconnect(websocket)
+
+# TEMP
+@app.get("/debug_prices")
+async def debug_prices(token1_address: str, token2_address: str) -> None:
+    from lpbook.lp_monitors import lp_monitors
+    lp_monitors.debug(token1_address, token2_address)
 
 # ++++ Server setup: ++++
 
@@ -296,7 +321,8 @@ if __name__ == '__main__':
     process_server = ProcessServer(protocols, mandatory_amms, args.state_directory, profiling)
     #p = create_in_another_process(ProcessServer, args.protocols, args.profile)
     
-    websocket_driver = WebsocketDriver(lp_stats, process_server)
+    lp_websocket_driver = LPWebsocketDriver(lp_stats, process_server)
+    price_websocket_driver = PriceWebsocketDriver()
 
     uvicorn.run(
         "__main__:app",

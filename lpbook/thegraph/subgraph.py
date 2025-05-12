@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import logging
 
 import aiohttp
@@ -14,6 +15,8 @@ class GraphQLClientError(RuntimeError):
 
 class GraphQLClient:
     page_size = 500
+    nr_queries = 0
+    start_time = datetime.datetime.now()
 
     def __init__(self, url, session: aiohttp.ClientSession):
         self.endpoint = AIOHTTPEndpoint(self.url, session)
@@ -46,6 +49,9 @@ class GraphQLClient:
     async def get_data(self, op, must_have_key=None, keep_trying=False):
         while True:
             data = await self.endpoint(op)
+            self.nr_queries += 1
+            if self.nr_queries % 100 == 0:
+                logger.info(f'Total TheGraph queries: {self.nr_queries} (since {self.start_time} = {self.nr_queries* (datetime.timedelta(days=30)/(datetime.datetime.now() - self.start_time))} queries/month)')
             if 'errors' not in data.keys() and (
                 must_have_key is None or must_have_key in data['data'].keys()
             ):

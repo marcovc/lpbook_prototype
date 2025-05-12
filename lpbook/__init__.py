@@ -134,9 +134,8 @@ class LPSyncProxyFromAsyncProxy(LPSyncProxy):
         self.recent_state_cache = RecentStateCache(self.CACHE_SIZE)
         self.underlying_lp_async_proxy = underlying_lp_async_proxy
         self.block_stream = block_stream
-        self.block_stream.subscribe(self.query_underlying_lp_async_proxy)
 
-    async def __del__(self):
+    def __del__(self):
         self.block_stream.unsubscribe(self.query_underlying_lp_async_proxy)
 
     def subscribe_on_sync(self, subscriber):
@@ -178,12 +177,75 @@ class LPSyncProxyFromAsyncProxy(LPSyncProxy):
         return self.recent_state_cache.get_at_block(block)
 
     async def start(self) -> None:
-        pass
+        self.block_stream.subscribe(self.query_underlying_lp_async_proxy)
 
     async def stop(self) -> None:
         self.block_stream.unsubscribe(self.query_underlying_lp_async_proxy)
 
 
+class EventFilteredLPSyncProxyFromAsyncProxy(LPSyncProxyFromAsyncProxy):
+    """Like the above, except that will only call into wrapped LPAsyncProxy if an event happened on the block.
+    """
+    def __init__(
+        self,
+        underlying_lp_async_proxy: LPAsyncProxy,
+        block_stream: BlockStream,
+        contracts, 
+        events,
+        event_stream
+    ):
+        super().__init__(self.wrapped_underlying_lp_async_proxy, block_stream)
+        self.actual_underlying_lp_async_proxy = underlying_lp_async_proxy
+        self.contracts = contracts
+        self.events = events
+        self.event_stream = event_stream
+        self.block_numbers_to_update_by_lp_id = {}
+        # Required to make sure events for a block are processed before returning its state.
+        self.processed_block_cond = ProcessedBlockCondition() 
+
+    async def start(self) -> None:
+        block = await self.actual_underlying_lp_async_proxy.latest_block()
+        await super().start()
+        await self.event_stream.subscribe(self.on_events, self.contracts, self.events, block.number, self.reset_event_listener)
+
+    async def stop(self) -> None:
+        self.event_stream.unsubscribe(self.on_events)
+        await super().stop()
+
+    async def on_events(self, events, block: BlockId):
+        for event in events:
+            lp_id = event.address.lower()
+            self.block_numbers_to_update_by_lp_id.setdefault(lp_id, set()).add(block.number)
+        await self.processed_block_cond.on_block_processed(block)
+
+    async def reset_event_listener(self, reason: RuntimeError) -> None:
+        logger.error(f"Resetting event listener for {self.underlying_lp_async_proxy}: {reason}")
+        self.stop()
+        await asyncio.sleep(5)
+        latest_block = await self.latest_block()
+        await self.start(latest_block.number)
+
+    async def wrapped_underlying_lp_async_proxy(self, block: BlockId) -> Dict[str, LP]:
+        await self.processed_block_cond.wait_for_block(block)
+        try:
+            prev_state = self.recent_state_cache.get_at_block_number(block.number - 1)
+        except CacheMissError:
+            return await self.actual_underlying_lp_async_proxy(block, None)
+
+        lp_ids_to_query = set()
+        for lp_id, block_numbers in self.block_numbers_to_update_by_lp_id.items():
+            new_block_numbers = {b for b in block_numbers if b > block.number}
+            if len(new_block_numbers) < len(block_numbers):
+                lp_ids_to_query.add(lp_id)
+                self.block_numbers_to_update_by_lp_id[lp_id] = new_block_numbers
+
+        if len(lp_ids_to_query) == 0:
+            return prev_state
+        
+        for lp_id, LP in (await self.actual_underlying_lp_async_proxy(block, lp_ids_to_query)).items():
+            prev_state[lp_id] = LP
+        return prev_state
+    
 class LPFromInitialStatePlusChangesProxy(LPSyncProxy):
     def __init__(self, contracts, events, async_proxy, event_stream, web3_client, extra_topics=tuple()):
         self.contracts = contracts

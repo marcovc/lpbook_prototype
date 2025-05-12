@@ -15,7 +15,7 @@ from lpbook.web3 import BlockId
 
 logger = logging.getLogger(__name__)
 
-class WebsocketDriver:
+class LPWebsocketDriver:
 
     def __init__(self, lp_stats: LPStats, process_server: ProcessServer):
         self.lp_stats = lp_stats
@@ -73,7 +73,7 @@ class WebsocketDriver:
             "prev_block_timestamp": block.timestamp,
         }
         # Timeout is needed to exit possible deadlock between client and server.
-        async def send_reply_with_timeout(connection):
+        async def send_reply_with_timeout(connection: WebSocket):
             try:
                 await asyncio.wait_for(connection.send_json(response), timeout=10)
             except asyncio.TimeoutError:
@@ -83,6 +83,5 @@ class WebsocketDriver:
 
         await asyncio.gather(*[
             send_reply_with_timeout(connection)
-            for connection in self.active_connections
+            for connection in list(self.active_connections)
         ])
-

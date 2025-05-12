@@ -73,7 +73,14 @@ class Token:
     def __hash__(self):
         return self.address.__hash__()
 
-        
+    def is_wrapped_native_token(self):
+        return self.symbol == "WETH"
+
+    @classmethod
+    def native_token_as_erc20(cls):
+        return Token(address="0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", symbol="ETH", decimals=18)
+
+
 # Recursively convert an object to a dict
 # https://stackoverflow.com/questions/1036409/recursively-convert-python-object-graph-to-dictionary
 def to_dict(obj, classkey=None):
@@ -179,18 +186,8 @@ class LP:
         """Returns if this pool is allowed to be internalized."""
 
     @property
-    def may_have_slippage(self) -> bool:
-        return False
-
-    @property
     def spot_xrates(self) -> dict[Tuple[Token, Token], ExchangeRate]:
         return {}
-    
-    #def estimate_slippage(self, lp_monitors, block_number, risk):
-    #    self.slippage = lp_monitors.slippage_estimators.estimates(self.uid, block_number, tokens=self.tokens, risk=risk)
-
-    #def estimate_signal(self, lp_monitors, block_number):
-    #    self.signal = lp_monitors.slippage_estimators.estimate_signals(self.uid, block_number, tokens=self.tokens)
 
     def marshall(self) -> Dict:
         """Encodes itself to a dict with a common API."""
